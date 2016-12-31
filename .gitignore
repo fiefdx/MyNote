@@ -12,6 +12,7 @@
 *.log.*
 *.pid
 *.pyc
+*.desktop
 
 # ignore dirs
 

@@ -10,11 +10,9 @@ Modified on 2014-05-31
 '''
 
 import os
-import sys
 import logging
 import shutil
 
-import logger
 
 LOG = logging.getLogger(__name__)
 
@@ -26,7 +24,6 @@ class Storage(object):
             self.user_path = os.path.join(root, user_sha1)
             self.user_path_dirs = ["notes", "share", "tmp", "rich_notes"]
             self.rich_note_path_list = ["rich_notes", "images"]
-            # self.note_type_list = ["work", "think", "person", "enjoy", "other"]
             self.note_type_list = []
         except Exception, e:
             LOG.exception(e)

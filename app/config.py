@@ -76,6 +76,3 @@ if __name__ == "__main__":
     print "cwd: %s"%cwd
     print "configpath: %s"%configpath
     print "CONFIG: %s"%CONFIG
-
-
-
