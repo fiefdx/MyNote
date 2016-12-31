@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=MyNote
-Comment=MyNote
-Exec="/home/breeze/App/MyNote/app/MyNote.sh" %F
-Icon=/home/breeze/App/MyNote/app/static/favicon.ico
-Type=Application
-Terminal=false
-Categories=GNOME;GTK;Utility;Development;
