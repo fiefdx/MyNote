@@ -20,11 +20,10 @@ import tornado.netutil
 from tornado.options import define, options
 
 from config import CONFIG
-from db import sqlite
 from db.sqlite import DB
 from utils import common
 import multiprocessing
-from utils.multi_async_tea import MultiProcessNoteTea 
+from utils.multi_async_tea import MultiProcessNoteTea
 from utils.multi_async_rich_import import MultiProcessNoteImport as RichNoteImport
 from utils.multi_async_note_import import MultiProcessNoteImport as TextNoteImport
 
@@ -67,7 +66,8 @@ LOG = logging.getLogger(__name__)
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
-                    (r"/", search.IndexHandler),
+                    (r"/", login.RedirectHandler),
+                    (r"/home", search.IndexHandler),
                     (r"/delete", login.DeleteCookiesHandler),
                     (r"/login", login.LoginHandler),
                     (r"/register", login.RegisterHandler),
@@ -122,14 +122,14 @@ if __name__ == "__main__":
     fp.write(PID)
     fp.close()
     tornado.options.parse_command_line()
-    logger.config_logging(file_name = options.log, 
-                          log_level = CONFIG['LOG_LEVEL'], 
-                          dir_name = "logs", 
-                          day_rotate = False, 
-                          when = "D", 
-                          interval = 1, 
-                          max_size = 20, 
-                          backup_count = 5, 
+    logger.config_logging(file_name = options.log,
+                          log_level = CONFIG['LOG_LEVEL'],
+                          dir_name = "logs",
+                          day_rotate = False,
+                          when = "D",
+                          interval = 1,
+                          max_size = 20,
+                          backup_count = 5,
                           console = True)
 
     # init database conn
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         common.Servers.RICH_SERVER = rich_server
         note_server = TextNoteImport(CONFIG["PROCESS_NUM"])
         common.Servers.NOTE_SERVER = note_server
-    
+
     tornado.locale.load_translations(os.path.join(cwd, "translations"))
     if CONFIG["SERVER_SCHEME"].lower() == "https":
         http_server = tornado.httpserver.HTTPServer(Application(), 

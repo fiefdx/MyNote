@@ -69,6 +69,8 @@ try:
     if not os.path.exists(CONFIG["STORAGE_DB_PATH"]) or not os.path.isdir(CONFIG["STORAGE_DB_PATH"]):
         os.makedirs(CONFIG["STORAGE_DB_PATH"])
     CONFIG["PID_PATH"] = cwd
+    if not CONFIG.has_key("FUNCTIONS"):
+        CONFIG["FUNCTIONS"] = ["home", "search", "note", "rich", "help"]
 except Exception, e:
     print e
 

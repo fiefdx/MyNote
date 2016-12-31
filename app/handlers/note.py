@@ -25,18 +25,12 @@ Modified on 2014-09-03
 @author: YangHaitao
 '''
 
-import sys
 import os.path
-import re
 import logging
-import hashlib
-import urllib
 import shutil
-import chardet
 import time
 import datetime
 import dateutil
-from dateutil import tz
 import StringIO
 import json
 
@@ -46,17 +40,15 @@ from tornado import gen
 from db import sqlite
 from db.sqlite import DB
 from config import CONFIG
-from utils.html import ThumbnailItem, ThumnailNote, add_params_to_url
 from utils import index_whoosh
 from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive
 from utils import note_xml
-# from utils import noteparser
 from models.item import NOTE
 from utils import common_utils
-from utils.multi_async_tea import MultiProcessNoteTea 
+from utils.multi_async_tea import MultiProcessNoteTea
 from utils.multi_async_note_import import MultiProcessNoteImport
 
 
@@ -102,7 +94,6 @@ class NoteHandler(BaseHandler):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
         user_locale = self.get_user_locale()
-        # locale = "zh" if user_locale and user_locale.code == "zh_CN" else "en"
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         option = (self.get_argument("option", "")).strip()
         note_id = (self.get_argument("id", "")).strip()
@@ -116,6 +107,7 @@ class NoteHandler(BaseHandler):
                         user = user, 
                         current_nav = "Note",
                         scheme = CONFIG["SERVER_SCHEME"],
+                        functions = CONFIG["FUNCTIONS"],
                         locale = locale)
         elif option == "download" and note_id != "":
             note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
@@ -138,6 +130,7 @@ class NoteHandler(BaseHandler):
                     user = user, 
                     current_nav = "Note",
                     scheme = CONFIG["SERVER_SCHEME"],
+                    functions = CONFIG["FUNCTIONS"],
                     locale = locale)
 
 @gen.coroutine
@@ -149,14 +142,12 @@ def update_categories(user_locale, user):
         trans_books += [category['name'] for category in json.loads(user_info.note_books)]
     else:
         trans_books = ['Search', 'All'] + [category['name'] for category in json.loads(user_info.note_books)]
-    # LOG.info("trans_books: %s", trans_books)
     note_num_dict = {}
     note_num_dict["All"] = 0
     for i in note_books:
         note_num_dict[i] = sqlite.get_note_num_by_type_user(i, user, conn = DB.conn_note)
         note_num_dict["All"] += note_num_dict[i]
     note_num_dict["Search"] = 0
-    # return {'books':note_books, 'trans':trans_books, 'numbers':note_num_dict}
     raise gen.Return({'books':note_books, 'trans':trans_books, 'numbers':note_num_dict})
 
 @gen.coroutine
@@ -196,14 +187,7 @@ def process_query(query, user, page = 1, user_key = ""):
     result = {}
     LOG.info("process query: %s", query)
     try:
-        # ix = index_whoosh.get_whoosh_index(CONFIG["INDEX_ROOT_PATH"], DB.note)
         if query != "":
-            # result = yield search_whoosh.search_query_no_page_note_user(IX.ix_note, 
-            #                                                             query, 
-            #                                                             DB.note, 
-            #                                                             user, 
-            #                                                             limits = None, 
-            #                                                             key = user_key)
             result = yield search_whoosh.search_query_page_note_user(IX.ix_note, 
                                                                      query, 
                                                                      DB.note, 
@@ -222,8 +206,7 @@ def process_query(query, user, page = 1, user_key = ""):
     except Exception, e:
         LOG.exception(e)
         result["totalcount"] = 0
-        result["result"] = [] 
-    # return result 
+        result["result"] = []
     raise gen.Return(result)
 
 @gen.coroutine
@@ -260,7 +243,6 @@ def create_category(category_name, user, handler, user_locale):
     category = {"name":category_name, "sha1":sha1_category_name}
     LOG.info("create category: %s[%s] for %s", category_name, sha1_category_name, user)
     user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-    # LOG.debug("user_info[%s]: %s", user, user_info)
     if user_info:
         note_books = json.loads(user_info.note_books)
         if category not in note_books:
@@ -285,7 +267,6 @@ def create_category(category_name, user, handler, user_locale):
 def delete_category(sha1_category_name, user, handler, user_locale, user_key = ""):
     LOG.info("delete sha1_category_name: %s for %s", sha1_category_name, user)
     user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-    # LOG.debug("user_info[%s]: %s", user, user_info)
     category_name = sha1_category_name
     if user_info:
         note_books = json.loads(user_info.note_books)
@@ -396,7 +377,6 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
             data['notes'] = (yield update_notes(note.type, user, user_key = user_key))['notes_list']
-            # LOG.info("notes: %s", data['notes'])
             data['current_note_id'] = data['notes'][0]['id']
             data['note_list_action'] = 'init'
             tmp_books = yield update_categories(user_locale, user)
@@ -416,7 +396,6 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         LOG.debug("Delete Note")
         data = {}
         flag = sqlite.delete_note_by_id(user, note_id, conn = DB.conn_note)
-        # should delete the index too!!!
         if flag == True:
             flag = index_whoosh.index_delete_note_by_id(str(note_id), user)
             if flag == True:
@@ -472,7 +451,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         data = {}
         flag = sqlite.get_note_by_id(note.id, user, conn = DB.conn_note)
         note.type = flag.type
-        # if note_dict['type'] != 'Search':
         if note.file_title.strip() == "" and note.file_content.strip() == "":
             delete_note(note_dict, user, handler, user_locale, page = 1, user_key = user_key)
         elif flag.sha1 != note.sha1:
@@ -496,7 +474,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
             if note_dict["type"] != "Search":
-                # data['notes'] = (yield update_notes(note_dict["type"], user, user_key = user_key))['notes_list']
                 data['note_list_action'] = 'update'
                 data['current_note_id'] = note.id
                 note.created_at = str(note.created_at)[:19]
@@ -524,9 +501,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
 
 def send_msg(msg, user, handler):
     try:
-        # if NoteSocketHandler.socket_handlers.has_key(user):
-        #     for handler in NoteSocketHandler.socket_handlers[user]:
-        #         handler.write_message(msg)
         handler.write_message(msg)
     except Exception, e:
         LOG.exception(e)
@@ -543,8 +517,6 @@ class NoteSocketHandler(BaseSocketHandler):
             user_key = ""
         user_locale = self.get_user_locale()
         user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-        # LOG.info("user_info: %s", user_info)
-        # LOG.info("user_key: %s", user_key)
         if NoteSocketHandler.socket_handlers.has_key(user):
             NoteSocketHandler.socket_handlers[user].add(self)
             LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
@@ -587,7 +559,6 @@ class NoteSocketHandler(BaseSocketHandler):
             user_key = ""
         user_locale = self.get_user_locale()
         msg = json.loads(msg)
-        # LOG.info("get message: %s", msg)
         data = {}
         note_list = []
         if msg.has_key('note'):
@@ -601,7 +572,6 @@ class NoteSocketHandler(BaseSocketHandler):
                     note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
                     end_time = time.time()
                     LOG.info("Decrypt note Time: %s", end_time - start_time)
-                # data['notes'] = update_notes(note.type, user)['notes_list']
                 data['note'] = note.to_dict()
                 data['current_note_id'] = note_id
                 send_msg(json.dumps(data), user, self)
@@ -653,14 +623,12 @@ class ImportHandler(BaseHandler):
             LOG.info("import notes encrypted: %s", True if password != "" else False)
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
             multi_process_note_import = MultiProcessNoteImport(CONFIG["PROCESS_NUM"])
-            # arch = Archive(user_info)
             try:
                 if not CONFIG["WITH_NGINX"]:
                     fileinfo = self.request.files["up_file"][0]
                     fname = fileinfo["filename"]
                     fbody = fileinfo["body"]
                 else:
-                    # LOG.info("Post Nginx: %s", self.request.arguments)
                     fileinfo = True
                     fname = self.get_argument("up_file.name", "")
                     up_file_path = self.get_argument("up_file.path", "")
@@ -705,9 +673,6 @@ class ExportHandler(BaseHandler):
         user_key = self.get_current_user_key()
         password = self.get_argument("passwd", "")
         user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-        # if password == "":
-        #     password = user_key
-        LOG.info("password: %s", password)
         encrypt = self.get_argument("encrypt","")
         encrypt = True if encrypt == "enable" else False
         export_category = self.get_argument("notes_category", "All")
@@ -720,15 +685,12 @@ class ExportHandler(BaseHandler):
             password = ""
         LOG.info("export notes encrypted: %s", encrypt)
         try:
-            # notes = sqlite.get_note_by_user_type_created_at(user, "All", order = "DESC", conn = DB.conn_note)
-            # notes_iter = sqlite.get_note_from_db_by_user_iter(user, conn = DB.conn_note)
             notes_iter = sqlite.get_note_from_db_by_user_type_iter(user, export_category, conn = DB.conn_note)
             user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "notes")
             shutil.rmtree(user_notes_path)
             LOG.info("remove user[%s] path[%s]", user, user_notes_path)
             os.makedirs(user_notes_path)
             LOG.info("create user[%s] path[%s]", user, user_notes_path)
-            # if notes != [] and notes != False:
             for note in notes_iter:
                 yield create_note_file(CONFIG["STORAGE_USERS_PATH"], 
                                        user, 
@@ -813,4 +775,3 @@ class AjaxNoteHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self, note_id = ""):
         user = self.get_current_user_name()
-

@@ -25,20 +25,13 @@ Modified on 2015-03-08
 @author: YangHaitao
 '''
 
-import sys
 import os.path
-import re
 import json
 import time
 import logging
-import hashlib
-import urllib
 import shutil
-import chardet
 import datetime
 import dateutil
-from dateutil import tz
-import StringIO
 
 import tornado.web
 from tornado import gen
@@ -46,20 +39,16 @@ from tornado import gen
 from db import sqlite
 from db.sqlite import DB
 from config import CONFIG
-from utils.html import ThumbnailItem, ThumnailRich, add_params_to_url
 from utils import index_whoosh
 from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive_Rich_Notes as Archive
 from utils import note_xml
-# from utils import noteparser
 from utils import htmlparser
-# from utils import richparser
-# from utils import imageparser
 from models.item import RICH
 from utils import common_utils
-from utils.multi_async_tea import MultiProcessNoteTea 
+from utils.multi_async_tea import MultiProcessNoteTea
 from utils.multi_async_rich_import import MultiProcessNoteImport
 
 
@@ -94,7 +83,6 @@ def create_rich_file(storage_users_path, user, user_sha1, note, key = "", key1 =
             image_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
             file_name = pic.sha1 + os.path.splitext(pic.file_name)[-1]
             target_path = os.path.join(user_images_path, file_name)
-            # LOG.info("Copy file[%s] to file[%s]"%(image_path, target_path))
             if not os.path.exists(target_path):
                 shutil.copyfile(image_path, target_path + '.tmp')
                 os.rename(target_path + '.tmp', target_path)
@@ -104,7 +92,6 @@ def create_rich_file(storage_users_path, user, user_sha1, note, key = "", key1 =
 
 def create_category_info(storage_users_path, user_info, category):
     file_path = os.path.join(storage_users_path, user_info.sha1, "rich_notes", "category.json")
-    # user_info = sqlite.get_user_from_db(db_user_path, user)
     fp = open(file_path, 'wb')
     if category["name"] == "All":
         fp.write(user_info.rich_books)
@@ -144,9 +131,6 @@ class RichHandler(BaseHandler):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
         user_locale = self.get_user_locale()
-        # print dir(user_locale)
-        # LOG.debug("user_locale: %s", user_locale.code)
-        # locale = "zh" if user_locale and user_locale.code == "zh_CN" else "en"
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         option = (self.get_argument("option", "")).strip()
         note_id = (self.get_argument("id", "")).strip()
@@ -160,12 +144,14 @@ class RichHandler(BaseHandler):
                         user = user, 
                         current_nav = "Rich",
                         scheme = CONFIG["SERVER_SCHEME"],
+                        functions = CONFIG["FUNCTIONS"],
                         locale = locale)
         else:
             self.render("note/rich_tinymce.html", 
                     user = user, 
                     current_nav = "Rich",
                     scheme = CONFIG["SERVER_SCHEME"],
+                    functions = CONFIG["FUNCTIONS"],
                     locale = locale)
 
 @gen.coroutine
@@ -177,19 +163,16 @@ def update_categories(user_locale, user):
         trans_books += [category['name'] for category in json.loads(user_info.rich_books)]
     else:
         trans_books = ['Search', 'All'] + [category['name'] for category in json.loads(user_info.rich_books)]
-    # LOG.info("trans_books: %s", trans_books)
     note_num_dict = {}
     note_num_dict["All"] = 0
     for i in note_books:
         note_num_dict[i] = sqlite.get_rich_num_by_type_user(i, user, conn = DB.conn_rich)
         note_num_dict["All"] += note_num_dict[i]
     note_num_dict["Search"] = 0
-    # return {'books':note_books, 'trans':trans_books, 'numbers':note_num_dict}
     raise gen.Return({'books':note_books, 'trans':trans_books, 'numbers':note_num_dict})
 
 @gen.coroutine
 def update_notes(note_type, user, order = "DESC", user_key = "", offset = 0):
-    # LOG.info("update_notes user_key: %s", user_key)
     notes_list = []
     notes = sqlite.get_rich_by_user_type_created_at(user, note_type, order = order, offset = offset, limit = NOTE_NUM_PER_FETCH, conn = DB.conn_rich)
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
@@ -197,7 +180,6 @@ def update_notes(note_type, user, order = "DESC", user_key = "", offset = 0):
         note = notes[0]
         if user_key != "":
             note = yield multi_process_note_tea.decrypt(note, *(user_key, ), **{"decrypt_content": True})
-            # LOG.debug("Note: %s", note.to_dict())
             # note.decrypt(user_key, decrypt_content = True)
             note.created_at = str(note.created_at)[:19]
             note.updated_at = str(note.updated_at)[:19]
@@ -210,7 +192,6 @@ def update_notes(note_type, user, order = "DESC", user_key = "", offset = 0):
         for note in notes[1:]:
             if user_key != "":
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ), **{"decrypt_content": False})
-                # LOG.debug("Note: %s", note.to_dict())
                 # note.decrypt(user_key, decrypt_content = False)
                 note.created_at = str(note.created_at)[:19]
                 note.updated_at = str(note.updated_at)[:19]
@@ -227,7 +208,6 @@ def process_query(query, user, page = 1, user_key = ""):
     LOG.info("process query: %s", query)
     try:
         if query != "":
-            # result = yield search_whoosh.search_query_no_page_rich_user(IX.ix_rich, query, DB.rich, user, limits = None, key = user_key)
             result = yield search_whoosh.search_query_page_rich_user(IX.ix_rich, 
                                                                      query, 
                                                                      DB.rich, 
@@ -246,8 +226,7 @@ def process_query(query, user, page = 1, user_key = ""):
     except Exception, e:
         LOG.exception(e)
         result["totalcount"] = 0
-        result["result"] = [] 
-    # return result 
+        result["result"] = []
     raise gen.Return(result)
 
 @gen.coroutine
@@ -284,10 +263,8 @@ def create_category(category_name, user, handler, user_locale):
     category = {"name":category_name, "sha1":sha1_category_name}
     LOG.info("create category: %s[%s] for %s", category_name, sha1_category_name, user)
     user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-    # LOG.debug("user_info[%s]: %s", user, user_info)
     if user_info:
         note_books = json.loads(user_info.rich_books)
-        # LOG.info("note_books[%s]: %s, type: %s", user, note_books, type(note_books))
         if category not in note_books:
             note_books.append(category)
         user_info.rich_books = json.dumps(note_books)
@@ -310,7 +287,6 @@ def create_category(category_name, user, handler, user_locale):
 def delete_category(sha1_category_name, user, handler, user_locale, user_key = ""):
     LOG.info("delete sha1_category_name: %s for %s", sha1_category_name, user)
     user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-    # LOG.debug("user_info[%s]: %s", user, user_info)
     category_name = sha1_category_name
     if user_info:
         note_books = json.loads(user_info.rich_books)
@@ -447,7 +423,6 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         LOG.debug("Delete Rich Note")
         data = {}
         flag = sqlite.delete_rich_by_id(user, note_id, conn = DB.conn_rich)
-        # should delete the index too!!!
         if flag == True:
             flag = index_whoosh.index_delete_rich_by_id(str(note_id), user)
             if flag == True:
@@ -515,7 +490,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             note.created_at = flag.created_at
             note.updated_at = datetime.datetime.now(dateutil.tz.tzlocal())
             note.description = common_utils.get_description_text(note.file_content, CONFIG["NOTE_DESCRIPTION_LENGTH"])
-            # LOG.info("note: %s", note)
             if user_key != "":
                 # note.encrypt(user_key)
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
@@ -531,7 +505,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
             if note_dict["type"] != "Search":
-                # data['notes'] = (yield update_notes(note_dict["type"], user, user_key = user_key))['notes_list']
                 data['note_list_action'] = 'update'
                 data['current_note_id'] = note.id
                 note.created_at = str(note.created_at)[:19]
@@ -559,9 +532,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
 
 def send_msg(msg, user, handler):
     try:
-        # if NoteSocketHandler.socket_handlers.has_key(user):
-        #     for handler in NoteSocketHandler.socket_handlers[user]:
-        #         handler.write_message(msg)
         handler.write_message(msg)
     except Exception, e:
         LOG.exception(e)
@@ -579,8 +549,6 @@ class RichSocketHandler(BaseSocketHandler):
                 user_key = ""
             user_locale = self.get_user_locale()
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-            # LOG.info("user_info: %s", user_info)
-            # LOG.info("user_key: %s", user_key)
             if RichSocketHandler.socket_handlers.has_key(user):
                 RichSocketHandler.socket_handlers[user].add(self)
                 LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
@@ -627,7 +595,6 @@ class RichSocketHandler(BaseSocketHandler):
                 user_key = ""
             user_locale = self.get_user_locale()
             msg = json.loads(msg)
-            # LOG.info("get message: %s", msg)
             data = {}
             note_list = []
             if msg.has_key('note'):
@@ -641,7 +608,6 @@ class RichSocketHandler(BaseSocketHandler):
                         note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
                         end_time = time.time()
                         LOG.info("Decrypt rich note Time: %s", end_time - start_time)
-                    # data['notes'] = update_notes(note.type, user)['notes_list']
                     data['note'] = note.to_dict()
                     data['current_note_id'] = note_id
                     send_msg(json.dumps(data), user, self)
@@ -742,7 +708,6 @@ class ExportHandler(BaseHandler):
         user_key = self.get_current_user_key()
         password = self.get_argument("passwd", "")
         user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-        # LOG.info("export password: %s, %s", password, password == user_key)
         encrypt = self.get_argument("encrypt","")
         encrypt = True if encrypt == "enable" else False
         export_category = self.get_argument("notes_category", "All")
@@ -755,8 +720,6 @@ class ExportHandler(BaseHandler):
             password = ""
         LOG.info("export rich notes encrypted: %s", encrypt)
         try:
-            # notes = sqlite.get_rich_by_user_type_created_at(user, "all", order = "DESC", conn = DB.conn_rich)
-            # notes_iter = sqlite.get_rich_from_db_by_user_iter(user, conn = DB.conn_rich)
             notes_iter = sqlite.get_rich_from_db_by_user_type_iter(user, export_category, conn = DB.conn_rich)
             user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_notes", "rich_notes")
             shutil.rmtree(user_notes_path)
@@ -815,18 +778,18 @@ class DeleteHandler(BaseHandler):
             if flag:
                 LOG.info("Delete user[%s] all rich notes index success", user)
                 flag = sqlite.delete_rich_by_user(user, conn = DB.conn_rich)
-                import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                           user_info.sha1, 
-                                           "tmp", 
-                                           "import", 
+                import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                           user_info.sha1,
+                                           "tmp",
+                                           "import",
                                            "rich_notes")
-                user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                               user_info.sha1, 
-                                               "rich_notes", 
+                user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                               user_info.sha1,
+                                               "rich_notes",
                                                "rich_notes")
-                user_images_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                                user_info.sha1, 
-                                                "rich_notes", 
+                user_images_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                                user_info.sha1,
+                                                "rich_notes",
                                                 "images")
                 # delete user rich notes
                 if os.path.exists(user_notes_path) and os.path.isdir(user_notes_path):
@@ -851,4 +814,4 @@ class DeleteHandler(BaseHandler):
             self.redirect("/rich")
         except Exception, e:
             LOG.exception(e)
-            self.render("info.html", info_msg = "Delete user[%s]'s rich notes failed."%user)
+            self.render("info.html", info_msg = "Delete user[%s]'s rich notes failed." % user)

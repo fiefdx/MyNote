@@ -8,9 +8,6 @@ Created on 2013-10-31
 import tornado.web
 import logging
 import math
-import urlparse
-import urllib
-import chardet
 from utils.html import add_params_to_url
 
 from config import CONFIG
@@ -105,7 +102,6 @@ class ThumbnailCollections(tornado.web.UIModule):
           @result:
         '''
         def construct_li(element):
-            #url = add_params_to_url(url, dict({}))
             html = ""
             html += '<li class="item_li">'
             html += "<a id='html' href = '" + element.url + "' target='_blank'>"
@@ -138,14 +134,12 @@ class ThumbnailCollections(tornado.web.UIModule):
             html += """
                 <div class="col-md-%s">
                     <ul class="list-unstyled">
-                """ %( 12 / column_count )
+                """ %(12 / column_count)
             for j in xrange(row_count):
                 current_index = i * row_count + j
                 if current_index < total_count:
                     element = elements[current_index]
-                    # if j == 5:
                     html += construct_li(element)
-                    # html += "<p>&nbsp;</p>"
                 else:
                     break
             html += """
@@ -217,5 +211,3 @@ class Paginator(tornado.web.UIModule):
         html += "</ul>\n"
         html += "</div>\n"
         return html
-
-

@@ -71,3 +71,12 @@ DELETE_ORIGINAL_FILE: false
 # a number config how many process start for import file task.
 # default 4
 PROCESS_NUM: 1
+
+# FUNCTIONS
+# functions that you want to use
+FUNCTIONS:
+  - home
+  - search
+  - note
+  - rich
+  - help

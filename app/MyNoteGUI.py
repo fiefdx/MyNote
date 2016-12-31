@@ -24,12 +24,11 @@ from tornado.options import define, options
 import wx
 
 from config import CONFIG, update
-from db import sqlite
 from db.sqlite import DB
 from utils import common
-from threading import Timer, RLock, Thread
+from threading import Thread
 import multiprocessing
-from utils.multi_async_tea import MultiProcessNoteTea 
+from utils.multi_async_tea import MultiProcessNoteTea
 from utils.multi_async_rich_import import MultiProcessNoteImport as RichNoteImport
 from utils.multi_async_note_import import MultiProcessNoteImport as TextNoteImport
 
@@ -75,7 +74,8 @@ LOG = logging.getLogger(__name__)
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
-                    (r"/", search.IndexHandler),
+                    (r"/", login.RedirectHandler),
+                    (r"/home", search.IndexHandler),
                     (r"/delete", login.DeleteCookiesHandler),
                     (r"/login", login.LoginHandler),
                     (r"/register", login.RegisterHandler),
@@ -338,14 +338,14 @@ if __name__ == "__main__":
         fp.write(PID)
         fp.close()
         tornado.options.parse_command_line()
-        logger.config_logging(file_name = options.log, 
-                              log_level = CONFIG['LOG_LEVEL'], 
-                              dir_name = "logs", 
-                              day_rotate = False, 
-                              when = "D", 
-                              interval = 1, 
-                              max_size = 20, 
-                              backup_count = 5, 
+        logger.config_logging(file_name = options.log,
+                              log_level = CONFIG['LOG_LEVEL'],
+                              dir_name = "logs",
+                              day_rotate = False,
+                              when = "D",
+                              interval = 1,
+                              max_size = 20,
+                              backup_count = 5,
                               console = True)
 
         # init database conn

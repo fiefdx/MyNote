@@ -13,3 +13,9 @@ SERVER_PORT: 8888
 SERVER_SCHEME: https
 USB_MODE: false
 WITH_NGINX: false
+FUNCTIONS:
+  # - home
+  # - search
+  - rich
+  - note
+  # - help

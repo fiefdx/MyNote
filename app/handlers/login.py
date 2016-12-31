@@ -15,15 +15,8 @@ Modified on 2014-06-04
 
 import json
 import logging
-import os.path
-import urllib
-import chardet
-import hashlib
 import datetime
 import dateutil
-from dateutil import tz
-from subprocess import PIPE
-from subprocess import Popen
 
 import tornado.web
 from tornado import gen
@@ -112,6 +105,29 @@ class RegisterHandler(BaseHandler):
             LOG.exception(e)
             self.render("error.html", error_msg = self.locale.translate("Sorry, Exception Occurs!"))
 
+class RedirectHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def get(self):
+        try:
+            user = self.get_current_user_name()
+            url = "/home"
+            page_name = CONFIG["FUNCTIONS"][0]
+            if page_name == "home":
+                url = "/home"
+            elif page_name == "search":
+                url = "/search"
+            elif page_name == "note":
+                url = "/note"
+            elif page_name == "rich":
+                url = "/rich"
+            else:
+                url = "/help"
+            self.redirect(url)
+        except Exception, e:
+            LOG.exception(e)
+            self.render("error.html", error_msg = self.locale.translate("Sorry, Exception Occurs!"))
+
 class SettingsHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self):
@@ -124,8 +140,6 @@ class SettingsHandler(BaseHandler):
             redirect_to = self.get_argument("redirect_to", "")
             old_user_pass = common_utils.sha256sum(old_passwd)
             user = self.get_current_user_name()
-            # import chardet
-            # LOG.info("user: %s", chardet.detect(user))
             LOG.info("user unicode: %s", isinstance(user, unicode))
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
             change_passwd_flag = False
