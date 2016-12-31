@@ -32,7 +32,6 @@ from whoosh.support.charset import accent_map
 from db import sqlite
 from db.sqlite import DB
 from config import CONFIG
-# from utils import index_whoosh
 from utils.html import ThumbnailItem, ThumnailNote, add_params_to_url
 from utils.multi_async_tea import MultiProcessNoteTea 
 from models.item import NOTE, RICH
@@ -52,12 +51,10 @@ def search_index_page(index, query, index_name, page, limits, filter = None):
         searcher = index.searcher()
         mparser = MultifieldParser(search_field[index_name], schema = index.schema)
         q = mparser.parse(query)
-        # result = searcher.search(q, filter = filter)
-        result = searcher.search_page(q, page, pagelen = limits)
+        result = searcher.search_page(q, page, filter = filter, pagelen = limits)
     except Exception, e:
         LOG.exception(e)
         result = False
-    # return result
     raise gen.Return(result)
 
 @gen.coroutine
@@ -74,7 +71,6 @@ def search_index_no_page(index, query, index_name, limits = None, filter = None)
     except Exception, e:
         LOG.exception(e)
         result = False
-    # return result
     raise gen.Return(result)
 
 @gen.coroutine
@@ -261,6 +257,7 @@ def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 
         LOG.debug("Query_string: %s"%query_string)
         hf = HtmlFormatter(tagname="em", classname="match", termclass="term")
         allow_q = query.Term("user_name", user_name)
+        LOG.debug("search filter by user_name: %s", user_name)
         # results = search_index(ix, query_string, filter = allow_q)
         # results = yield search_index_no_page(ix, query_string, index_name, limits, filter = allow_q)
         results = yield search_index_page(ix, query_string, index_name, page, limits, filter = allow_q)
