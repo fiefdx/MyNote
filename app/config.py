@@ -44,16 +44,31 @@ try:
         datapath = os.path.join("../..", "MyNoteData")
     else:
         datapath = CONFIG["DATA_PATH"]
+    if not os.path.exists(datapath) or not os.path.isdir(datapath):
+        os.makedirs(datapath)
     CONFIG["APP_PATH"] = cwd
     CONFIG["SOURCE_PATH"] = os.path.join(datapath, "source")
+    if not os.path.exists(CONFIG["SOURCE_PATH"]) or not os.path.isdir(CONFIG["SOURCE_PATH"]):
+        os.makedirs(CONFIG["SOURCE_PATH"])
     CONFIG["INDEX_ROOT_PATH"] = os.path.join(datapath, "index")
+    if not os.path.exists(CONFIG["INDEX_ROOT_PATH"]) or not os.path.isdir(CONFIG["INDEX_ROOT_PATH"]):
+        os.makedirs(CONFIG["INDEX_ROOT_PATH"])
     CONFIG["STORAGE_ROOT_PATH"] = os.path.join(datapath, "storage")
+    if not os.path.exists(CONFIG["STORAGE_ROOT_PATH"]) or not os.path.isdir(CONFIG["STORAGE_ROOT_PATH"]):
+        os.makedirs(CONFIG["STORAGE_ROOT_PATH"])
     CONFIG["STORAGE_STATIC_PATH"] = os.path.join(datapath, "static")
+    if not os.path.exists(CONFIG["STORAGE_STATIC_PATH"]) or not os.path.isdir(CONFIG["STORAGE_STATIC_PATH"]):
+        os.makedirs(CONFIG["STORAGE_STATIC_PATH"])
     CONFIG["STORAGE_USERS_PATH"] = os.path.join(datapath, "users")
+    if not os.path.exists(CONFIG["STORAGE_USERS_PATH"]) or not os.path.isdir(CONFIG["STORAGE_USERS_PATH"]):
+        os.makedirs(CONFIG["STORAGE_USERS_PATH"])
     CONFIG["STORAGE_PICTURES_PATH"] = os.path.join(datapath, "pictures")
+    if not os.path.exists(CONFIG["STORAGE_PICTURES_PATH"]) or not os.path.isdir(CONFIG["STORAGE_PICTURES_PATH"]):
+        os.makedirs(CONFIG["STORAGE_PICTURES_PATH"])
     CONFIG["STORAGE_DB_PATH"] = os.path.join(datapath, "db")
+    if not os.path.exists(CONFIG["STORAGE_DB_PATH"]) or not os.path.isdir(CONFIG["STORAGE_DB_PATH"]):
+        os.makedirs(CONFIG["STORAGE_DB_PATH"])
     CONFIG["PID_PATH"] = cwd
-    CONFIG["SCRIPTS_PATH"] = os.path.join(cwd, "scripts")
 except Exception, e:
     print e
 
