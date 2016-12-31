@@ -204,23 +204,7 @@
                 </div>
             </form>
         </div>
-        <div id="wait_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="waitModalLabel" aria-hidden="true">
-            <form id="form_wait" class="form-horizontal">
-                {% raw xsrf_form_html() %}
-                <div id="dialog_wait" class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3 id="waitModalLabel" class="modal-title">{{_("Waiting")}}</h3>
-                        </div>
-                        <div class="modal-body">
-                            <img id="wait_img" src="{{ static_url("img/Pulse2.gif") }}">
-                        </div>
-                        <div class="modal-footer">
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
+        <div class="full_window_wait_modal"></div>
     </div>
 
     <!-- Le javascript

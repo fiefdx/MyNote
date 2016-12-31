@@ -1,4 +1,6 @@
 function noteInit (scheme, locale) {
+    var $body = $("body");
+    $body.addClass("loading");
     var $note_books_list = $('#note_books_list');
     var $note_books = $('#note_books');
     var $note_list_ul = $('#notes_list_ul');
@@ -53,8 +55,6 @@ function noteInit (scheme, locale) {
     //         var socket = new WebSocket(uri);
     //     } catch (e) {}
     // }
-
-    // $('#wait_modal').modal('show');
 
     tinymce.EditorManager.init({
         selector: "textarea#note_text",
@@ -136,7 +136,6 @@ function noteInit (scheme, locale) {
         if (socket) {
             socket.onopen = function() {
                 console.log("websocket onopen");
-                $('#wait_modal').modal('show');
                 $user_settings.bind("click", showSettings);
                 $save_note.bind("click", saveNote);
                 $save_note_toolbar.bind("click", saveNote);
@@ -289,7 +288,7 @@ function noteInit (scheme, locale) {
                 var div_note_text_height = $("div#div_note_text").height();
                 tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
 
-                $('#wait_modal').modal('hide');
+                $body.removeClass("loading");
             };
 
             socket.onclose = function() {
@@ -316,7 +315,7 @@ function noteInit (scheme, locale) {
 
     function initCategoryClick(category) {
         $('a#' + category + '_query').bind("click", function () {
-            $('#wait_modal').modal('show');
+            $body.addClass("loading");
             $('a#' + current_category + '_query').attr("class","list-group-item");
             current_category = category;
             $('a#' + current_category + '_query').attr("class","list-group-item active");
@@ -352,7 +351,7 @@ function noteInit (scheme, locale) {
 
     function initNoteClick(note_id) {
         $('a#a_' + note_id).bind("click", function () {
-            $('#wait_modal').modal('show');
+            $body.addClass("loading");
             var data = {};
             data['note'] = {'cmd':'select', 'note_id':note_id};
             console.log("click old_id: " + current_note_id);
@@ -379,7 +378,7 @@ function noteInit (scheme, locale) {
     }
 
     function saveNote() {
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         note_scroll = $('#note_text_ifr').contents().find('html,body').scrollTop();
         console.log("save scrollTop: " + note_scroll);
         console.log("save note: " + current_note_id);
@@ -429,13 +428,13 @@ function noteInit (scheme, locale) {
     }
 
     function deleteAll() {
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         window.location.href = location.protocol + "//" + local + "/deleterichnotes";
     }
 
     function createCategory() {
         console.log("create category");
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         var data = {};
         data['category'] = {'cmd':'create', 
                             'category_name': escapeHtml($('#category_name').val())};
@@ -450,7 +449,7 @@ function noteInit (scheme, locale) {
     }
 
     function deleteCategory() {
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         if (current_category != 'Search' && current_category != 'All') {
             console.log("delete category");
             var data = {};
@@ -462,13 +461,13 @@ function noteInit (scheme, locale) {
     }
 
     function reindexNotes() {
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         window.location.href = location.protocol + "//" + local + "/rich/?option=rebuild_index";
     }
 
     function search() {
         console.log("search note");
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         $('a#' + current_category + '_query').attr("class","list-group-item");
         var data = {};
         data['category'] = {'cmd':'search', 
@@ -524,7 +523,7 @@ function noteInit (scheme, locale) {
     }
 
     function importNotes() {
-        $('#wait_modal').modal('show');
+        $body.addClass("loading");
         $('#form_import').submit();
         // upload_notes_ajax();
     }
