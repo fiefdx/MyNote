@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link href="{{ static_url("favicon.ico") }}">
+    <title>
+      {% block title %}
+        Learning Every Day
+      {% end %}
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block meta %}
+      <meta name="keywords" content="html, search, note, rich note">
+      <meta name="description" content="html rich note search">
+    {% end %}
+    <link href="{{ static_url("bootstrap/css/bootstrap.css") }}" rel="stylesheet" />
+    <link href="{{ static_url("bootstrap/css/bootstrap-theme.css") }}" rel="stylesheet" />
+    <link href="{{ static_url("css/bootstrap.css") }}" rel="stylesheet" >
+    <link href="{{ static_url("css/template.css") }}" rel="stylesheet" />
+    <script src="{{ static_url("jquery/jquery-2.0.3.js") }}"></script>
+    <script src="{{ static_url("bootstrap/js/bootstrap.js") }}"></script>
+    
+    {% block stylesheet %}
+    {% end %}
+    {% block headscript %}
+    {% end %}
+</head>
+<body>
+    {% block header %}
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="navbar-header"> 
+            <!-- <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button> -->
+            <a id="navbar_header" class="navbar-brand" href="/">{{_("Recording Every Day")}}</a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li id="Home" class>
+                    <a id="Home_a" href="/" >{{_("Home")}}</a>
+                </li>
+                <li id="Search" class>
+                    <a id="Search_a" href="/search" >{{_("Search")}}</a>
+                </li>
+                <li id="Note" class>
+                    <a id="Note_a" href="/note" >{{_("Note")}}</a>
+                </li>
+                <li id="Rich" class>
+                    <a id="Rich_a" href="/rich" >{{_("Rich")}}</a>
+                </li>
+                <!-- <li id="Share" class>
+                    <a id="Share_a" href="/share" >{{_("Share")}}</a>
+                </li> -->
+                <li id="Help" class>
+                    <a id="Help_a" href="/help" >{{_("Help")}}</a>
+                </li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropdown">
+                    <a id="user_name" class="dropdown-toggle brand" data-toggle="dropdown" href="#">
+                        {{user}}
+                        <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li id="Settings" class>
+                            <a id="Settings">{{_("Settings")}}</a>
+                        </li>
+                        <li id="delete_user" class>
+                            <a id="delete_user" href="#">{{_("Delete user")}}</a>
+                        </li>
+                        <li id="Logout" class>
+                            <a id="Logout" href="#">{{_("Sign out")}}</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% end %}
+
+    <div id="body_container" class="container" >
+        <div id="body_row" class="row">
+            {% block body %}
+
+            {% end %}
+            
+            {% block footer %}
+
+            {% end %}
+        </div>
+        <div id="settings_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="settingsModalLabel" aria-hidden="true">
+            <form id="form_settings" class="form-horizontal" enctype="multipart/form-data" action="/settings" method="post">
+                {% raw xsrf_form_html() %}
+                <input id="redirect_to" type="hidden" name="redirect_to">
+                <div id="dialog_import" class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h3 id="settingsModalLabel" class="modal-title">{{_("User Settings")}}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <div class="">
+                                <div class="language well row col-xs-12">
+                                    <div class="form-group">
+                                        <label class="control-label col-xs-4" for="lang">{{_("Language")}}</label>
+                                        <div class="col-xs-8">
+                                            <div class="radio col-xs-4">
+                                                <label>
+                                                    <input type="radio" name="optionsRadios" id="optionsRadios1" value="en_US"> <!-- checked> -->
+                                                    {{_("English")}}
+                                                </label>
+                                            </div>
+                                            <div class="radio col-xs-4">
+                                                <label>
+                                                    <input type="radio" name="optionsRadios" id="optionsRadios2" value="zh_CN">
+                                                    {{_("Chinese")}}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="update_password well">
+                                    <div class="form-group">
+                                        <label class="control-label col-xs-4" for="old_passwd">{{_("Old Password")}}</label>
+                                        <div class="col-xs-8">
+                                            <input class="r_user form-control col-md-10" type="password" name="old_passwd" autocomplete="off" id="old_passwd" placeholder="{{_("Old Password")}}" >
+                                            <span class="col-md-2"></span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-xs-4" for="passwd">{{_("New Password")}}</label>
+                                        <div class="col-xs-8">
+                                            <input class="r_passwd form-control col-md-10" type="password" name="passwd" autocomplete="off" id="passwd" placeholder="{{_("New Password")}}" >
+                                            <span id="r_passwd" class="glyphicon glyphicon-star col-md-2" ></span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label col-xs-4" for="passwd">{{_("Confirm Password")}}</label>
+                                        <div class="col-xs-8">
+                                            <input class="r_passwd_confirm form-control col-md-10" type="password" name="passwd_confirm" autocomplete="off" id="passwd" placeholder="{{_("Confirm Password")}}" >
+                                            <span id="r_passwd_confirm" class="glyphicon glyphicon-star col-md-2" ></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                            <button id="settings_submit" class="btn btn-primary" type="submit">{{_("Save")}}</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="sign_out_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="signOutModalLabel" aria-hidden="true">
+            <form id="form_sign_out" class="form-horizontal">
+                {% raw xsrf_form_html() %}
+                <div id="dialog_sign_out" class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h3 id="signOutModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <span class="col-xs-12">{{_("Are you sure to sign out?")}}</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                            <button id="sign_out" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Sign out")}}</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="delete_user_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+            <form id="form_delete_user" class="form-horizontal">
+                {% raw xsrf_form_html() %}
+                <div id="dialog_delete_user" class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h3 id="deleteUserModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <span class="col-xs-12">{{_("Are you sure to delete this user?")}}</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                            <button id="delete_user" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    {% block public_js %}
+    <script src="{{ static_url("js/base.js") }}"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        var msg = {'password_alert': '{{_("The password must be a string, and can not contain spaces, and the length is greater than 6!")}}'};
+        baseInit('{{current_nav}}', '{{scheme}}', '{{locale}}', msg);
+    });
+    </script>
+    {% end %}
+
+    {% block javascript %}
+    
+    {% end %}
+</body>
+</html>

@@ -1,0 +1,37 @@
+{% extends "../base.html" %}
+
+{% block title %}
+{{_("Help")}}
+{% end %}
+
+{% block stylesheet %}
+<link href="{{ static_url("css/help.css") }}" rel="stylesheet" >
+{% end %}
+ 
+{% block body %}
+<div id="row_container" class="row col-xs-12">
+    <div class="col-xs-2">
+    </div>
+    <div id="help_content" class="col-xs-8">
+        <h3 id="help_title">{{_("Features")}}</h3>
+        <hr/>
+    </div>
+    <div class="col-xs-2">
+    </div>
+</div>
+
+{% end %}
+
+{% block javascript %}
+<script src="{{ static_url("js/help.js") }}"></script>
+<link href="{{ static_url("css/help.css") }}" rel="stylesheet" >
+<script type="text/javascript">
+$(document).ready(function(){
+    $("li#{{current_nav}}").attr("class","active");
+});
+</script>
+{% end %}
+
+<!-- {% block footer %}
+
+{% end %} -->

@@ -1,0 +1,65 @@
+{% extends "../base.html" %}
+
+{% block title %}
+{{_("Login")}}
+{% end %}
+
+{% block header %}
+<div class="navbar navbar-fixed-top">
+    <div class="navbar-inner" style="min-height:30px; height:35px;">
+        <div class="container-fluid">
+            <a class="brand" href="/">{{_("Learning Every Day")}}</a>
+        </div>
+    </div>
+</div>
+{% end %}
+ 
+{% block body %}
+<div class="hero-unit-fluid" style = "text-align:center;">
+    <div class="span6">
+    </div>
+    <div class="span6">
+        <div class="span3">
+        </div>
+        <form class="form-horizontal span6 well" action="/login" method="post" style="margin-top:100px;">
+            {% raw xsrf_form_html() %}
+            <div class="span12">
+                <div class="control-group" style="margin-top: 18px; margin-bottom: 18px;">
+                    <label class="control-label" for="user" style="width: 20%;">{{_("User")}}</label>
+                    <div class="controls" style="margin-left: 20%;">
+                        <input type="text" name="user" id="user" placeholder="{{_("User Name")}}" style="width: 80%;">
+                    </div>
+                </div>
+                <div class="control-group" style="margin-top: 18px; margin-bottom: 18px;">
+                    <label class="control-label" for="passwd" style="width: 20%;">{{_("Password")}}</label>
+                    <div class="controls" style="margin-left: 20%;">
+                        <input type="password" name="passwd" id="passwd" placeholder="{{_("Password")}}" style="width: 80%;">
+                    </div>
+                </div>
+                <div class="control-group" style="margin-top: 18px; margin-bottom: 18px;">
+                    <div class="controls" style="margin-left: 20%;">
+                        <!-- <label class="checkbox">
+                            <input type="checkbox">{{_("Remember me")}}
+                        </label> -->
+                        <button type="submit" class="btn" style="width: 85%">{{_("Sign in")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="span3">
+        </div>
+    </div>
+</div>
+{% end %}
+
+{% block javascript %}
+<script type="text/javascript">
+$(document).ready(function(){
+});
+</script>
+{% end %}
+
+<!-- {% block footer %}
+
+{% end %} --> 
+ 

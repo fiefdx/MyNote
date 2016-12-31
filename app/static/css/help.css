@@ -1,0 +1,15 @@
+#row_container {
+    text-align:left;
+}
+
+#help_content {
+    margin-top: 30px;
+}
+
+#help_title {
+    text-align:center;
+}
+
+.modal-content {
+    text-align: center;
+}

@@ -1,0 +1,31 @@
+div#body_container {
+    margin-top: 80px;
+    max-width: 1920px;
+    margin-left: 60px;
+    margin-right: 10px;
+}
+
+
+#register_navbar {
+    margin-top: 0px;
+}
+
+#myCarousel {
+    margin-top: 70px;
+}
+
+#login_form {
+    margin-top: 70px;
+}
+
+/*#Register_modal {
+    margin-top: 200px;
+}*/
+
+#form_register {
+    margin-top: 150px;
+}
+
+/*#dialog_register {
+    margin-top: 200px;
+}*/

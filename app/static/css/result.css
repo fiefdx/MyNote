@@ -1,0 +1,132 @@
+.container {
+    max-width: 1920px;
+    padding-left:0; 
+    padding-right:0;
+}
+
+#row_container {
+    text-align: center;
+    margin-top: -43px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+#form_search {
+    padding: 10px;
+    margin-bottom: 0px;
+}
+
+#brand_logo {
+    margin-left: 0px;
+    padding-left: 0px;
+    margin-right: 0px;
+    padding-right: 0px;
+}
+
+#logo_img {
+    margin-left: 0px;
+    margin-right: 0px;
+    min-width: 145px;
+    display:block; 
+    margin-top:auto; 
+    width: 10%;
+    /*height:50px;*/
+}
+
+#search_div {
+    margin-left: 50px;
+    margin-right: 60px;
+    padding-left: 0px;
+    min-width: 600px;
+}
+
+#div_search_col_0 {
+    padding-left: 0px;
+}
+
+#prompt {
+    margin-left: 60px;
+}
+
+#prompt_span {
+    margin-left:auto;
+    margin-right:auto;
+    display:block; 
+    margin-top:5px;
+    color: #999;
+    font-size: 14px;
+}
+
+hr {
+    margin-top: 5px;
+    margin-bottom: 10px;
+    margin-left: 70px;
+    margin-right: 70px;
+}
+
+#search_input {
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+    margin-top: 15px;
+    /*width: 600px;*/
+}
+
+#search_button {
+    margin-left:auto;
+    margin-right:auto;
+    display:block; 
+    margin-top: 15px; 
+    min-width: 80px;
+}
+
+.item_li {
+    margin-bottom: 20px;
+    margin-left: 25px;
+}
+
+.item_title {
+    /*color: rgb(17, 34, 204);*/
+    font-size: 16px; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis;
+    margin-bottom: 0px;
+}
+
+.item_excerpts_div {
+    line-height:16px; 
+    min-height: 16px;
+    max-height: 35px;
+    overflow:hidden; 
+    padding:0px; 
+    margin-left:0px;
+}
+
+.item_excerpts {
+    color: #444;
+    font-size: 13px;
+    padding: 2px;
+    margin-bottom: 2px;
+    word-wrap: break-word; 
+    word-break: break-all;
+}
+
+.item_description {
+    padding: 2px; 
+    color: rgb(0, 153, 51); 
+    font-size: 12px;
+}
+
+#paginator {
+    margin-left: 60px;
+}
+
+#result_list {
+    min-width: 600px;
+}
+
+.modal-content {
+    text-align: center;
+}

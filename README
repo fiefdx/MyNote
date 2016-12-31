@@ -1,0 +1,72 @@
+MyNote Version 0.0.8-4
+============
+This is a application for:
+1. search local html files
+2. create and search local text notes
+3. create and search local rich notes(html notes)
+4. encrypt and decrypt local text and rich notes files(include database)
+
+Installation
+============
+Before you run it, please install the following packages.
+Some packages in the "MyNote/vendor".
+To install:
+1. python-setuptools
+2. python-lxml
+3. tornado >= 3.1.1
+4. toro >= 0.8
+5. jieba
+6. python-dateutil
+7. pyyaml
+8. whoosh
+9. python-bs4
+10. numpy
+11. cython
+12. tea (a python and cython module for encrypt and decrypt)
+13. chardet
+
+In Windows, you can install mingw, cython and numpy, then can install tea(use C extension),
+or, if you don't want to install mingw, cython and numpy, you can install tea(use pure python),
+tea packages will detect if cython has been installed and then install tea with it or not.
+Without cython and numpy, encrypt and decrypt speed will slow down.
+
+In Linux, you just install cython and numpy, then install tea.
+
+You can install nginx with upload-module, or just use tornado itself.
+
+Configuration
+=============
+1. there is a folder at "MyNote/data", it is a template for MyNote's data folder,
+   copy it to a directory where you want to store MyNote's data, and you can rename
+   the folder.
+2. change the configuration.yml at "MyNote/app/configuration.yml", the "DATA_PATH"
+   is the folder you copy at the previous step.
+3. configure other options at the configuration.yml file.
+4. run the MyNote.py at "MyNote/app/MyNote.py", 
+   at linux: 
+   $ cd /path to MyNote/app
+   run it at background
+   $ nohup python ./MyNote.py > /dev/null 2>&1 &
+   or run it at foreground
+   $ python ./MyNote.py
+ 
+   at windows:
+   > cd \path to MyNote\app
+   > python MyNote.py
+   or 
+   double-click MyNote.py to run it
+
+5. open you Web browser(firefox or chrome), and type your local url(SERVER_SCHEME://SERVER_HOST:SERVER_PORT) 
+   to your note page, "SERVER_SCHEME", "SERVER_HOST", "SERVER_PORT" is what you configure
+   at configuration.yml.
+6. when you get the login page, you can register your account, and then login it.
+7. now, you can use the note, rich note and the local search.
+
+Local Html Search Usage
+=======================
+1. there are two scripts at "MyNote/":
+   ImportHtml.py: run it, you can import the html files at "DATA_PATH"/source to your
+   application.
+   IndexHtml.py: run it, you can index the html files what you imported recently, and
+   then you can search and view the html file use Web browser.
+

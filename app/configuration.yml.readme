@@ -1,0 +1,73 @@
+---
+# MyNote-0.0.8-beta by YangHaitao
+
+# APP_DEBUG
+# if true: listen localhost:SERVER_PORT, and ignore the SERVER_HOST, and ignore the BIND_LOCAL.
+# if false: bind localhost:SERVER_PORT and SERVER_HOST:SERVER_PORT if BIND_LOCAL is false.
+APP_DEBUG: false
+
+# BIND_LOCAL
+# if true: and APP_DEBUG is false, bind localhost:SERVER_PORT, and ignore the SERVER_HOST.
+# if false: and APP_DEBUG is false, bind localhost:SERVER_PORT and SERVER_HOST:SERVER_PORT.
+BIND_LOCAL: false
+
+# SERVER_HOST
+# is your computer's ip at local area network
+SERVER_HOST: 10.255.24.10
+SERVER_PORT: 9900
+
+# SERVER_SCHEME
+# a value of (http, https)
+# default https
+SERVER_SCHEME: https
+
+# MAX_BUFFER_SIZE
+# a number config how big your note ball can upload
+# default 104857600 = 100M, 134217728 = 128M, 268435456 = 256M, 536870912 = 512M, 1073741824 = 1G
+MAX_BUFFER_SIZE: 134217728
+
+# LOG_LEVEL
+# a value of (NOSET, DEBUG, INFO, WARNING, ERROR, CRITICAL)
+# default NOSET
+LOG_LEVEL: NOSET
+
+# USB_MODE
+# if true: find the relative 'MyNoteData' directory at the same level with 
+# 'MyNote' directory, and ignore the DATA_PATH.
+# if false: use the DATA_PATH.
+USB_MODE: false
+
+# WITH_NGINX
+# if true: upload file will through nginx with the upload-module.
+# if false: upload file will through tornado, less than 100MB.
+WITH_NGINX: false
+
+# ENCRYPT
+# if true: note and rich note will be encrypted at background.
+# if false: note and rich note will be plaintext at background.
+ENCRYPT: true
+
+# ITEMS_PER_PAGE
+# a number config how many items per page at local html file search.
+# default 10
+ITEMS_PER_PAGE: 10
+
+# NOTE_DESCRIPTION_LENGTH
+# a number config how many characters at note's or rich note's description.
+# default 300
+NOTE_DESCRIPTION_LENGTH: 300
+
+# DATA_PATH
+# a path for all data
+DATA_PATH: /home/breeze/Develop/MyNoteData
+#/home/breeze/Develop/MyNoteData
+
+# DELETE_ORIGINAL_FILE
+# if true: delete original html file in the 'source' directory when import it success.
+# if false: do not delete it.
+DELETE_ORIGINAL_FILE: false
+
+# PROCESS_NUM
+# a number config how many process start for import file task.
+# default 4
+PROCESS_NUM: 1

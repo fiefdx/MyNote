@@ -1,0 +1,52 @@
+{% extends "../base.html" %}
+
+{% block title %}
+{{_("Search")}}
+{% end %}
+
+{% block stylesheet %}
+<link href="{{ static_url("css/index.css") }}" rel="stylesheet" >
+{% end %}
+ 
+{% block body %}
+<div id="logo_div" class="row">
+    <img src="{{ static_url("logo.png") }}">
+</div>
+
+<div id="search_div" class="row">
+    <div class="col-xs-3">
+    </div>
+    <form id="search_form" class="well form-inline col-xs-6" action="/search?search_time=All_Times" method="post">
+        {% raw xsrf_form_html() %}
+        <div class="container">
+            <div class="col-xs-12">
+                <div class="row">
+                    <div class="input-group">
+                        <input name = "q" type="text" class="form-control col-xs-12" placeholder = "{{_("Type the key words...")}}" id = "search_input">
+                        <span class="input-group-btn">
+                            <button id="search_botton" type="submit" class="btn btn-primary col-xs-12">
+                                <span class="glyphicon glyphicon-search"></span>
+                                {{_("Search")}}
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="col-xs-3">
+    </div>
+</div>
+{% end %}
+
+{% block javascript %}
+<script type="text/javascript">
+$(document).ready(function(){
+    $("li#{{current_nav}}").attr("class","active");
+});
+</script>
+{% end %}
+
+<!-- {% block footer %}
+
+{% end %} -->

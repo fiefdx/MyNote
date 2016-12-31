@@ -1,0 +1,458 @@
+{% extends "../base.html" %}
+
+{% block title %}
+{{_("Rich")}}
+{% end %}
+
+{% block stylesheet %}
+<link href="{{ static_url("css/rich.css") }}" rel="stylesheet" >
+<style type="text/css">
+    .match {color: rgb(221, 75, 57);}
+</style>
+{% end %}
+
+{% block body %}
+<div id="row_container" class="row">
+    <div id="option_list">
+        <div id="note_books_list">
+            <div id="note_books" class="list-group">
+                <!-- note books -->
+            </div>
+        </div>
+        <div id="note_actions" class="list-group">
+            <a id="create_note" class="list-group-item">
+                <span class="glyphicon glyphicon-file"></span>
+                {{_("Create Note")}}
+            </a>
+            <a id="create_category" data-toggle="modal" href="#category_modal"  class="list-group-item">
+                <span class="glyphicon glyphicon-book"></span>
+                {{_("Create Category")}}
+            </a>
+            <a id="import_notes" data-toggle="modal" href="#import_modal" class="list-group-item">
+                <span class="glyphicon glyphicon-import"></span>
+                {{_("Import Notes")}}
+            </a>
+            <a id="export_notes" data-toggle="modal" href="#export_modal" class="list-group-item">
+                <!-- href="/exportnotes" target="_blank"  -->
+                <span class="glyphicon glyphicon-export"></span>
+                {{_("Export Notes")}}
+            </a>
+            <a id="delete_category" class="list-group-item">
+                <span class="glyphicon glyphicon-remove"></span>
+                {{_("Delete Category")}}
+            </a>
+            <a id="delete_all" data-toggle="modal" href="#delete_notes_modal" class="list-group-item">
+                <span class="glyphicon glyphicon-trash"></span>
+                {{_("Delete All")}}
+            </a>
+            <a id="rebuild_index" data-toggle="modal" href="#reindex_modal" class="list-group-item">
+                <span class="glyphicon glyphicon-refresh"></span>
+                {{_("Rebuild Index")}}
+            </a>
+        </div>
+    </div>
+    <div id="notes_form_list">
+        <form id="form_search" name = "form_search" class="form-inline" action="/rich/?note_book=search" method="post">
+            {% raw xsrf_form_html() %}
+            <div class="row">
+                <div id="search_div" class="col-xs-12">
+                    <div class="input-group">
+                        <input name="q" type="text" class="form-control" placeholder = "{{_("Type the key words...")}}" id="search_input">
+                        <span class="input-group-btn">
+                            <button id="search_button" type="submit" class="btn btn-primary">
+                                <span class="glyphicon glyphicon-search"></span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div id="notes_list" class="row col-xs-12">
+            <div id="notes_list_ul" class="list-group">
+                <!-- notes list -->
+            </div>
+        </div>
+    </div>
+    <div id="note_area" class="" role="form">
+        <form id="note_form" class="container col-xs-12">
+            {% raw xsrf_form_html() %}
+            <div id="div_note_title" class="col-xs-12">
+                <input id="note_title" name="note_title" type="text" class="form-control col-xs-12" value="">
+            </div>
+            <div id="div_note_text" class="col-xs-12">
+                <!-- note_content -->
+                <textarea id="note_text" class="form-control col-xs-12" name="note_content" type="text">
+                </textarea>
+            </div>
+        </form>
+    </div>
+    <div id="import_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importModalLabel" aria-hidden="true">
+        <form id="form_import" class="form-horizontal" enctype="multipart/form-data" action="/importrichnotes" method="post">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_import" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="myModalLabel" class="modal-title">{{_("Import Notes")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="input-group">
+                            <span class="input-group-btn">
+                                <span class="btn btn-primary btn-file">
+                                    {{_("Choose File")}}<input id="up_file" type="file" name="up_file" multiple>
+                                </span>
+                            </span>
+                            <input type="text" class="form-control" readonly>
+                        </div>
+                        <hr>
+                        <div class="well">
+                            <div class="form-group">
+                                <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
+                                <div class="col-xs-8">
+                                    <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
+                                </div>
+                            </div>
+                            <div id="div_display_passwd" class="checkbox">
+                                <label>
+                                    <input id="display_passwd" value="unable" type="checkbox">&nbsp;{{_("Display The Password")}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="import" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Upload")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="categoryModalLabel" aria-hidden="true">
+        <form id="form_category" class="form-horizontal" enctype="multipart/form-data">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_category" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="categoryModalLabel" class="modal-title">{{_("Create New Category")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="user">{{_("Category Name")}}</label>
+                            <div class="col-xs-8">
+                                <input id="category_name" class="form-control col-xs-10" type="text" autocomplete="off">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="create_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="export_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportModalLabel" aria-hidden="true">
+        <form id="form_export" class="form-horizontal" enctype="multipart/form-data" target="_blank" action="/exportrichnotes" method="post">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_export" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="exportModalLabel" class="modal-title">{{_("Export Notes")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="well">
+                            <div class="form-group">
+                                <label class="control-label col-xs-4" for="notes_category">{{_("Notes Category")}}</label>
+                                <div class="col-xs-8">
+                                    <select class="form-control" name="notes_category" id="notes_category">
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
+                                <div class="col-xs-8">
+                                    <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
+                                </div>
+                            </div>
+                            <div id="div_display_passwd" class="checkbox">
+                                <label>
+                                    <input id="encrypt_notes" name="encrypt" value="unable" type="checkbox">&nbsp;{{_("Encrypt Notes")}}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="export_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Export")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="delete_category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+        <form id="form_delete_category" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_delete_category" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="deleteCategoryModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Are you sure to delete the category and it's notes?")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="delete_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="delete_notes_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteNotesModalLabel" aria-hidden="true">
+        <form id="form_delete_notes" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_delete_notes" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="deleteNotesModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Are you sure to delete all notes?")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="delete_all" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="reindex_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexModalLabel" aria-hidden="true">
+        <form id="form_delete_category" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_reindex" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="reindexModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Are you sure to update all notes index?")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="reindex_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Update")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="create_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteModalLabel" aria-hidden="true">
+        <form id="form_create_note" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_create" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="createNoteModalLabel" class="modal-title">{{_("Create New Note")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="user">{{_("Note Title")}}</label>
+                            <div class="col-xs-8">
+                                <input id="new_note_title" class="form-control col-xs-10" type="text" autocomplete="on">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                        <button id="create_note" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="save_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true">
+        <form id="form_save_note" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_save" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="saveNoteModalLabel" class="modal-title">{{_("Message")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Save note success!")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="create_note_all_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteAllModalLabel" aria-hidden="true">
+        <form id="form_create_note_all" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_create_note_all" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="createNoteAllModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("You must create a category first by click 'Create Category', then create note under the category!")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="create_note_search_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteSearchModalLabel" aria-hidden="true">
+        <form id="form_create_note_search" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_create_note_search" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="createNoteSearchModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("You can't create note under the 'Search' category, please to create note under your own category!")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% end %}
+
+
+{% block javascript %}
+<link href="{{ static_url("bootstrap/css/prettify.css") }}" rel="stylesheet" >
+<!-- <link href="{{ static_url("bootstrap/css/bootstrap-wysihtml5.css") }}" rel="stylesheet" > -->
+<link href="{{ static_url("highlight/styles/default.css") }}" rel="stylesheet" >
+<script src="{{ static_url("highlight/highlight.pack.js") }}"></script>
+<script src="{{ static_url("bootstrap/js/prettify.js") }}"></script>
+<!-- <script src="{{ static_url("bootstrap/js/wysihtml5-0.3.0.js") }}"></script> -->
+<!-- <script src="{{ static_url("bootstrap/js/bootstrap-wysihtml5.js") }}"></script> -->
+<script src="{{ static_url("js/ajaxfileupload.js") }}"></script>
+<!-- <script src="{{ static_url("js/rich.js") }}"></script> -->
+<script src="{{ static_url("js/rich_tinymce.js") }}"></script>
+<script src="{{ static_url("tinymce/tinymce.js")}}"></script>
+<link href="{{ static_url("css/rich.css") }}" rel="stylesheet" >
+<script type="text/javascript">
+
+function upload_picture_ajax() {   
+    /*
+        prepareing ajax file upload
+        url: the url of script file handling the uploaded files
+                    fileElementId: the file type of input element id and it will be the index of  $_FILES Array()
+        dataType: it support json, xml
+        secureuri:use secure protocol
+        success: call back function when the ajax complete
+        error: callback function when the ajax failed
+
+        <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
+        
+            */
+    result = false
+    $.ajaxFileUpload({
+        url:'/picture',
+        secureuri:false,
+        fileElementId:'up_picture',
+        dataType: 'xml',
+        success: function (data, status) {
+            if(typeof(data.error) != 'undefined') {
+                if(data.error != '') {
+                    alert(data.error);
+                } else {
+                    alert(data.msg);
+                }
+            } else {
+                var name = data.getElementById("name").innerHTML;
+                var url = data.getElementById("url").innerHTML;
+                document.getElementById('bootstrap-wysihtml5-insert-image-url').value = url;
+            }
+        },
+        error: function (data, status, e) {
+            alert(e);
+        }
+    })
+    return result;
+}  
+
+window.onload=window.onresize=function(){
+    $(document).ready(function(){
+        var window_height = $(window).height();
+        var window_width = $(window).width();
+        $("div#notes_list").height(window_height - 115);
+        $("textarea#note_text").height(window_height - 245);
+        $("div#div_note_text").height(window_height - 116);
+        $("div#note_area").width(window_width - 510);
+        if (tinymce.EditorManager.get(0) != null){
+            // tinymce.EditorManager.get(0).theme.resizeTo("100%", window_height - 188);
+            var div_note_text_height = $("div#div_note_text").height();
+            console.log(div_note_text_height);
+            tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+        }
+    });
+}
+
+
+$(document).on('change', '.btn-file :file', function() {
+    var input = $(this),
+    numFiles = input.get(0).files ? input.get(0).files.length : 1,
+    label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+    input.trigger('fileselect', [numFiles, label]);
+});  
+
+$(document).ready(function(){
+    var window_height = $(window).height();
+    var window_width = $(window).width();
+
+    $("li#{{current_nav}}").attr("class","active");
+    $("div#notes_list").height(window_height - 115);
+    $("textarea#note_text").height(window_height - 245);
+    $("div#div_note_text").height(window_height - 116);
+    $("div#note_area").width(window_width - 510);
+    if (tinymce.EditorManager.get(0) != null){
+        // tinymce.EditorManager.get(0).theme.resizeTo("100%", window_height - 188);
+        var div_note_text_height = $("div#div_note_text").height();
+        console.log(div_note_text_height);
+        tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+    }
+
+    // $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+    //     var input = $(this).parents('.input-group').find(':text'),
+    //         log = numFiles > 1 ? numFiles + ' files selected' : label;
+    //     if( input.length ) {
+    //         input.val(log);
+    //     } else {
+    //         if( log ) alert(log);
+    //     }
+    // });
+    
+    $("#import_modal").on("hidden.bs.modal", resetModal);
+    $("#create_note_modal").on("hidden.bs.modal", resetModal);
+    $("#export_modal").on("hidden.bs.modal", resetModal);
+    $("#category_modal").on("hidden.bs.modal", resetModal);
+    // $("#import_modal").on("hidden.bs.modal", resetModal);
+    
+    noteInit('{{scheme}}', '{{locale}}');
+    // hljs.initHighlightingOnLoad();
+});
+
+function resetModal(e) {
+    console.log("Reset: ", e.target.id);
+    $("#" + e.target.id).find("input:text").val("");
+    $("#" + e.target.id).find("input:password").val("");
+}
+</script>
+{% end %}

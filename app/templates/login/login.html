@@ -1,0 +1,165 @@
+{% extends "../base.html" %}
+
+{% block title %}
+{{_("Login")}}
+{% end %}
+
+{% block header %}
+<div id="navbar_bar" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    <div class="navbar-header"> 
+        <!-- <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button> -->
+        <a id="navbar_header" class="navbar-brand" href="/">{{_("Recording Every Day")}}</a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar-collapse">
+        <ul id="register_navbar" class="nav navbar-nav navbar-right">
+            <li id="Logout" class>
+                <a id="Register" data-toggle="modal" href="#Register_modal">{{_("Register User")}}</a>
+            </li>
+        </ul>
+    </div>
+</div>
+{% end %}
+ 
+{% block body %}
+<div class="col-xs-8">
+    <div id="myCarousel" class="carousel slide">
+        <ol class="carousel-indicators">
+            <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+            <li data-target="#myCarousel" data-slide-to="1"></li>
+            <li data-target="#myCarousel" data-slide-to="2"></li>
+        </ol>
+        <div class="carousel-inner">
+            <div class="item active">
+                <img src="static/img/search1.png" alt="">
+                <div class="carousel-caption">
+                    <h3>{{_("Home")}}</h3>
+                </div>
+            </div>
+            <div class="item">
+                <img src="static/img/search2.png" alt="">
+                <div class="carousel-caption">
+                    <h3>{{_("Search")}}</h3>
+                </div>
+            </div>
+            <div class="item">
+                <img src="static/img/search3.png" alt="">
+                <div class="carousel-caption">
+                    <h3>{{_("Note")}}</h3>
+                </div>
+            </div>
+            <div class="item">
+                <img src="static/img/search4.png" alt="">
+                <div class="carousel-caption">
+                    <h3>{{_("Rich")}}</h3>
+                </div>
+            </div>
+        </div>
+        <a class="left carousel-control" href="#myCarousel" data-slide="prev">
+            <span class="glyphicon glyphicon-chevron-left"></span>
+        </a>
+        <a class="right carousel-control" href="#myCarousel" data-slide="next">
+            <span class="glyphicon glyphicon-chevron-right"></span>
+        </a>
+    </div>
+</div>
+<div class="col-xs-4">
+    <div class="col-xs-1">
+    </div>
+    <form id="login_form" class="form-horizontal col-xs-9 well" action="/login" method="post">
+        {% raw xsrf_form_html() %}
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label class="control-label col-xs-3" for="user">{{_("User")}}</label>
+                <div class="col-xs-9">
+                    <input class="form-control" type="text" name="user" autocomplete="off" autofocus id="user" value="{{USER}}" placeholder="{{_("User Name")}}">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="control-label col-xs-3" for="passwd">{{_("Pass")}}</label>
+                <div class="col-xs-9">
+                    <input class="form-control" type="password" name="passwd" autocomplete="off" id="passwd" placeholder="{{_("Password")}}">
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-xs-3">
+                </div>
+                <div class="col-xs-9">
+                    <button type="submit" class="btn btn-default col-xs-12">{{_("Sign in")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div class="col-xs-2">
+    </div>
+</div>
+<div id="Register_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <form id="form_register" class="form-horizontal" action="/register" method="post">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_register" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 class="modal-title" id="myModalLabel">{{_("User Registration")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="">
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="user">{{_("User Name")}}</label>
+                            <div class="col-xs-8">
+                                <input class="r_user form-control col-md-10" type="text" name="user" autocomplete="off" id="user" placeholder="{{_("User Name")}}" >
+                                <span id="r_user" class="glyphicon glyphicon-star col-md-2" ></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="passwd">{{_("Password")}}</label>
+                            <div class="col-xs-8">
+                                <input class="r_passwd form-control col-md-10" type="password" name="passwd" autocomplete="off" id="passwd" placeholder="{{_("Password")}}" >
+                                <span id="r_passwd" class="glyphicon glyphicon-star col-md-2" ></span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="passwd">{{_("Confirm Password")}}</label>
+                            <div class="col-xs-8">
+                                <input class="r_passwd_confirm form-control col-md-10" type="password" name="passwd_confirm" autocomplete="off" id="passwd" placeholder="{{_("Confirm Password")}}" >
+                                <span id="r_passwd_confirm" class="glyphicon glyphicon-star col-md-2" ></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">{{_("Cancel")}}</button>
+                    <button type="button" id="register" class="btn btn-primary">{{_("Register")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% end %}
+
+{% block public_js %}
+{% end %}
+
+{% block javascript %}
+<link href="{{ static_url("css/login.css") }}" rel="stylesheet" />
+<script src="{{ static_url("js/login.js") }}"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    var msg = {
+        'user_name': '{{_("The user name must be a string, and can not contain spaces, and the length is greater than 3!")}}',
+        'password': '{{_("The password must be a string, and can not contain spaces, and the length is greater than 6!")}}',
+        'passwords_unequal': '{{_("Password and Confirm Password must be equal!")}}',
+        'user_name_password_error': '{{_("User Name or Password error, please correct the error.")}}'
+    };
+    loginInit(msg);
+});
+</script>
+{% end %}
+
+<!-- {% block footer %}
+
+{% end %} --> 

@@ -1,0 +1,281 @@
+.container {
+    max-width: 1920px;
+    padding-left:0; 
+    padding-right:0;
+}
+
+#row_container {
+    text-align: center;
+    margin-top: -43px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+#option_list {
+    top: 60px;
+    width: 185px; /*165*/
+    position: absolute;
+    text-align: left;
+    margin-left: 20px;
+}
+
+#option_list div a, 
+#option_list div div a {
+    height: 25px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+#note_books_list {
+    overflow-y: auto; 
+    height: 0px; /*300*/
+    margin-bottom: 15px;
+}
+
+#note_books {
+    margin-bottom: 0px;
+}
+
+.book_icon {
+    top: -3px;
+}
+
+.category_name {
+    display: inline-block;
+    width: 80px;
+    white-space: nowrap; 
+    overflow: hidden;
+    /*text-overflow: ellipsis; */
+    overflow: ellipsis; 
+}
+
+.note_book_item {
+    /*position: 0px;*/
+    height: 20px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+hr {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#notes_form_list {
+    width: 280px; /*300*/
+    left: 210px; /*190*/
+    top: 60px;
+    position: absolute;
+}
+
+#form_search {
+    margin-bottom: 0px;
+}
+
+#search_div {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+#search_button {
+    height: 34px;
+}
+
+#notes_list {
+    margin-top: 5px;
+    overflow-y: scroll; 
+    height: 300px; 
+    margin-left: 0%;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+#notes_list_ul {
+    list-style: none outside none;
+    text-align: left;
+    margin-bottom: 0px;
+}
+
+.note_list_item {
+    height: 70px;
+    font-size: 16px;
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+#note_num_badge {
+    background-color: #9999CC;
+}
+
+#notes_badge {
+    background-color: #6699CC;
+}
+
+.note_item_title {
+    color: rgb(17, 34, 204);
+    font-size: 14px; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    overflow: ellipsis; 
+    padding : 0px;
+    margin-bottom: 0px;
+}
+
+.note_description_div {
+    line-height:16px; 
+    height:32px; 
+    overflow:hidden; 
+    padding:0px; 
+    margin-left:0px;
+}
+
+.note_item_description {
+    font-size: 12px; 
+    color: rgb(51,51,51); 
+    padding: 0px; 
+    word-wrap: break-word; 
+    word-break: break-all;
+}
+
+.note_item_datetime {
+    font-size: 12px; 
+    color: rgb(92, 209, 0); 
+    padding : 0px;
+    margin-bottom: 0px;
+}
+
+#note_area {
+    width: 500px;
+    left:490px;
+    top: 60px;
+    position: absolute;
+    padding-right: 0px;
+}
+
+#note_form {
+    padding-right: 0px;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+#div_note_title {
+    padding-right: 20px; 
+    padding-left: 5px;
+    margin-left: 0%;
+}
+
+#note_title {
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+    margin-top: 0px; 
+    color: rgb(17, 34, 204); 
+    width: 100%;
+}
+
+#div_note_text {
+    padding-right: 20px; 
+    padding-left: 5px;
+    margin-left: 0%;
+    margin-top: 5px;
+}
+
+#note_text {
+    height: 445px; 
+    font-size: 13px;
+    resize: none; 
+    color: #111111; 
+    margin-left: auto; 
+    margin-right: auto; 
+    display: block; 
+    width: 100%;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+#div_note_button {
+    padding-right: 20px; 
+    padding-left: 5px;
+    margin-left: 0px;
+    margin-right: 0px;
+    margin-top: 5px;
+}
+
+#save_note_button {
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+    margin-top: 2px; 
+    padding: 0px 0px 0px; 
+    width: 90px; 
+    min-width: 80px;
+    height: 30px;
+}
+
+#download_note_button {
+    margin-left: auto;
+    margin-right: auto;
+    display: block; 
+    margin-top: 2px; 
+    padding: 0px 0px 0px; 
+    width: 90px; 
+    min-width: 80px;
+    height: 30px;
+}
+
+#display_passwd {
+    float: none;
+}
+
+#encrypt_notes {
+    float: none;
+}
+
+#form_import,
+#form_export,
+#form_category,
+#form_delete_category,
+#form_delete_notes,
+#form_create_note,
+#form_save_note,
+#form_create_note_all,
+#form_create_note_search {
+    margin-top: 150px;
+    margin-bottom: 0px; 
+    padding: 0px
+}
+
+a#import_notes {
+    cursor: auto;
+    text-align: left;
+}
+
+.btn-file {
+    position: relative;
+    overflow: hidden;
+}
+.btn-file input[type=file] {
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 100%;
+    min-height: 100%;
+    font-size: 999px;
+    text-align: right;
+    filter: alpha(opacity=0);
+    opacity: 0;
+    background: red;
+    cursor: inherit;
+    display: block;
+}
+
+.modal-content {
+    text-align: center;
+}
