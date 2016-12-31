@@ -9,3 +9,4 @@ version 0.0.8.beta Fix bugs, use tea to encrypt & decrypt, use tinymce as rich n
                    use tornado coroutine for non-blocking service.
 version 0.0.8-4 change scripts, for pyinstaller package it to exe.
 version 0.0.8-5 add MyNoteGUI.py with wxpython.
+version 0.0.8-6 add waiting modal, bugs fix.
