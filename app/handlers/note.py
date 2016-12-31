@@ -98,6 +98,11 @@ class NoteHandler(BaseHandler):
         option = (self.get_argument("option", "")).strip()
         note_id = (self.get_argument("id", "")).strip()
         if option == "rebuild_index":
+            flag = index_whoosh.index_delete_note_by_user(1000, user)
+            if flag:
+                LOG.info("Delete all notes index user[%s] success", user)
+            else:
+                LOG.error("Delete all notes index user[%s] failed!", user)
             flag = index_whoosh.index_all_note_by_num_user(1000, user, key = user_key if CONFIG["ENCRYPT"] else "", merge = True)
             if flag:
                 LOG.info("Reindex all notes user[%s] success", user)
@@ -277,7 +282,7 @@ def delete_category(sha1_category_name, user, handler, user_locale, user_key = "
         user_info.note_books = json.dumps(note_books)
         flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
         if flag:
-            notes = sqlite.get_note_by_user_type_created_at(user, sha1_category_name, conn = DB.conn_note)
+            notes = sqlite.get_note_from_db_by_user_type_iter(user, sha1_category_name, conn = DB.conn_note)
             if notes:
                 for note in notes:
                     flag = index_whoosh.index_delete_note_by_id(str(note.id), user)

@@ -255,7 +255,8 @@ hr {
 #form_create_note,
 #form_save_note,
 #form_create_note_all,
-#form_create_note_search {
+#form_create_note_search,
+#form_wait {
     margin-top: 150px;
     margin-bottom: 0px; 
     padding: 0px

@@ -270,6 +270,31 @@ def delete_whoosh_index_doc_num(index, item_iter, item_num, index_name, merge = 
         LOG.exception(e)
     return result
 
+def delete_whoosh_index_doc_num_by_user(index, user_name, item_num, index_name, merge = False):
+    result = False
+    try:
+        if index != None and index != False:
+            # writer = index.writer()
+            writer = AsyncWriter(index)
+            try:
+                if index_name == DB.note:
+                    writer.delete_by_term("user_name", unicode(str(user_name)))
+                elif index_name == DB.rich:
+                    writer.delete_by_term("user_name", unicode(str(user_name)))
+                else:
+                    LOG.error("index_name error: in the delete_whoosh_index_doc_num_by_user!")
+                LOG.debug("Delete index[%s] user[%s]"%(index_name, user_name))
+                writer.commit(merge = merge)
+                LOG.info("Commit index[%s] success."%index_name)
+                result = True
+            except Exception, e:
+                LOG.exception(e)
+                writer.cancel()
+                result = False
+    except Exception, e:
+        LOG.exception(e)
+    return result
+
 def delete_whoosh_index_doc(index, doc_id, index_name, merge = False):
     result = False
     try:
@@ -454,13 +479,11 @@ def index_delete_note_by_user(item_num, user_name, db = None, ix = None, merge =
     if ix == None:
         ix = IX
     try:
-        notes_iter = sqlite.get_note_from_db_by_user_iter(user_name, 
-                                                          conn = db.conn_note)
-        result = delete_whoosh_index_doc_num(ix.ix_note, 
-                                             notes_iter, 
-                                             item_num, 
-                                             db.note, 
-                                             merge = merge)
+        result = delete_whoosh_index_doc_num_by_user(ix.ix_note,
+                                                     user_name,
+                                                     item_num,
+                                                     db.note,
+                                                     merge = merge)
     except Exception, e:
         LOG.exception(e)
     return result
@@ -567,14 +590,11 @@ def index_delete_rich_by_user(item_num, user_name, db = None, ix = None, merge =
     if ix == None:
         ix = IX
     try:
-        notes_iter = sqlite.get_rich_from_db_by_user_iter(user_name, 
-                                                          conn = db.conn_rich)
-        result = delete_whoosh_index_doc_num(ix.ix_rich, 
-                                             notes_iter, 
-                                             item_num, 
-                                             db.rich, 
-                                             merge = merge)
+        result = delete_whoosh_index_doc_num_by_user(ix.ix_rich,
+                                                     user_name,
+                                                     item_num,
+                                                     db.rich,
+                                                     merge = merge)
     except Exception, e:
         LOG.exception(e)
     return result
-

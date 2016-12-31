@@ -42,6 +42,7 @@ function noteInit (scheme, locale) {
     if (socket) {
         socket.onopen = function() {
             console.log("websocket onopen");
+            $('#wait_modal').modal('show');
             $user_settings.bind("click", showSettings);
             $save_note.bind("click", saveNote);
             $create_note.bind("click", showCreateNote);
@@ -180,6 +181,8 @@ function noteInit (scheme, locale) {
                     $notes_list.scrollTop(0);
                 });
             }
+
+            $('#wait_modal').modal('hide');
         };
 
         socket.onclose = function() {
@@ -204,6 +207,7 @@ function noteInit (scheme, locale) {
 
         function initCategoryClick(category) {
             $('a#' + category + '_query').bind("click", function () {
+                $('#wait_modal').modal('show');
                 $('a#' + current_category + '_query').attr("class","list-group-item");
                 current_category = category;
                 $('a#' + current_category + '_query').attr("class","list-group-item active");
@@ -235,6 +239,7 @@ function noteInit (scheme, locale) {
 
         function initNoteClick(note_id) {
             $('a#a_' + note_id).bind("click", function () {
+                $('#wait_modal').modal('show');
                 var data = {};
                 data['note'] = {'cmd':'select', 'note_id':note_id};
                 console.log("click old_id: " + current_note_id);
@@ -259,6 +264,7 @@ function noteInit (scheme, locale) {
 
         function saveNote() {
             console.log("save note: " + current_note_id);
+            $('#wait_modal').modal('show');
             var data = {};
             data['note'] = {'cmd':'save', 
                             'note_id':current_note_id, 
@@ -302,11 +308,13 @@ function noteInit (scheme, locale) {
         }
 
         function deleteAll() {
+            $('#wait_modal').modal('show');
             window.location.href = location.protocol + "//" + local + "/deletenotes";
         }
 
         function createCategory() {
             console.log("create category");
+            $('#wait_modal').modal('show');
             var data = {};
             data['category'] = {'cmd':'create', 
                                 'category_name': escapeHtml($('#category_name').val())};
@@ -321,6 +329,7 @@ function noteInit (scheme, locale) {
         }
 
         function deleteCategory() {
+            $('#wait_modal').modal('show');
             if (current_category != 'Search' && current_category != 'All') {
                 console.log("delete category");
                 var data = {};
@@ -332,11 +341,13 @@ function noteInit (scheme, locale) {
         }
 
         function reindexNotes() {
+            $('#wait_modal').modal('show');
             window.location.href = location.protocol + "//" + local + "/note/?option=rebuild_index";
         }
 
         function search() {
             console.log("search note");
+            $('#wait_modal').modal('show');
             $('a#' + current_category + '_query').attr("class","list-group-item");
             var data = {};
             data['category'] = {'cmd':'search', 
@@ -410,6 +421,7 @@ function noteInit (scheme, locale) {
         }
 
         function importNotes() {
+            $('#wait_modal').modal('show');
             $('#form_import').submit();
         }
 
