@@ -322,9 +322,12 @@ if __name__ == "__main__":
     if PLATFORM[0].lower() == "windows":
         multiprocessing.freeze_support()
     should_start_new = True
-    fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"))
-    PID = fp.read()
-    fp.close()
+    PID = ""
+    pid_file_path = os.path.join(CONFIG["PID_PATH"], "application.pid")
+    if os.path.exists(pid_file_path) and os.path.isfile(pid_file_path):
+        fp = open(pid_file_path, "rb")
+        PID = fp.read()
+        fp.close()
     try:
         if PID != "":
             os.kill(int(PID), 0)
