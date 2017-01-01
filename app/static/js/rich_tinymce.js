@@ -403,7 +403,7 @@ function noteInit (scheme, locale) {
     }
 
     function saveNote() {
-        $body.addClass("loading");
+        $div_note_text.addClass("loading");
         note_scroll = $('#note_text_ifr').contents().find('html,body').scrollTop();
         console.log("save scrollTop: " + note_scroll);
         console.log("save note: " + current_note_id);

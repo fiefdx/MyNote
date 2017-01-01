@@ -290,7 +290,7 @@ function noteInit (scheme, locale) {
 
         function saveNote() {
             console.log("save note: " + current_note_id);
-            $body.addClass("loading");
+            $div_note_text.addClass("loading");
             var data = {};
             data['note'] = {'cmd':'save', 
                             'note_id':current_note_id, 
