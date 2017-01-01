@@ -554,13 +554,16 @@ class RichSocketHandler(BaseSocketHandler):
                 user_key = ""
             user_locale = self.get_user_locale()
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-            if RichSocketHandler.socket_handlers.has_key(user):
-                RichSocketHandler.socket_handlers[user].add(self)
-                LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
+            if user_info:
+                if RichSocketHandler.socket_handlers.has_key(user):
+                    RichSocketHandler.socket_handlers[user].add(self)
+                    LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
+                else:
+                    RichSocketHandler.socket_handlers[user] = set()
+                    RichSocketHandler.socket_handlers[user].add(self)
+                    LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
             else:
-                RichSocketHandler.socket_handlers[user] = set()
-                RichSocketHandler.socket_handlers[user].add(self)
-                LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
+                self.redirect("/login")
             LOG.info("open rich note websocket: %s", user)
             LOG.info("rich note websocket users: %s", RichSocketHandler.socket_handlers.keys())
             data = {}

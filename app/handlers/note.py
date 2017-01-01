@@ -522,13 +522,16 @@ class NoteSocketHandler(BaseSocketHandler):
             user_key = ""
         user_locale = self.get_user_locale()
         user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-        if NoteSocketHandler.socket_handlers.has_key(user):
-            NoteSocketHandler.socket_handlers[user].add(self)
-            LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+        if user_info:
+            if NoteSocketHandler.socket_handlers.has_key(user):
+                NoteSocketHandler.socket_handlers[user].add(self)
+                LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+            else:
+                NoteSocketHandler.socket_handlers[user] = set()
+                NoteSocketHandler.socket_handlers[user].add(self)
+                LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
         else:
-            NoteSocketHandler.socket_handlers[user] = set()
-            NoteSocketHandler.socket_handlers[user].add(self)
-            LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+            self.redirect("/login")
         LOG.info("open note websocket: %s", user)
         LOG.info("note websocket users: %s", NoteSocketHandler.socket_handlers.keys())
         data = {}
