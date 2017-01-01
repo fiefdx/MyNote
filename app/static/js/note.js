@@ -13,6 +13,7 @@ function noteInit (scheme, locale) {
     var current_note_id = null;
 
     var $user_settings = $('a#Settings');
+    var $save_settings = $('button#settings_submit');
     var $save_note = $('#save_note_button');
     var $create_note = $('a#create_note');
     var $create_note_modal = $('button#create_note');
@@ -34,6 +35,7 @@ function noteInit (scheme, locale) {
     var book_numbers = {};
     var loading_notes_list = false;
     var books = {};
+    var action = "";
 
     var WebSocket = window.WebSocket || window.MozWebSocket;
     if (WebSocket) {
@@ -46,6 +48,7 @@ function noteInit (scheme, locale) {
         socket.onopen = function() {
             console.log("websocket onopen");
             $user_settings.bind("click", showSettings);
+            $save_settings.bind("click", saveSettings);
             $save_note.bind("click", saveNote);
             $create_note.bind("click", showCreateNote);
             $create_note_modal.bind("click", createNote);
@@ -213,7 +216,7 @@ function noteInit (scheme, locale) {
 
         socket.onclose = function() {
             console.log("websocket onclose");
-            if (!$('#offline_modal').is(':visible')) {
+            if ((action == "" || (action != "import_notes" && action != "delete_notes" && action != "reindex_notes" && action != "change_settings")) && !$('#offline_modal').is(':visible')) {
                 $('#offline_modal').modal('show');
             }
         };
@@ -290,6 +293,12 @@ function noteInit (scheme, locale) {
             $('#settings_modal').modal('show');
         }
 
+        function saveSettings() {
+            $body.addClass("loading");
+            action = "change_settings";
+            $('#form_settings').submit();
+        }
+
         function saveNote() {
             console.log("save note: " + current_note_id);
             $div_note_text.addClass("loading");
@@ -337,6 +346,7 @@ function noteInit (scheme, locale) {
 
         function deleteAll() {
             $body.addClass("loading");
+            action = "change_settings";
             window.location.href = location.protocol + "//" + local + "/deletenotes";
         }
 
@@ -370,6 +380,7 @@ function noteInit (scheme, locale) {
 
         function reindexNotes() {
             $body.addClass("loading");
+            action = "reindex_notes";
             window.location.href = location.protocol + "//" + local + "/note/?option=rebuild_index";
         }
 
@@ -450,6 +461,7 @@ function noteInit (scheme, locale) {
 
         function importNotes() {
             $body.addClass("loading");
+            action = "import_notes";
             $('#form_import').submit();
         }
 

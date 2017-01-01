@@ -18,7 +18,7 @@
     <div class="collapse navbar-collapse" id="navbar-collapse">
         <ul id="register_navbar" class="nav navbar-nav navbar-right">
             <li id="Logout" class>
-                <a id="Register" data-toggle="modal" href="#Register_modal">{{_("Register User")}}</a>
+                <a id="Register" data-toggle="modal" href="#register_modal">{{_("Register User")}}</a>
             </li>
         </ul>
     </div>
@@ -97,7 +97,10 @@
     <div class="col-xs-2">
     </div>
 </div>
-<div id="Register_modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+{% end %}
+
+{% block modal %}
+<div id="register_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="registerModalLabel" aria-hidden="true" onfocus="this.blur();">
     <form id="form_register" class="form-horizontal" action="/register" method="post">
         {% raw xsrf_form_html() %}
         <div id="dialog_register" class="modal-dialog">

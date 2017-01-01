@@ -5,7 +5,6 @@ div#body_container {
     margin-right: 10px;
 }
 
-
 #register_navbar {
     margin-top: 0px;
 }
@@ -18,14 +17,32 @@ div#body_container {
     margin-top: 70px;
 }
 
-/*#Register_modal {
-    margin-top: 200px;
-}*/
-
 #form_register {
-    margin-top: 150px;
+    margin-top: 100px;
+    text-align: center;
 }
 
-/*#dialog_register {
-    margin-top: 200px;
-}*/
+@media only screen and (min-width: 768px) {
+    .modal-dialog {
+        display: inline-block;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .modal.fade .modal-dialog {
+        -webkit-transform: scale(0.9);
+        -moz-transform: scale(0.9);
+        -ms-transform: scale(0.9);
+        transform: scale(0.9);
+        opacity: 0;
+        -webkit-transition: all 0.3s ease;
+        -moz-transition: all 0.3s ease;
+        transition: all 0.3s ease;
+    }
+    .modal.fade.in .modal-dialog {
+        -webkit-transform: scale(1);
+        -moz-transform: scale(1);
+        -ms-transform: scale(1);
+        transform: scale(1);
+        opacity: 1;
+    }
+}

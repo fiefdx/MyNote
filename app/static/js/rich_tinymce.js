@@ -13,6 +13,7 @@ function noteInit (scheme, locale) {
     var current_note_id = null;
 
     var $user_settings = $('a#Settings');
+    var $save_settings = $('button#settings_submit');
     var $save_note = $('#save_note_button');
     var $create_note = $('a#create_note');
     var $create_note_modal = $('button#create_note');
@@ -39,6 +40,7 @@ function noteInit (scheme, locale) {
     var book_numbers = {};
     var loading_notes_list = false;
     var books = {};
+    var action = "";
 
     tinymce.baseURL = "/static/tinymce";
     var tinymceEditor = null;
@@ -138,6 +140,7 @@ function noteInit (scheme, locale) {
             socket.onopen = function() {
                 console.log("websocket onopen");
                 $user_settings.bind("click", showSettings);
+                $save_settings.bind("click", saveSettings);
                 $save_note.bind("click", saveNote);
                 $save_note_toolbar.bind("click", saveNote);
                 $create_note_modal.bind("click", createNote);
@@ -318,7 +321,7 @@ function noteInit (scheme, locale) {
 
             socket.onclose = function() {
                 console.log("websocket onclose");
-                if (!$('#offline_modal').is(':visible')) {
+                if ((action == "" || (action != "import_notes" && action != "delete_notes" && action != "reindex_notes" && action != "change_settings")) && !$('#offline_modal').is(':visible')) {
                     $('#offline_modal').modal('show');
                 }
             };
@@ -404,6 +407,12 @@ function noteInit (scheme, locale) {
         $('#settings_modal').modal('show');
     }
 
+    function saveSettings() {
+        $body.addClass("loading");
+        action = "change_settings";
+        $('#form_settings').submit();
+    }
+
     function saveNote() {
         $div_note_text.addClass("loading");
         note_scroll = $('#note_text_ifr').contents().find('html,body').scrollTop();
@@ -456,6 +465,7 @@ function noteInit (scheme, locale) {
 
     function deleteAll() {
         $body.addClass("loading");
+        action = "change_settings";
         window.location.href = location.protocol + "//" + local + "/deleterichnotes";
     }
 
@@ -489,6 +499,7 @@ function noteInit (scheme, locale) {
 
     function reindexNotes() {
         $body.addClass("loading");
+        action = "reindex_notes";
         window.location.href = location.protocol + "//" + local + "/rich/?option=rebuild_index";
     }
 
@@ -551,6 +562,7 @@ function noteInit (scheme, locale) {
 
     function importNotes() {
         $body.addClass("loading");
+        action = "import_notes";
         $('#form_import').submit();
         // upload_notes_ajax();
     }

@@ -302,3 +302,39 @@ div.loading {
 div.loading .note_wait_modal {
     display: block;
 }
+
+@media only screen and (min-width: 768px) {
+    .modal {
+        text-align: center;
+        position: relative;
+        overflow-y: auto;
+    }
+    .modal:before {
+        display: inline-block;
+        vertical-align: middle;
+        content: "";
+        height: 100%;
+    }
+    .modal-dialog {
+        display: inline-block;
+        text-align: left;
+        vertical-align: middle;
+    }
+    .modal.fade .modal-dialog {
+        -webkit-transform: scale(0.9);
+        -moz-transform: scale(0.9);
+        -ms-transform: scale(0.9);
+        transform: scale(0.9);
+        opacity: 0;
+        -webkit-transition: all 0.3s ease;
+        -moz-transition: all 0.3s ease;
+        transition: all 0.3s ease;
+    }
+    .modal.fade.in .modal-dialog {
+        -webkit-transform: scale(1);
+        -moz-transform: scale(1);
+        -ms-transform: scale(1);
+        transform: scale(1);
+        opacity: 1;
+    }
+}
