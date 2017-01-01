@@ -1,6 +1,7 @@
 function noteInit (scheme, locale) {
     var $body = $('body');
     $body.addClass("loading");
+    var $div_note_text = $("div#div_note_text");
     var $note_books_list = $('#note_books_list');
     var $note_books = $('#note_books');
     var $note_list_ul = $('#notes_list_ul');
@@ -184,6 +185,7 @@ function noteInit (scheme, locale) {
             }
 
             $body.removeClass("loading");
+            $div_note_text.removeClass("loading");
         };
 
         socket.onclose = function() {
@@ -240,7 +242,7 @@ function noteInit (scheme, locale) {
 
         function initNoteClick(note_id) {
             $('a#a_' + note_id).bind("click", function () {
-                $body.addClass("loading");
+                $div_note_text.addClass("loading");
                 var data = {};
                 data['note'] = {'cmd':'select', 'note_id':note_id};
                 console.log("click old_id: " + current_note_id);

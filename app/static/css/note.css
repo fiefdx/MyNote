@@ -280,3 +280,29 @@ a#import_notes {
 .modal-content {
     text-align: center;
 }
+
+.note_wait_modal {
+    display:    none;
+    z-index:    1000;
+    position: absolute;
+    top:        0px;
+    left:       -8px;
+    height: 100%;
+    width: 100%;
+    background: rgba(255, 255, 255, 0 )
+                url('../img/spin2.gif')
+                50% 50%
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+div.loading {
+    overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+div.loading .note_wait_modal {
+    display: block;
+}
