@@ -86,3 +86,7 @@ body.loading {
 body.loading .full_window_wait_modal {
     display: block;
 }
+
+a.list-group-item {
+    cursor: pointer;
+}

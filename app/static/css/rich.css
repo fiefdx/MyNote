@@ -263,11 +263,6 @@ hr {
     padding: 0px
 }
 
-a#import_notes {
-    cursor: auto;
-    text-align: left;
-}
-
 .btn-file {
     position: relative;
     overflow: hidden;
