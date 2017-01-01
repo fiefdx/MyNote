@@ -100,11 +100,14 @@
 
             {% end %}
         </div>
-        <div id="settings_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        {% block modal %}
+
+        {% end %}
+        <div id="settings_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="settingsModalLabel" aria-hidden="true" onfocus="this.blur();">
             <form id="form_settings" class="form-horizontal" enctype="multipart/form-data" action="/settings" method="post">
                 {% raw xsrf_form_html() %}
                 <input id="redirect_to" type="hidden" name="redirect_to">
-                <div id="dialog_import" class="modal-dialog">
+                <div id="dialog_settings" class="modal-dialog">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -164,7 +167,7 @@
                 </div>
             </form>
         </div>
-        <div id="sign_out_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="signOutModalLabel" aria-hidden="true">
+        <div id="sign_out_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="signOutModalLabel" aria-hidden="true" onfocus="this.blur();">
             <form id="form_sign_out" class="form-horizontal">
                 {% raw xsrf_form_html() %}
                 <div id="dialog_sign_out" class="modal-dialog">
@@ -184,7 +187,7 @@
                 </div>
             </form>
         </div>
-        <div id="delete_user_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteUserModalLabel" aria-hidden="true">
+        <div id="delete_user_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteUserModalLabel" aria-hidden="true" onfocus="this.blur();">
             <form id="form_delete_user" class="form-horizontal">
                 {% raw xsrf_form_html() %}
                 <div id="dialog_delete_user" class="modal-dialog">
@@ -204,7 +207,7 @@
                 </div>
             </form>
         </div>
-        <div id="offline_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="offlineModalLabel" aria-hidden="true">
+        <div id="offline_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="offlineModalLabel" aria-hidden="true" onfocus="this.blur();">
             <form id="form_offline" class="form-horizontal">
                 {% raw xsrf_form_html() %}
                 <div id="dialog_offline" class="modal-dialog">

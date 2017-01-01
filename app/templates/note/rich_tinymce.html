@@ -87,253 +87,255 @@
             </div>
         </form>
     </div>
-    <div id="import_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importModalLabel" aria-hidden="true">
-        <form id="form_import" class="form-horizontal" enctype="multipart/form-data" action="/importrichnotes" method="post">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_import" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="myModalLabel" class="modal-title">{{_("Import Notes")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="input-group">
-                            <span class="input-group-btn">
-                                <span class="btn btn-primary btn-file">
-                                    {{_("Choose File")}}<input id="up_file" type="file" name="up_file" multiple>
-                                </span>
-                            </span>
-                            <input type="text" class="form-control" readonly>
-                        </div>
-                        <hr>
-                        <div class="well">
-                            <div class="form-group">
-                                <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
-                                <div class="col-xs-8">
-                                    <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
-                                </div>
-                            </div>
-                            <div id="div_display_passwd" class="checkbox">
-                                <label>
-                                    <input id="display_passwd" value="unable" type="checkbox">&nbsp;{{_("Display The Password")}}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="import" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Upload")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="categoryModalLabel" aria-hidden="true">
-        <form id="form_category" class="form-horizontal" enctype="multipart/form-data">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_category" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="categoryModalLabel" class="modal-title">{{_("Create New Category")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="control-label col-xs-4" for="user">{{_("Category Name")}}</label>
-                            <div class="col-xs-8">
-                                <input id="category_name" class="form-control col-xs-10" type="text" autocomplete="off">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="create_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="export_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportModalLabel" aria-hidden="true">
-        <form id="form_export" class="form-horizontal" enctype="multipart/form-data" target="_blank" action="/exportrichnotes" method="post">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_export" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="exportModalLabel" class="modal-title">{{_("Export Notes")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="well">
-                            <div class="form-group">
-                                <label class="control-label col-xs-4" for="notes_category">{{_("Notes Category")}}</label>
-                                <div class="col-xs-8">
-                                    <select class="form-control" name="notes_category" id="notes_category">
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
-                                <div class="col-xs-8">
-                                    <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
-                                </div>
-                            </div>
-                            <div id="div_display_passwd" class="checkbox">
-                                <label>
-                                    <input id="encrypt_notes" name="encrypt" value="unable" type="checkbox">&nbsp;{{_("Encrypt Notes")}}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="export_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Export")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="delete_category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
-        <form id="form_delete_category" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_delete_category" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="deleteCategoryModalLabel" class="modal-title">{{_("Warning")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("Are you sure to delete the category and it's notes?")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="delete_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="delete_notes_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteNotesModalLabel" aria-hidden="true">
-        <form id="form_delete_notes" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_delete_notes" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="deleteNotesModalLabel" class="modal-title">{{_("Warning")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("Are you sure to delete all notes?")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="delete_all" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="reindex_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexModalLabel" aria-hidden="true">
-        <form id="form_delete_category" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_reindex" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="reindexModalLabel" class="modal-title">{{_("Warning")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("Are you sure to update all notes index?")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="reindex_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Update")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="create_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteModalLabel" aria-hidden="true">
-        <form id="form_create_note" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_create" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="createNoteModalLabel" class="modal-title">{{_("Create New Note")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label class="control-label col-xs-4" for="user">{{_("Note Title")}}</label>
-                            <div class="col-xs-8">
-                                <input id="new_note_title" class="form-control col-xs-10" type="text" autocomplete="on">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
-                        <button id="create_note" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="save_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true">
-        <form id="form_save_note" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_save" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="saveNoteModalLabel" class="modal-title">{{_("Message")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("Save note success!")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="create_note_all_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteAllModalLabel" aria-hidden="true">
-        <form id="form_create_note_all" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_create_note_all" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="createNoteAllModalLabel" class="modal-title">{{_("Warning")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("You must create a category first by click 'Create Category', then create note under the category!")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div id="create_note_search_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteSearchModalLabel" aria-hidden="true">
-        <form id="form_create_note_search" class="form-horizontal">
-            {% raw xsrf_form_html() %}
-            <div id="dialog_create_note_search" class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h3 id="createNoteSearchModalLabel" class="modal-title">{{_("Warning")}}</h3>
-                    </div>
-                    <div class="modal-body">
-                        <span class="col-xs-12">{{_("You can't create note under the 'Search' category, please to create note under your own category!")}}</span>
-                    </div>
-                    <div class="modal-footer">
-                    </div>
-                </div>
-            </div>
-        </form>
-    </div>
 </div>
 {% end %}
 
+{% block modal %}
+<div id="import_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_import" class="form-horizontal" enctype="multipart/form-data" action="/importrichnotes" method="post">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="myModalLabel" class="modal-title">{{_("Import Notes")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <span class="input-group-btn">
+                            <span class="btn btn-primary btn-file">
+                                {{_("Choose File")}}<input id="up_file" type="file" name="up_file" multiple>
+                            </span>
+                        </span>
+                        <input type="text" class="form-control" readonly>
+                    </div>
+                    <hr>
+                    <div class="well">
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
+                            <div class="col-xs-8">
+                                <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
+                            </div>
+                        </div>
+                        <div id="div_display_passwd" class="checkbox">
+                            <label>
+                                <input id="display_passwd" value="unable" type="checkbox">&nbsp;{{_("Display The Password")}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="import" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Upload")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="categoryModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_category" class="form-horizontal" enctype="multipart/form-data">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_category" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="categoryModalLabel" class="modal-title">{{_("Create New Category")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="control-label col-xs-4" for="user">{{_("Category Name")}}</label>
+                        <div class="col-xs-8">
+                            <input id="category_name" class="form-control col-xs-10" type="text" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="create_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="export_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_export" class="form-horizontal" enctype="multipart/form-data" target="_blank" action="/exportrichnotes" method="post">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_export" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="exportModalLabel" class="modal-title">{{_("Export Notes")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="well">
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="notes_category">{{_("Notes Category")}}</label>
+                            <div class="col-xs-8">
+                                <select class="form-control" name="notes_category" id="notes_category">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label col-xs-4" for="passwd">{{_("Notes Password")}}</label>
+                            <div class="col-xs-8">
+                                <input class="form-control" type="password" name="passwd" autocomplete="off" id="notes_passwd" placeholder="{{_("Password")}}">
+                            </div>
+                        </div>
+                        <div id="div_display_passwd" class="checkbox">
+                            <label>
+                                <input id="encrypt_notes" name="encrypt" value="unable" type="checkbox">&nbsp;{{_("Encrypt Notes")}}
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="export_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Export")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="delete_category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_delete_category" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_delete_category" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="deleteCategoryModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Are you sure to delete the category and it's notes?")}}</span>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="delete_category" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="delete_notes_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="deleteNotesModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_delete_notes" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_delete_notes" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="deleteNotesModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Are you sure to delete all notes?")}}</span>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="delete_all" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Delete")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="reindex_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_delete_category" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_reindex" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="reindexModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Are you sure to update all notes index?")}}</span>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="reindex_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Update")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="create_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_create_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_create" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="createNoteModalLabel" class="modal-title">{{_("Create New Note")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="control-label col-xs-4" for="user">{{_("Note Title")}}</label>
+                        <div class="col-xs-8">
+                            <input id="new_note_title" class="form-control col-xs-10" type="text" autocomplete="on">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
+                    <button id="create_note" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Create")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="save_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_save" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Message")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Save note success!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="create_note_all_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteAllModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_create_note_all" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_create_note_all" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="createNoteAllModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("You must create a category first by click 'Create Category', then create note under the category!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="create_note_search_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteSearchModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_create_note_search" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_create_note_search" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="createNoteSearchModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("You can't create note under the 'Search' category, please to create note under your own category!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% end %}
 
 {% block javascript %}
 <link href="{{ static_url("bootstrap/css/prettify.css") }}" rel="stylesheet" >

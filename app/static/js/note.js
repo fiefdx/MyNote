@@ -213,7 +213,9 @@ function noteInit (scheme, locale) {
 
         socket.onclose = function() {
             console.log("websocket onclose");
-            $('#offline_modal').modal('show');
+            if (!$('#offline_modal').is(':visible')) {
+                $('#offline_modal').modal('show');
+            }
         };
 
         var entityMap = {

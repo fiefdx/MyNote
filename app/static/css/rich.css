@@ -258,7 +258,7 @@ hr {
 #form_create_note_search,
 #form_wait,
 #form_offline {
-    margin-top: 150px;
+    margin-top: 0px;
     margin-bottom: 0px; 
     padding: 0px
 }
