@@ -62,6 +62,29 @@ function noteInit (scheme, locale) {
             $import_notes.bind("click", importNotes);
             $notes_list.bind("scroll", loadMoreNotes);
             $("#export_modal").on("show.bs.modal", showExportModal);
+            $('#import_modal').on('shown.bs.modal', function () {
+                $('button.btn-default').focus();
+            });
+            $('#export_modal').on('shown.bs.modal', function () {
+                $('button.btn-default').focus();
+            });
+            $('#delete_notes_modal').on('shown.bs.modal', function () {
+                $('button.btn-default').focus();
+            });
+            $('#delete_category_modal').on('shown.bs.modal', function () {
+                $('button.btn-default').focus();
+            });
+            $('#reindex_modal').on('shown.bs.modal', function () {
+                $('button.btn-default').focus();
+            });
+            $('#create_note_modal').on('shown.bs.modal', function () {
+                $('input#new_note_title').focus();
+            });
+            $('#category_modal').on('shown.bs.modal', function () {
+                $('input#category_name').focus();
+            });
+            $('form#form_create_note').submit(function() {return false;});
+            $('form#form_category').submit(function() {return false;});
         };
 
         socket.onmessage = function(msg) {
@@ -190,7 +213,7 @@ function noteInit (scheme, locale) {
 
         socket.onclose = function() {
             console.log("websocket onclose");
-            $note_title.css({'background-color' : '#CC0000'});
+            $('#offline_modal').modal('show');
         };
 
         var entityMap = {

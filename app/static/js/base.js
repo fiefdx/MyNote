@@ -32,6 +32,15 @@ function baseInit (current_nav, scheme, locale, msg) {
             $("#r_passwd_confirm").attr("class","glyphicon glyphicon-remove col-xs-2");
         }
     });
+    $('#settings_modal').on('shown.bs.modal', function () {
+        $('button.btn-default').focus();
+    })
+    $('#sign_out_modal').on('shown.bs.modal', function () {
+        $('button.btn-primary').focus();
+    })
+    $('#delete_user_modal').on('shown.bs.modal', function () {
+        $('button.btn-default').focus();
+    })
 
     function resetModal(e) {
         console.log("Reset: ", e.target.id);

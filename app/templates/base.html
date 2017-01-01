@@ -204,6 +204,24 @@
                 </div>
             </form>
         </div>
+        <div id="offline_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="offlineModalLabel" aria-hidden="true">
+            <form id="form_offline" class="form-horizontal">
+                {% raw xsrf_form_html() %}
+                <div id="dialog_offline" class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h3 id="offlineModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                        </div>
+                        <div class="modal-body">
+                            <span class="col-xs-12">{{_("The network connection has been interrupted. Please refresh the page!")}}</span>
+                        </div>
+                        <div class="modal-footer">
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
         <div class="full_window_wait_modal"></div>
     </div>
 
