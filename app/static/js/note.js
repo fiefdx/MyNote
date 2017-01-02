@@ -1,6 +1,13 @@
 function noteInit (scheme, locale) {
     var $body = $('body');
     $body.addClass("loading");
+    var $goto_header = $("a#navbar_header");
+    var $goto_home = $("a#Home_a");
+    var $goto_search = $("a#Search_a");
+    var $goto_rich = $("a#Rich_a");
+    var $goto_note = $("a#Note_a");
+    var $goto_help = $("a#Help_a");
+
     var $div_note_text = $("div#div_note_text");
     var $note_books_list = $('#note_books_list');
     var $note_books = $('#note_books');
@@ -47,6 +54,13 @@ function noteInit (scheme, locale) {
     if (socket) {
         socket.onopen = function() {
             console.log("websocket onopen");
+            $goto_header.bind("click", gotoHome);
+            $goto_home.bind("click", gotoHome);
+            $goto_search.bind("click", gotoSearch);
+            $goto_rich.bind("click", gotoRich);
+            $goto_note.bind("click", gotoNote);
+            $goto_help.bind("click", gotoHelp);
+
             $user_settings.bind("click", showSettings);
             $save_settings.bind("click", saveSettings);
             $save_note.bind("click", saveNote);
@@ -216,7 +230,15 @@ function noteInit (scheme, locale) {
 
         socket.onclose = function() {
             console.log("websocket onclose");
-            if ((action == "" || (action != "import_notes" && action != "delete_notes" && action != "reindex_notes" && action != "change_settings")) && !$('#offline_modal').is(':visible')) {
+            if ((action == "" || (action != "import_notes" &&
+                    action != "delete_notes" &&
+                    action != "reindex_notes" &&
+                    action != "change_settings" &&
+                    action != "goto_home" &&
+                    action != "goto_search" &&
+                    action != "goto_rich" &&
+                    action != "goto_note" &&
+                    action != "goto_help")) && !$('#offline_modal').is(':visible')) {
                 $('#offline_modal').modal('show');
             }
         };
@@ -469,6 +491,36 @@ function noteInit (scheme, locale) {
             search();
             return false;
         });
+
+        function gotoHome() {
+            $body.addClass("loading");
+            action = "goto_home";
+            window.location.href = location.protocol + "//" + local + "/";
+        }
+
+        function gotoSearch() {
+            $body.addClass("loading");
+            action = "goto_search";
+            window.location.href = location.protocol + "//" + local + "/search";
+        }
+
+        function gotoRich() {
+            $body.addClass("loading");
+            action = "goto_rich";
+            window.location.href = location.protocol + "//" + local + "/rich";
+        }
+
+        function gotoNote() {
+            $body.addClass("loading");
+            action = "goto_note";
+            window.location.href = location.protocol + "//" + local + "/note";
+        }
+
+        function gotoHelp() {
+            $body.addClass("loading");
+            action = "goto_help";
+            window.location.href = location.protocol + "//" + local + "/help";
+        }
     }
 }
 

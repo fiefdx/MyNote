@@ -10,6 +10,9 @@
     a#html {color: rgb(17, 34, 204)}
     a#html:visited {color: #61c}
     .match {color: rgb(221, 75, 57);}
+    .glyphicon {
+        line-height: 13px;
+    }
 </style>
 {% end %}
 
@@ -61,6 +64,41 @@ $(document).ready(function(){
     $("button").click(function(){
         $("#form_search").attr("action","/search?q={{typed_search_string}}&query={{query}}&page=1");
     });
+
+    var local = window.location.host;
+    var $goto_header = $("a#navbar_header");
+    var $goto_home = $("a#Home_a");
+    var $goto_search = $("a#Search_a");
+    var $goto_rich = $("a#Rich_a");
+    var $goto_note = $("a#Note_a");
+    var $goto_help = $("a#Help_a");
+
+    $goto_header.bind("click", gotoHome);
+    $goto_home.bind("click", gotoHome);
+    $goto_search.bind("click", gotoSearch);
+    $goto_rich.bind("click", gotoRich);
+    $goto_note.bind("click", gotoNote);
+    $goto_help.bind("click", gotoHelp);
+
+    function gotoHome() {
+        window.location.href = location.protocol + "//" + local + "/";
+    }
+
+    function gotoSearch() {
+        window.location.href = location.protocol + "//" + local + "/search";
+    }
+
+    function gotoRich() {
+        window.location.href = location.protocol + "//" + local + "/rich";
+    }
+
+    function gotoNote() {
+        window.location.href = location.protocol + "//" + local + "/note";
+    }
+
+    function gotoHelp() {
+        window.location.href = location.protocol + "//" + local + "/help";
+    }
 });
 </script>
 {% end %}

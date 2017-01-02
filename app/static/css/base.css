@@ -1,3 +1,12 @@
 .modal-content {
     text-align: center;
 }
+
+li#Home,
+li#Search,
+li#Rich,
+li#Note,
+li#Help,
+a#navbar_header {
+    cursor: pointer;
+}

@@ -70,7 +70,7 @@ try:
         os.makedirs(CONFIG["STORAGE_DB_PATH"])
     CONFIG["PID_PATH"] = cwd
     if not CONFIG.has_key("FUNCTIONS"):
-        CONFIG["FUNCTIONS"] = ["home", "search", "note", "rich", "help"]
+        CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
 except Exception, e:
     print e
 

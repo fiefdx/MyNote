@@ -17,6 +17,7 @@
     <link href="{{ static_url("bootstrap/css/bootstrap-theme.css") }}" rel="stylesheet" />
     <link href="{{ static_url("css/bootstrap.css") }}" rel="stylesheet" >
     <link href="{{ static_url("css/template.css") }}" rel="stylesheet" />
+    <link href="{{ static_url("css/base.css") }}" rel="stylesheet" />
     <script src="{{ static_url("jquery/jquery-2.0.3.js") }}"></script>
     <script src="{{ static_url("bootstrap/js/bootstrap.js") }}"></script>
     
@@ -35,34 +36,34 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button> -->
-            <a id="navbar_header" class="navbar-brand" href="/">{{_("Recording Every Day")}}</a>
+            <a id="navbar_header" class="navbar-brand">{{_("Recording Every Day")}}</a>
         </div>
         <div class="collapse navbar-collapse" id="navbar-collapse">
             <ul class="nav navbar-nav">
                 {% for func in functions %}
                     {% if func == "home" %}
                         <li id="Home" class>
-                            <a id="Home_a" href="/" >{{_("Home")}}</a>
+                            <a id="Home_a">{{_("Home")}}</a>
                         </li>
                     {% end %}
                     {% if func == "search" %}
                         <li id="Search" class>
-                            <a id="Search_a" href="/search" >{{_("Search")}}</a>
+                            <a id="Search_a">{{_("Search")}}</a>
                         </li>
                     {% end %}
                     {% if func == "note" %}
                         <li id="Note" class>
-                            <a id="Note_a" href="/note" >{{_("Note")}}</a>
+                            <a id="Note_a">{{_("Note")}}</a>
                         </li>
                     {% end %}
                     {% if func == "rich" %}
                         <li id="Rich" class>
-                            <a id="Rich_a" href="/rich" >{{_("RNote")}}</a>
+                            <a id="Rich_a">{{_("RNote")}}</a>
                         </li>
                     {% end %}
                     {% if func == "help" %}
                         <li id="Help" class>
-                            <a id="Help_a" href="/help" >{{_("Help")}}</a>
+                            <a id="Help_a">{{_("Help")}}</a>
                         </li>
                     {% end %}
                 {% end %}
