@@ -24,15 +24,15 @@
                 <span class="glyphicon glyphicon-file"></span>
                 {{_("Create Note")}}
             </a>
-            <a id="create_category" data-toggle="modal" href="#category_modal"  class="list-group-item">
+            <a id="create_category" class="list-group-item">
                 <span class="glyphicon glyphicon-book"></span>
                 {{_("Create Category")}}
             </a>
-            <a id="import_notes" data-toggle="modal" href="#import_modal" class="list-group-item">
+            <a id="import_notes" class="list-group-item">
                 <span class="glyphicon glyphicon-import"></span>
                 {{_("Import Notes")}}
             </a>
-            <a id="export_notes" data-toggle="modal" href="#export_modal" class="list-group-item">
+            <a id="export_notes" class="list-group-item">
                 <!-- href="/exportnotes" target="_blank"  -->
                 <span class="glyphicon glyphicon-export"></span>
                 {{_("Export Notes")}}
@@ -41,11 +41,11 @@
                 <span class="glyphicon glyphicon-remove"></span>
                 {{_("Delete Category")}}
             </a>
-            <a id="delete_all" data-toggle="modal" href="#delete_notes_modal" class="list-group-item">
+            <a id="delete_all" class="list-group-item">
                 <span class="glyphicon glyphicon-trash"></span>
                 {{_("Delete All")}}
             </a>
-            <a id="rebuild_index" data-toggle="modal" href="#reindex_modal" class="list-group-item">
+            <a id="rebuild_index" class="list-group-item">
                 <span class="glyphicon glyphicon-refresh"></span>
                 {{_("Rebuild Index")}}
             </a>
@@ -335,6 +335,7 @@
         </div>
     </form>
 </div>
+<div class="full_screen_note_wait_modal"></div>
 {% end %}
 
 {% block javascript %}

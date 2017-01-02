@@ -337,6 +337,32 @@ div.loading .note_wait_modal {
     display: block;
 }
 
+.full_screen_note_wait_modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        40px;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba(255, 255, 255, 0 )
+                url('../img/spin2.gif')
+                50% 50%
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.saving {
+    overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.saving .full_screen_note_wait_modal {
+    display: block;
+}
+
 @media only screen and (min-width: 768px) {
     .modal {
         text-align: center;
@@ -372,3 +398,7 @@ div.loading .note_wait_modal {
         opacity: 1;
     }
 }
+
+/*.mce-fullscreen {
+    margin-top: 0px;
+}*/

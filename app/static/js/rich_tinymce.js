@@ -24,9 +24,14 @@ function noteInit (scheme, locale) {
     var $save_note = $('#save_note_button');
     var $create_note = $('a#create_note');
     var $create_note_modal = $('button#create_note');
+    var $show_create_category = $('a#create_category');
     var $create_category = $('button#create_category');
     var $delete_category = $('button#delete_category');
     var $delete_category_modal = $('a#delete_category');
+    var $show_import_notes = $('a#import_notes');
+    var $show_export_notes = $('a#export_notes');
+    var $show_delete_all = $('a#delete_all');
+    var $show_rebuild_index = $('a#rebuild_index');
     var $search_note = $('#search_button');
     var $download_note = $('#download_note_button');
     var $display_passwd = $('#display_passwd');
@@ -197,6 +202,12 @@ function noteInit (scheme, locale) {
                 $('form#form_create_note').submit(function() {return false;});
                 $('form#form_category').submit(function() {return false;});
 
+                $show_create_category.bind("click", showCreateCategory);
+                $show_import_notes.bind("click", showImportNotes);
+                $show_export_notes.bind("click", showExportNotes);
+                $show_delete_all.bind("click", showDeleteNotes);
+                $show_rebuild_index.bind("click", showRebuildIndex);
+
                 var div_note_text_height = $("div#div_note_text").height();
                 tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
             };
@@ -318,6 +329,7 @@ function noteInit (scheme, locale) {
                 }
                 // info for save note
                 if (data.save) {
+                    changeDialogMarginTop();
                     $('#save_note_modal').modal('show');
                 }
                 if (data.note_list_action && data.note_list_action == "init") {
@@ -327,9 +339,12 @@ function noteInit (scheme, locale) {
                 }
 
                 var div_note_text_height = $("div#div_note_text").height();
-                tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
+                if (!$body.hasClass("mce-fullscreen")) {
+                    tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
+                }
 
                 $body.removeClass("loading");
+                $body.removeClass("saving");
                 $div_note_text.removeClass("loading");
             };
 
@@ -344,6 +359,7 @@ function noteInit (scheme, locale) {
                         action != "goto_rich" &&
                         action != "goto_note" &&
                         action != "goto_help")) && !$('#offline_modal').is(':visible')) {
+                    changeDialogMarginTop();
                     $('#offline_modal').modal('show');
                 }
             };
@@ -426,6 +442,7 @@ function noteInit (scheme, locale) {
         } else {
             $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
         }
+        changeDialogMarginTop();
         $('#settings_modal').modal('show');
     }
 
@@ -436,7 +453,11 @@ function noteInit (scheme, locale) {
     }
 
     function saveNote() {
-        $div_note_text.addClass("loading");
+        if (!$body.hasClass("mce-fullscreen")) {
+            $div_note_text.addClass("loading");
+        } else {
+            $body.addClass("saving");
+        }
         note_scroll = $('#note_text_ifr').contents().find('html,body').scrollTop();
         console.log("save scrollTop: " + note_scroll);
         console.log("save note: " + current_note_id);
@@ -453,6 +474,7 @@ function noteInit (scheme, locale) {
     }
 
     function showCreateNote() {
+        changeDialogMarginTop();
         if (current_category != 'Search' && current_category != 'All') {
             $('#create_note_modal').modal('show');
         } else if (current_category == 'All') {
@@ -460,6 +482,31 @@ function noteInit (scheme, locale) {
         } else if (current_category == 'Search') {
             $('#create_note_search_modal').modal('show');
         }
+    }
+
+    function showCreateCategory() {
+        changeDialogMarginTop();
+        $('#category_modal').modal('show');
+    }
+
+    function showImportNotes() {
+        changeDialogMarginTop();
+        $('#import_modal').modal('show');
+    }
+
+    function showExportNotes() {
+        changeDialogMarginTop();
+        $('#export_modal').modal('show');
+    }
+
+    function showDeleteNotes() {
+        changeDialogMarginTop();
+        $('#delete_notes_modal').modal('show');
+    }
+
+    function showRebuildIndex() {
+        changeDialogMarginTop();
+        $('div#reindex_modal').modal('show');
     }
 
     function createNote() {
@@ -503,6 +550,7 @@ function noteInit (scheme, locale) {
 
     function deleteCategoryModal() {
         if (current_category != 'Search' && current_category != 'All') {
+            changeDialogMarginTop();
             $('#delete_category_modal').modal('show');
         }
     }
@@ -672,6 +720,14 @@ function noteInit (scheme, locale) {
         $body.addClass("loading");
         action = "goto_help";
         window.location.href = location.protocol + "//" + local + "/help";
+    }
+
+    function changeDialogMarginTop() {
+        if ($body.hasClass("mce-fullscreen")) {
+            $('div#body_container').css("margin-top", "-20px");
+        } else {
+            $('div#body_container').css("margin-top", "80px");
+        }
     }
 }
 
