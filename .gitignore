@@ -19,6 +19,6 @@
 requires/*
 
 # track dirs
-
+!requires/requirements.txt
 !.data
 !.doc

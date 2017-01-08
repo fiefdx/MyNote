@@ -1,0 +1,14 @@
+################## requirements.txt ##################
+
+setuptools
+tornado
+toro
+whoosh
+jieba
+chardet
+pyyaml
+cython
+numpy
+lxml
+bs4
+python-dateutil
