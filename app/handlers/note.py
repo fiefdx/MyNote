@@ -45,7 +45,6 @@ from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive
-from utils import note_xml
 from models.item import NOTE
 from utils import common_utils
 from utils.multi_async_tea import MultiProcessNoteTea
@@ -72,7 +71,7 @@ def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 =
         # note.encrypt(key1)
         note = yield multi_process_note_tea.encrypt(note, *(key1, ))
     fp = open(note_file_path, 'wb')
-    doc = note_xml.generate_note_xml(note)
+    doc = note.to_xml()
     doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
     fp.close()
 

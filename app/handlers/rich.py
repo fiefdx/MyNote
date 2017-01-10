@@ -44,7 +44,6 @@ from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive_Rich_Notes as Archive
-from utils import note_xml
 from utils import htmlparser
 from models.item import RICH
 from utils import common_utils
@@ -72,7 +71,7 @@ def create_rich_file(storage_users_path, user, user_sha1, note, key = "", key1 =
         # note.encrypt(key1)
         note = yield multi_process_note_tea.encrypt(note, *(key1, ))
     fp = open(note_file_path, 'wb')
-    doc = note_xml.generate_rich_note_xml(note)
+    doc = note.to_xml()
     doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
     fp.close()
 
@@ -109,7 +108,7 @@ def delete_rich_note(storage_users_path, user_sha1, notetype, noteid):
 def create_rich_note(storage_users_path, user_sha1, rich):
     note_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "rich_notes", rich.type, str(rich.id))
     fp = open(note_path, 'wb')
-    doc = note_xml.generate_rich_note_xml(rich)
+    doc = rich.to_xml()
     doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
     fp.close()
     LOG.info("Create rich note[%s] success.", note_path)
@@ -119,7 +118,7 @@ def update_rich_note(storage_users_path, user_sha1, rich):
     if os.path.exists(note_path) and os.path.isfile(note_path):
         os.remove(note_path)
     fp = open(note_path, 'wb')
-    doc = note_xml.generate_rich_note_xml(rich)
+    doc = rich.to_xml()
     doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
     fp.close()
     LOG.info("Update rich note[%s] success.", note_path)

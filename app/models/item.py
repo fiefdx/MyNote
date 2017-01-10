@@ -31,18 +31,17 @@ Modified on 2014-10-28
 Modified on 2014-10-28
 @summary: USER add sha1
 @author: YangHaitao
+
+Modified on 2017-01-10
+@summary: Reconstruct note
+@author: YangHaitao
 '''
 
-import os
-import sys
 import logging
 import json
-import datetime
-import time
-import dateutil
-from dateutil import tz
 
-import tea
+from lxml import etree
+
 from tea import EncryptStr, DecryptStr
 
 LOG = logging.getLogger(__name__)
@@ -281,6 +280,71 @@ class NOTE(object):
             LOG.exception(e)
         return result
 
+    def parse_xml(self, xml_path):
+        result = False
+        try:
+            fp = open(xml_path, "rb")
+            doc = etree.parse(fp)
+            tmp = doc.xpath('//version/text()')
+            version = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//notesha1/text()')
+            notesha1 = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_title/text()')
+            file_title = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_path/text()')
+            file_path = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_content/text()')
+            file_content = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//created_at/text()')
+            created_at = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//updated_at/text()')
+            updated_at = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//notetype/text()')
+            notetype = tmp[0] if tmp != [] else ""
+
+            self.version = version
+            self.file_title = file_title
+            self.file_content = file_content
+            self.created_at = created_at
+            self.updated_at = updated_at
+            self.type = notetype
+            self.sha1 = notesha1
+            self.file_path = file_path
+            result = True
+            fp.close()
+        except Exception , e:
+            LOG.exception(e)
+        return result
+
+    def to_xml(self):
+        '''
+        note's attribute is unicode
+        '''
+        result = ""
+        try:
+            root = etree.Element('note')
+            result = etree.ElementTree(root)
+            version = etree.SubElement(root, 'version')
+            version.text = self.version
+            notesha1 = etree.SubElement(root, 'notesha1')
+            notesha1.text = self.sha1
+            file_title = etree.SubElement(root, 'file_title')
+            file_title.text = self.file_title
+            created_at = etree.SubElement(root, 'created_at')
+            created_at.text = str(self.created_at)[:19]
+            updated_at = etree.SubElement(root, 'updated_at')
+            updated_at.text = str(self.updated_at)[:19]
+            notetype = etree.SubElement(root, 'notetype')
+            notetype.text = self.type
+            file_path = etree.SubElement(root, 'file_path')
+            file_path.text = self.file_path
+            file_content = etree.SubElement(root, 'file_content')
+            file_content.text = self.file_content
+        except Exception , e:
+            LOG.exception(e)
+            result = False
+        return result
+
     def clear(self):
         """
         @summary: reset property:
@@ -421,6 +485,84 @@ class RICH(object):
             LOG.exception(e)
         return result
 
+    def parse_xml(self, xml_path):
+        result = False
+        try:
+            fp = open(xml_path, "rb")
+            doc = etree.parse(fp)
+            tmp = doc.xpath('//version/text()')
+            version = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//notesha1/text()')
+            notesha1 = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//journalsha1/text()')
+            journalsha1 = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_title/text()')
+            file_title = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_path/text()')
+            file_path = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//file_content/text()')
+            file_content = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//rich_content/text()')
+            rich_content = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//journal_content/text()')
+            journal_content = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//created_at/text()')
+            created_at = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//updated_at/text()')
+            updated_at = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//notetype/text()')
+            notetype = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//journaltype/text()')
+            journaltype = tmp[0] if tmp != [] else ""
+            tmp = doc.xpath('//images/text()')
+            images = tmp[0] if tmp != [] else '[]'
+
+            self.version = version
+            self.file_title = file_title
+            self.file_content = file_content
+            self.rich_content = rich_content if rich_content != "" else journal_content
+            self.created_at = created_at
+            self.updated_at = updated_at
+            self.type = notetype if notetype != "" else journaltype
+            self.sha1 = notesha1 if notesha1 != "" else journalsha1
+            self.file_path = file_path
+            self.from_json("images", images)
+            result = True
+            fp.close()
+        except Exception , e:
+            LOG.exception(e)
+        return result
+
+    def to_xml(self):
+        result = ""
+        try:
+            root = etree.Element('rich')
+            result = etree.ElementTree(root)
+            version = etree.SubElement(root, 'version')
+            version.text = self.version
+            notesha1 = etree.SubElement(root, 'notesha1')
+            notesha1.text = self.sha1
+            file_title = etree.SubElement(root, 'file_title')
+            file_title.text = self.file_title
+            created_at = etree.SubElement(root, 'created_at')
+            created_at.text = str(self.created_at)[:19]
+            updated_at = etree.SubElement(root, 'updated_at')
+            updated_at.text = str(self.updated_at)[:19]
+            notetype = etree.SubElement(root, 'notetype')
+            notetype.text = self.type
+            file_path = etree.SubElement(root, 'file_path')
+            file_path.text = self.file_path
+            file_content = etree.SubElement(root, 'file_content')
+            file_content.text = self.file_content
+            rich_content = etree.SubElement(root, 'rich_content')
+            rich_content.text = self.rich_content
+            images = etree.SubElement(root, 'images')
+            images.text = self.to_json("images")
+        except Exception , e:
+            LOG.exception(e)
+            result = False
+        return result
+
     def clear(self):
         """
         @summary: reset property:
@@ -441,30 +583,6 @@ class RICH(object):
         self.description = ""
         self.images = []
         self.version = RICH.VERSION
-
-class NoteState(object):
-    LOCKED = "locked"
-    UNLOCKED = "unlocked"
-
-    def __init__(self):
-        self.state = NoteState.UNLOCKED
-
-    def set_lock(self):
-        if self.state == NoteState.UNLOCKED:
-            self.state = NoteState.LOCKED
-        return self.state
-
-    def clear_lock(self):
-        if self.state == NoteState.LOCKED:
-            self.state = NoteState.UNLOCKED
-        return self.state
-
-    def is_locked(self):
-        if self.state == NoteState.LOCKED:
-            return True
-        else:
-            return False
-
 
 class PICTURE(object):
     def __init__(self):
@@ -529,5 +647,3 @@ class PICTURE(object):
 
 if __name__ == "__main__":
     pass
-
-

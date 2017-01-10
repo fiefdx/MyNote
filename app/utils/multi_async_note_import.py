@@ -6,34 +6,22 @@ Created on 2015-03-06
 '''
 
 import os
-import sys
 import shutil
 import logging
 import json
 import time
-import signal
 import binascii
-import dateutil
-import hashlib
-import datetime
-import time
 from time import localtime, strftime
 from multiprocessing import Process, Pipe
 
-import tornado
 from tornado import gen
-from tornado.ioloop import IOLoop
 import toro
 
 from db import sqlite
 from db.sqlite import DB
-from utils import note_xml
 from utils.archive import Archive
-from models.item import PICTURE as PIC
-from models.item import RICH
 from models.item import NOTE
 from utils import common_utils
-from utils import htmlparser
 # from utils import index_whoosh
 from config import CONFIG
 import logger
@@ -64,7 +52,8 @@ def process_notes(source_dir, storage_path, key = "", old_key = "", user = "", d
                     fpath = os.path.join(root, fname)
                     LOG.debug("Processing [%s]", fpath)
                     total_count_file += 1
-                    note = note_xml.get_note_from_xml(xml_path = fpath)
+                    note = NOTE()
+                    note.parse_xml(fpath)
                     if old_key != "":
                         note.decrypt(old_key, decrypt_description = False)
                     note.description = common_utils.get_description_text(note.file_content, CONFIG["NOTE_DESCRIPTION_LENGTH"])

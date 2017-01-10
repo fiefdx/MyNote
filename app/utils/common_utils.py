@@ -9,28 +9,11 @@ Modified on 2014-06-09
 @author: YangHaitao
 ''' 
 
-import sys
 import os
 import re
-import getopt
 import logging
-import shutil
-import datetime
-import time
-import multiprocessing
-import dateutil
-from dateutil import tz
-from time import localtime,strftime
-from multiprocessing import Process as pProcess
-from multiprocessing import Queue
 import hashlib
-import chardet
 
-from config import CONFIG
-from db import sqlite
-from db.sqlite import DB
-from utils import note_xml
-from models.item import RICH
 
 # cwd = os.path.split(os.path.realpath(__file__))[0]
 cwd = "."
