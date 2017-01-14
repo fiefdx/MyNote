@@ -481,10 +481,68 @@ function noteInit (scheme, locale) {
             });
         }
 
+        function uploadNotesAjax() {
+            /*
+                prepareing ajax file upload
+                url: the url of script file handling the uploaded files
+                            fileElementId: the file type of input element id and it will be the index of  $_FILES Array()
+                dataType: it support json, xml
+                secureuri:use secure protocol
+                success: call back function when the ajax complete
+                error: callback function when the ajax failed
+
+                <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
+             */
+            $.ajaxFileUpload({
+                url:'/uploadnotesajax',
+                secureuri:false,
+                fileElementId:'up_file',
+                dataType: 'xml',
+                success: function (data, status) {
+                    if(typeof(data.error) != 'undefined') {
+                        if(data.error != '') {
+                            alert(data.error);
+                        } else {
+                            alert(data.msg);
+                        }
+                    } else {
+                        importNotesAjax();
+                    }
+                },
+                error: function (data, status, e) {
+                    alert(e);
+                }
+            })
+        }
+
+        function importNotesAjax() {
+            var result = false;
+            var file_name = $('form#form_import input#up_file').val();
+            var password = $('form#form_import input#notes_passwd').val();
+            var xsrf = $('form#form_import input[name=_xsrf]').val();
+            $('#export_modal').modal('hide');
+            $.ajax({
+                type: "post",
+                async: false,
+                url: location.protocol + "//" + local + "/importnotesajax",
+                data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
+                success: function(data, textStatus) {
+                    result = true;
+                },
+                error: function() {
+                    alert("import notes failed!");
+                }
+            });
+            window.location.href = location.protocol + "//" + local + "/note";
+            $body.removeClass("loading");
+            return result;
+        }
+
         function importNotes() {
             $body.addClass("loading");
             action = "import_notes";
-            $('#form_import').submit();
+            uploadNotesAjax();
+            console.log("uploadnotes success!");
         }
 
         $('#form_search').submit(function () {

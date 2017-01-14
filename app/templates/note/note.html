@@ -119,7 +119,7 @@
                     <div class="input-group">
                         <span class="input-group-btn">
                             <span class="btn btn-primary btn-file">
-                                {{_("Choose File")}}<input type="file" name="up_file" multiple>
+                                {{_("Choose File")}}<input id="up_file" type="file" name="up_file" multiple>
                             </span>
                         </span>
                         <input type="text" class="form-control" readonly>
@@ -358,7 +358,7 @@
 <script src="{{ static_url("js/note.js") }}"></script>
 <!-- <script src="{{ static_url("bootstrap/js/bootstrap-fileupload.min.js") }}"></script>
 <script src="{{ static_url("bootstrap/js/bootstrap-fileupload.js") }}"></script> -->
-<!-- <script src="{{ static_url("js/ajaxfileupload.js") }}"></script> -->
+<script src="{{ static_url("js/ajaxfileupload.js") }}"></script>
 <script type="text/javascript">
 window.onload=window.onresize=function(){
     $(document).ready(function(){

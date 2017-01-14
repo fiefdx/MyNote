@@ -23,14 +23,9 @@ Modified on 2015-03-02
 '''
 
 import os
-import sys
-import time
 import json
 import sqlite3
-import dateutil
-import getopt
 import logging
-import datetime
 
 from models.item import PICTURE as PIC
 from models.item import HTML
@@ -217,7 +212,6 @@ def get_db_path(root_path, db_type):
     try:
         db_file_path = os.path.join(root_path, db_type, db_type + ".db")
         db_root_path = os.path.join(root_path, db_type)
-        db = None
         if os.path.exists(db_root_path) and os.path.isdir(db_root_path):
             if os.path.exists(db_file_path) and os.path.isfile(db_file_path):
                 result = db_file_path
@@ -309,7 +303,7 @@ def get_flag_from_db(index_name, conn = None):
         result = False
     return result
 
-def save_data_to_db(item, db_type, mode = "INSERT", conn = None):
+def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
     result = False
     sql = {DB.html: "INSERT INTO HTML VALUES (NULL,?,?,?,?,?)", 
            DB.rich: "INSERT INTO RICH VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)", 
@@ -440,36 +434,40 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None):
                             item["user_language"], 
                             item["user_name"])
 
-    try:
-        if conn != False:
-            c = conn.cursor()
-            if mode == "UPDATE":
-                c.execute(sql_update[db_type], sql_update_param)
-            else:
-                c.execute(sql[db_type], sql_param)
-            conn.commit()
-            result = True
-            if db_type == DB.user:
-                LOG.debug("Save data item[%s] to %s success."%(item["user_name"], db_type))
-            else:
-                LOG.debug("Save data item[%s] to %s success."%(item["id"], db_type))
-    except sqlite3.IntegrityError:
-        if db_type != DB.user: # and db_type != db.pic:
-            LOG.info("The item[%s] have been in %s service, so update it!"%(item["id"], db_type))
+    for i in xrange(retries):
+        try:
             if conn != False:
                 c = conn.cursor()
-                c.execute(sql_update[db_type], sql_update_param)
+                if mode == "UPDATE":
+                    c.execute(sql_update[db_type], sql_update_param)
+                else:
+                    c.execute(sql[db_type], sql_param)
                 conn.commit()
                 result = True
-                LOG.debug("Update data item[%s] to %s success."%(item["id"], db_type))
-        else:
-            result = True
-            LOG.info("The item[%s] have been in %s service, so ignore the insert action!"%(item["id"], db_type))
-    except Exception, e:
-        if conn:
-            conn.rollback()
-        LOG.exception(e)
-        result = False
+                if db_type == DB.user:
+                    LOG.debug("Save data item[%s] to %s success."%(item["user_name"], db_type))
+                else:
+                    LOG.debug("Save data item[%s] to %s success."%(item["id"], db_type))
+                break
+        except sqlite3.IntegrityError:
+            if db_type != DB.user: # and db_type != db.pic:
+                LOG.info("The item[%s] have been in %s service, so update it!"%(item["id"], db_type))
+                if conn != False:
+                    c = conn.cursor()
+                    c.execute(sql_update[db_type], sql_update_param)
+                    conn.commit()
+                    result = True
+                    LOG.debug("Update data item[%s] to %s success."%(item["id"], db_type))
+                    break
+            else:
+                result = True
+                LOG.info("The item[%s] have been in %s service, so ignore the insert action!"%(item["id"], db_type))
+                break
+        except Exception, e:
+            if conn:
+                conn.rollback()
+            LOG.exception(e)
+            result = False
     # finally:
     #     if conn:
     #         conn.close()

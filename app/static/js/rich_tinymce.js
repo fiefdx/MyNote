@@ -637,7 +637,7 @@ function noteInit (scheme, locale) {
         // upload_notes_ajax();
     }
 
-    function upload_notes_ajax() {   
+    function upload_notes_ajax() {
         /*
             prepareing ajax file upload
             url: the url of script file handling the uploaded files
@@ -648,14 +648,14 @@ function noteInit (scheme, locale) {
             error: callback function when the ajax failed
 
             <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
-            
-                */
+        */
         result = false;
         $.ajaxFileUpload({
             url:'/importrichnotes',
             secureuri:false,
             fileElementId:'up_file',
             dataType: 'xml',
+            async: false,
             success: function (data, status) {
                 if(typeof(data.error) != 'undefined') {
                     if(data.error != '') {

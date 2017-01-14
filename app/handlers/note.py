@@ -48,7 +48,7 @@ from utils.archive import Archive
 from models.item import NOTE
 from utils import common_utils
 from utils.multi_async_tea import MultiProcessNoteTea
-from utils.multi_async_note_import import MultiProcessNoteImport
+from utils.processer import ManagerClient
 
 
 LOG = logging.getLogger(__name__)
@@ -613,65 +613,6 @@ class NoteSocketHandler(BaseSocketHandler):
             if cmd == 'delete':
                 pass
 
-
-class ImportHandler(BaseHandler):
-    @tornado.web.authenticated
-    @gen.coroutine
-    def post(self):
-        user = self.get_current_user_name()
-        user_key = self.get_current_user_key()
-        try:
-            fname = ""
-            fbody = ""
-            fileinfo = None
-            up_file_path = None
-            password = self.get_argument("passwd","")
-            password = common_utils.md5twice(password) if password != "" else ""
-            LOG.info("import notes encrypted: %s", True if password != "" else False)
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-            multi_process_note_import = MultiProcessNoteImport(CONFIG["PROCESS_NUM"])
-            try:
-                if not CONFIG["WITH_NGINX"]:
-                    fileinfo = self.request.files["up_file"][0]
-                    fname = fileinfo["filename"]
-                    fbody = fileinfo["body"]
-                else:
-                    fileinfo = True
-                    fname = self.get_argument("up_file.name", "")
-                    up_file_path = self.get_argument("up_file.path", "")
-            except Exception, e:
-                fileinfo = None
-                LOG.debug("Upload file failed, You must be sure selected a file!")
-                LOG.exception(e)
-            if fileinfo != None:
-                fpath = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                     user_info.sha1, 
-                                     "tmp", 
-                                     "import", 
-                                     fname)
-                if not CONFIG["WITH_NGINX"]:
-                    fp = open(fpath, 'wb')
-                    fp.write(fbody)
-                    fp.close()
-                else:
-                    shutil.move(up_file_path, fpath)
-                flag = yield multi_process_note_import.import_notes(fname, user_info, user_key, password)
-                # index all notes
-                if flag:
-                    flag = index_whoosh.index_all_note_by_num_user(1000, 
-                                                                   user, 
-                                                                   key = user_key if CONFIG["ENCRYPT"] else "",
-                                                                   db = DB,
-                                                                   ix = IX,
-                                                                   merge = True)
-                    if flag:
-                        LOG.info("Reindex all notes user[%s] success", user)
-                    else:
-                        LOG.error("Reindex all notes user[%s] failed!", user)
-            self.redirect("/note")
-        except Exception, e:
-            LOG.exception(e)
-
 class ExportHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
@@ -782,3 +723,76 @@ class AjaxNoteHandler(BaseHandler):
     @tornado.web.authenticated
     def post(self, note_id = ""):
         user = self.get_current_user_name()
+
+class UploadAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        try:
+            fname = ""
+            fbody = ""
+            fileinfo = None
+            up_file_path = None
+            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            try:
+                if not CONFIG["WITH_NGINX"]:
+                    fileinfo = self.request.files["up_file"][0]
+                    fname = fileinfo["filename"]
+                    fbody = fileinfo["body"]
+                else:
+                    fileinfo = True
+                    fname = self.get_argument("up_file.name", "")
+                    up_file_path = self.get_argument("up_file.path", "")
+            except Exception, e:
+                fileinfo = None
+                LOG.error("Upload file failed, You must be sure selected a file!")
+                LOG.exception(e)
+            if fileinfo is not None:
+                fpath = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                     user_info.sha1,
+                                     "tmp",
+                                     "import",
+                                     fname)
+                if not CONFIG["WITH_NGINX"]:
+                    fp = open(fpath, 'wb')
+                    fp.write(fbody)
+                    fp.close()
+                else:
+                    shutil.move(up_file_path, fpath)
+        except Exception, e:
+            LOG.exception(e)
+        self.write({"result":"ok"})
+
+class ImportAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        try:
+            fname = self.get_argument("file_name", "")
+            password = self.get_argument("passwd", "")
+            LOG.debug("ImportAjaxHandler: file_name: %s, password: %s", fname, password)
+            password = common_utils.md5twice(password) if password != "" else ""
+            LOG.info("import notes encrypted: %s", True if password != "" else False)
+            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.import_notes(fname, user_info, user_key, password)
+            # index all notes
+            if flag:
+                flag = index_whoosh.index_all_note_by_num_user(1000,
+                                                               user,
+                                                               key = user_key if CONFIG["ENCRYPT"] else "",
+                                                               db = DB,
+                                                               ix = IX,
+                                                               merge = True)
+                if flag:
+                    LOG.info("Reindex all notes user[%s] success", user)
+                else:
+                    LOG.error("Reindex all notes user[%s] failed!", user)
+            else:
+                LOG.error("Import notes user[%s] failed!", user)
+        except Exception, e:
+            LOG.exception(e)

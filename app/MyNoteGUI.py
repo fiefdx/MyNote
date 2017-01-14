@@ -30,7 +30,7 @@ from threading import Thread
 import multiprocessing
 from utils.multi_async_tea import MultiProcessNoteTea
 from utils.multi_async_rich_import import MultiProcessNoteImport as RichNoteImport
-from utils.multi_async_note_import import MultiProcessNoteImport as TextNoteImport
+from utils.processer import ManagerClient
 
 PLATFORM = [platform.system(), platform.architecture()[0]]
 
@@ -40,8 +40,8 @@ if PLATFORM[0].lower() != "windows":
     common.Servers.CRYPT_SERVER = crypt_server
     rich_server = RichNoteImport(CONFIG["PROCESS_NUM"])
     common.Servers.RICH_SERVER = rich_server
-    note_server = TextNoteImport(CONFIG["PROCESS_NUM"])
-    common.Servers.NOTE_SERVER = note_server
+    processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
+    common.Servers.PROCESSER_SERVER = processer_server
 else:
     import utils.win_compat
 
@@ -91,7 +91,8 @@ class Application(tornado.web.Application):
                     (r"/note/websocket/", note.NoteSocketHandler),
                     (r"/deletenotes", note.DeleteHandler),
                     (r"/exportnotes", note.ExportHandler),
-                    (r"/importnotes", note.ImportHandler),
+                    (r"/uploadnotesajax", note.UploadAjaxHandler),
+                    (r"/importnotesajax", note.ImportAjaxHandler),
                     (r"/rich", rich.RichHandler),
                     (r"/rich/", rich.RichHandler),
                     (r"/rich/websocket", rich.RichSocketHandler),
@@ -363,8 +364,8 @@ if __name__ == "__main__":
             common.Servers.CRYPT_SERVER = crypt_server
             rich_server = RichNoteImport(CONFIG["PROCESS_NUM"])
             common.Servers.RICH_SERVER = rich_server
-            note_server = TextNoteImport(CONFIG["PROCESS_NUM"])
-            common.Servers.NOTE_SERVER = note_server
+            processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
+            common.Servers.PROCESSER_SERVER = processer_server
         webserver = WebServer()
         common.Servers.WEB_SERVER = webserver
         signal.signal(signal.SIGTERM, common.sig_thread_handler)

@@ -25,6 +25,7 @@ class Servers(object):
     CRYPT_SERVER = None
     TORNADO_INSTANCE = None
     WEB_SERVER = None
+    PROCESSER_SERVER = None
 
 def shutdown():
     LOG.info("Stopping MyNote(%s:%s)", CONFIG["SERVER_HOST"], CONFIG["SERVER_PORT"])
@@ -46,13 +47,16 @@ def shutdown():
     if Servers.CRYPT_SERVER:
         Servers.CRYPT_SERVER.close()
         LOG.info("Stop encrypt & decrypt server!")
+    if Servers.PROCESSER_SERVER:
+        Servers.PROCESSER_SERVER.close()
+        LOG.info("Stop processer server!")
     if Servers.WEB_SERVER:
         Servers.WEB_SERVER.close()
         LOG.info("Stop web server!")
     LOG.info("Will shutdown in %s seconds ...", MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
     io_loop = tornado.ioloop.IOLoop.instance()
     deadline = time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN
- 
+
     def stop_loop():
         now = time.time()
         if now < deadline and (io_loop._callbacks or io_loop._timeouts):
@@ -83,6 +87,9 @@ def shutdown_thread():
     if Servers.CRYPT_SERVER:
         Servers.CRYPT_SERVER.close()
         LOG.info("Stop encrypt & decrypt server!")
+    if Servers.PROCESSER_SERVER:
+        Servers.PROCESSER_SERVER.close()
+        LOG.info("Stop processer server!")
     if Servers.WEB_SERVER:
         Servers.WEB_SERVER.close()
         LOG.info("Stop web server!")

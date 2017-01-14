@@ -9,8 +9,7 @@ import os
 import logging
 import logging.handlers
 
-# CWD = os.path.split(os.path.realpath(__file__))[0]
-CWD = "."
+CWD = os.path.split(os.path.realpath(__file__))[0]
 
 LEVELS = {'NOSET': logging.NOTSET,
           'DEBUG': logging.DEBUG,
@@ -95,14 +94,15 @@ class ConsoleStreamHandler(logging.StreamHandler):
         except:
             self.handleError(record)
 
-def config_logging(file_name = "main.log", 
-                   log_level = "NOSET", 
-                   dir_name = "logs", 
-                   day_rotate = False, 
-                   when = "D", 
-                   interval = 1, 
-                   max_size = 50, 
-                   backup_count = 5, 
+def config_logging(logger_name = "",
+                   file_name = "main.log",
+                   log_level = "NOSET",
+                   dir_name = "logs",
+                   day_rotate = False,
+                   when = "D",
+                   interval = 1,
+                   max_size = 50,
+                   backup_count = 5,
                    console = True):
     format_log_string = "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"
     format_console_string = "%(name)-12s: %(levelname)-8s %(message)s"
@@ -110,11 +110,11 @@ def config_logging(file_name = "main.log",
     file_dir = os.path.join(logs_dir, file_name)
     # init logs directory
     if os.path.exists(logs_dir) and os.path.isdir(logs_dir):
-       pass
+        pass
     else:
         os.makedirs(logs_dir)
     # clear all handlers
-    logging.getLogger("").handlers = []
+    logging.getLogger(logger_name).handlers = []
     # init rotating handler
     if day_rotate == True:
         rotatingFileHandler = logging.handlers.TimedRotatingFileHandler(filename = file_dir,
@@ -127,7 +127,7 @@ def config_logging(file_name = "main.log",
                                                                    backupCount = backup_count)
     formatter = logging.Formatter(format_log_string)
     rotatingFileHandler.setFormatter(formatter)
-    logging.getLogger("").addHandler(rotatingFileHandler)
+    logging.getLogger(logger_name).addHandler(rotatingFileHandler)
     # add a console handler
     if console == True:
         if os.name == 'nt':
@@ -138,8 +138,8 @@ def config_logging(file_name = "main.log",
         consoleHandler.setLevel(LEVELS[log_level.upper()])
         formatter = logging.Formatter(format_console_string)
         consoleHandler.setFormatter(formatter)
-        logging.getLogger("").addHandler(consoleHandler)
+        logging.getLogger(logger_name).addHandler(consoleHandler)
     # set log level
-    logger = logging.getLogger("")
+    logger = logging.getLogger(logger_name)
     level = LEVELS[log_level.upper()]
     logger.setLevel(level)
