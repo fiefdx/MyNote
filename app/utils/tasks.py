@@ -103,10 +103,6 @@ class NoteImportProcesser(TaskProcesser):
         except Exception, e:
             LOG.exception(e)
 
-        # if os.path.exists(import_path) and os.path.isdir(import_path):
-        #     shutil.rmtree(import_path)
-        #     LOG.info("delete import_path[%s] success.", import_path)
-
     def map(self, x):
         _, self.task_key, fname, fpath, storage_path, user_name, key, password = x
         result = (self.name, self.task_key, False)

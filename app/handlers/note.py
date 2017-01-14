@@ -794,5 +794,13 @@ class ImportAjaxHandler(BaseHandler):
                     LOG.error("Reindex all notes user[%s] failed!", user)
             else:
                 LOG.error("Import notes user[%s] failed!", user)
+            import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                       user_info.sha1,
+                                       "tmp",
+                                       "import",
+                                       "notes")
+            if os.path.exists(import_path) and os.path.isdir(import_path):
+                shutil.rmtree(import_path)
+                LOG.info("delete import_path[%s] success.", import_path)
         except Exception, e:
             LOG.exception(e)
