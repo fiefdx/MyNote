@@ -287,6 +287,42 @@
             </div>
         </form>
     </div>
+    <div id="import_note_success_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importNoteSuccessModalLabel" aria-hidden="true">
+        <form id="form_import_note" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_import_success" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="importNoteSuccessModalLabel" class="modal-title">{{_("Message")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Import notes success!")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div id="import_note_fail_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importNoteFailModalLabel" aria-hidden="true">
+        <form id="form_import_note" class="form-horizontal">
+            {% raw xsrf_form_html() %}
+            <div id="dialog_import_fail" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h3 id="importNoteFailModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                    </div>
+                    <div class="modal-body">
+                        <span class="col-xs-12">{{_("Import notes failed!")}}</span>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 {% end %}
 

@@ -48,7 +48,7 @@ from utils import htmlparser
 from models.item import RICH
 from utils import common_utils
 from utils.multi_async_tea import MultiProcessNoteTea
-from utils.multi_async_rich_import import MultiProcessNoteImport
+from utils.processer import ManagerClient
 
 
 LOG = logging.getLogger(__name__)
@@ -644,68 +644,22 @@ class RichSocketHandler(BaseSocketHandler):
                     note_id = msg['category']['note_id']
                     q = msg['category']['q']
                     yield load_category(category_name, note_id, user, self, user_locale, user_key, offset, q)
+            if msg.has_key('reinit'):
+                data = {}
+                data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
+                if data['notes'] != []:
+                    data['note'] = data['notes'][0]
+                    data['current_note_id'] = data['notes'][0]['id']
+                else:
+                    data['note'] = {'file_title':'', 'file_content':'', 'rich_content':''}
+                    data['current_note_id'] = None
+                data['note_list_action'] = 'init' # init, append
+                data['books'] = yield update_categories(user_locale, user)
+                data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
+                send_msg(json.dumps(data), user, self)
         else:
             self.close()
             LOG.info("Server close websocket!")
-
-class ImportHandler(BaseHandler):
-    @tornado.web.authenticated
-    @gen.coroutine
-    def post(self):
-        user = self.get_current_user_name()
-        user_key = self.get_current_user_key()
-        try:
-            fname = ""
-            fbody = ""
-            fileinfo = None
-            up_file_path = None
-            password = self.get_argument("passwd","")
-            password = common_utils.md5twice(password) if password != "" else ""
-            LOG.info("import notes encrypted: %s, %s", True if password != "" else False, password == user_key)
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-            multi_process_note_import = MultiProcessNoteImport(CONFIG["PROCESS_NUM"])
-            try:
-                if not CONFIG["WITH_NGINX"]:
-                    fileinfo = self.request.files["up_file"][0]
-                    fname = fileinfo["filename"]
-                    fbody = fileinfo["body"]
-                else:
-                    LOG.info("Post Nginx: %s", self.request.arguments)
-                    fileinfo = True
-                    fname = self.get_argument("up_file.name", "")
-                    up_file_path = self.get_argument("up_file.path", "")
-            except Exception, e:
-                fileinfo = None
-                LOG.debug("Upload file failed, You must be sure selected a file!")
-                LOG.exception(e)
-            if fileinfo != None:
-                fpath = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                     user_info.sha1, 
-                                     "tmp", 
-                                     "import", 
-                                     fname)
-                if not CONFIG["WITH_NGINX"]:
-                    fp = open(fpath, 'wb')
-                    fp.write(fbody)
-                    fp.close()
-                else:
-                    shutil.move(up_file_path, fpath)
-                flag = yield multi_process_note_import.import_notes(fname, user_info, user_key, password)
-                # index all rich notes
-                if flag:
-                    flag = index_whoosh.index_all_rich_by_num_user(1000, 
-                                                                   user, 
-                                                                   key = user_key if CONFIG["ENCRYPT"] else "",
-                                                                   db = DB,
-                                                                   ix = IX,
-                                                                   merge = True)
-                    if flag:
-                        LOG.info("Reindex all rich notes user[%s] success", user)
-                    else:
-                        LOG.error("Reindex all rich notes user[%s] failed!", user)
-            self.redirect("/rich")
-        except Exception, e:
-            LOG.exception(e)
 
 class ExportHandler(BaseHandler):
     @tornado.web.authenticated
@@ -822,3 +776,89 @@ class DeleteHandler(BaseHandler):
         except Exception, e:
             LOG.exception(e)
             self.render("info.html", info_msg = "Delete user[%s]'s rich notes failed." % user)
+
+class UploadAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        try:
+            fname = ""
+            fbody = ""
+            fileinfo = None
+            up_file_path = None
+            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            try:
+                if not CONFIG["WITH_NGINX"]:
+                    fileinfo = self.request.files["up_file"][0]
+                    fname = fileinfo["filename"]
+                    fbody = fileinfo["body"]
+                else:
+                    fileinfo = True
+                    fname = self.get_argument("up_file.name", "")
+                    up_file_path = self.get_argument("up_file.path", "")
+            except Exception, e:
+                fileinfo = None
+                LOG.error("Upload file failed, You must be sure selected a file!")
+                LOG.exception(e)
+            if fileinfo is not None:
+                fpath = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                     user_info.sha1,
+                                     "tmp",
+                                     "import",
+                                     fname)
+                if not CONFIG["WITH_NGINX"]:
+                    fp = open(fpath, 'wb')
+                    fp.write(fbody)
+                    fp.close()
+                else:
+                    shutil.move(up_file_path, fpath)
+        except Exception, e:
+            LOG.exception(e)
+        self.write({"result":"ok"})
+
+class ImportAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        result = {"flag": False, "total": 0, "tasks": 0}
+        try:
+            fname = self.get_argument("file_name", "")
+            password = self.get_argument("passwd", "")
+            password = common_utils.md5twice(password) if password != "" else ""
+            LOG.info("import notes encrypted: %s", True if password != "" else False)
+            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.import_rich_notes(fname, user_info, user_key, password)
+            # index all notes
+            if flag is not False and flag["flag"] == True:
+                result = flag
+                flag = index_whoosh.index_all_rich_by_num_user(1000,
+                                                               user,
+                                                               key = user_key if CONFIG["ENCRYPT"] else "",
+                                                               db = DB,
+                                                               ix = IX,
+                                                               merge = True)
+                if flag:
+                    LOG.info("Reindex all rich notes user[%s] success", user)
+                else:
+                    LOG.error("Reindex all rich notes user[%s] failed!", user)
+            else:
+                LOG.error("Import notes user[%s] failed!", user)
+
+            import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                       user_info.sha1,
+                                       "tmp",
+                                       "import",
+                                       "rich_notes",
+                                       "rich_notes")
+            import_root_path = os.path.split(import_path)[0]
+            if os.path.exists(import_root_path) and os.path.isdir(import_root_path):
+                shutil.rmtree(import_root_path)
+                LOG.info("delete import_path[%s] success.", import_root_path)
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)

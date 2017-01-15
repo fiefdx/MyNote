@@ -24,6 +24,7 @@ Modified on 2015-03-02
 
 import os
 import json
+import time
 import sqlite3
 import logging
 
@@ -460,13 +461,16 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                     LOG.debug("Update data item[%s] to %s success."%(item["id"], db_type))
                     break
             else:
-                result = True
+                result = False
                 LOG.info("The item[%s] have been in %s service, so ignore the insert action!"%(item["id"], db_type))
                 break
         except Exception, e:
             if conn:
                 conn.rollback()
-            LOG.exception(e)
+            if i < retries - 1:
+                time.sleep(0.5)
+            else:
+                LOG.exception(e)
             result = False
     # finally:
     #     if conn:
@@ -529,7 +533,7 @@ def get_data_by_sha1(sha1, conn = None):
         LOG.exception(e)
         result = False
     return result
-# 
+#
 # functions for note
 #
 def get_note_by_user_type_created_at(user_name, note_type, order = "DESC", offset = 0, limit = 20, conn = None):
@@ -1015,38 +1019,43 @@ def get_rich_by_id(doc_id, user_name, conn = None):
         result = False
     return result
 
-def get_rich_by_sha1(sha1, user_name, conn = None):
+def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
     result = False
-    try:
-        if conn == None:
-            conn = DB.conn_rich
-        if conn != False:
-            c = conn.cursor()
-            c.execute("SELECT * FROM RICH WHERE sha1 = '%s' and user_name = '%s'"%(sha1, user_name))
-            result = []
-            i = c.fetchone()
-            if i is None:
-                LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", sha1, user_name)
-                result = None
+    for i in xrange(retries):
+        try:
+            if conn == None:
+                conn = DB.conn_rich
+            if conn != False:
+                c = conn.cursor()
+                c.execute("SELECT * FROM RICH WHERE sha1 = '%s' and user_name = '%s'"%(sha1, user_name))
+                result = []
+                i = c.fetchone()
+                if i is None:
+                    LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", sha1, user_name)
+                    result = None
+                else:
+                    item = RICH()
+                    item.id = i[0]
+                    item.user_name = i[1]
+                    item.sha1 = i[2]
+                    item.created_at = i[3]
+                    item.updated_at = i[4]
+                    item.file_title = i[5]
+                    item.file_content = i[6]
+                    item.rich_content = i[7]
+                    item.file_path = i[8]
+                    item.description = i[9]
+                    item.images = json.loads(i[10])
+                    item.type = i[11]
+                    result = item
+                LOG.debug("Get a user[%s]'s rich[%s] from db success.", user_name, sha1)
+                break
+        except Exception, e:
+            if i < retries - 1:
+                time.sleep(0.5)
             else:
-                item = RICH()
-                item.id = i[0]
-                item.user_name = i[1]
-                item.sha1 = i[2]
-                item.created_at = i[3]
-                item.updated_at = i[4]
-                item.file_title = i[5]
-                item.file_content = i[6]
-                item.rich_content = i[7]
-                item.file_path = i[8]
-                item.description = i[9]
-                item.images = json.loads(i[10])
-                item.type = i[11]
-                result = item
-            LOG.debug("Get a user[%s]'s rich[%s] from db success.", user_name, sha1)
-    except Exception, e:
-        LOG.exception(e)
-        result = False
+                LOG.exception(e)
+            result = False
     return result
 
 def get_rich_num_by_type_user(note_type, user_name, conn = None):

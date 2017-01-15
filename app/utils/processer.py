@@ -15,7 +15,7 @@ from multiprocessing import Process, Queue, Pipe
 import toro
 from tornado import gen
 
-from utils.tasks import get_key, NoteImportProcesser
+from utils.tasks import get_key, NoteImportProcesser, RichImportProcesser
 from models.mapping import Mapping
 from models.task import StopSignal
 from config import CONFIG
@@ -108,7 +108,7 @@ class Worker(Process):
                               backup_count = 5,
                               console = True)
         LOG = logging.getLogger("worker")
-        LOG.propagate = False
+        # LOG.propagate = False
         LOG.info("Worker(%03d) start", self.wid)
         try:
             threads = []
@@ -151,9 +151,15 @@ class Dispatcher(StoppableThread):
                         self.task_queue.put(job)
                         self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= 1
-                    LOG.info("dispatch over: %s, %s, %s", command, file_name, user.sha1)
+                    LOG.info("dispatch notes over: %s, %s, %s", command, file_name, user.sha1)
                 elif command == ImportRich:
-                    pass
+                    processer = self.mapping.get("rich")
+                    task_key = get_key(file_name, user)
+                    for job in processer.iter(file_name, user, user_key, password):
+                        self.task_queue.put(job)
+                        self.tasks[task_key]["total"] += 1
+                    self.tasks[task_key]["total"] -= 1
+                    LOG.info("dispatch rich notes over: %s, %s, %s", command, file_name, user.sha1)
         except Exception, e:
             LOG.exception(e)
         self.task_queue.put(StopSignal)
@@ -166,7 +172,6 @@ class Collector(StoppableThread):
         self.pid = pid
         self.result_queue = result_queue
         self.mapping = mapping
-        self.datas = {}
         self.tasks = tasks
 
     def run(self):
@@ -179,12 +184,11 @@ class Collector(StoppableThread):
                     LOG.debug("collect: %s", task)
                     if task != StopSignal:
                         flag = False
-                        if self.datas.has_key(task[1]):
-                            self.datas[task[1]], flag = self.mapping.get(task[0]).reduce(self.datas[task[1]], task[2])
+                        if self.tasks.has_key(task[1]):
+                            self.tasks[task[1]]["tasks"], flag = self.mapping.get(task[0]).reduce(self.tasks[task[1]]["tasks"], task[2])
                         else:
-                            self.datas[task[1]], flag = self.mapping.get(task[0]).reduce(0, task[2])
-                        if self.datas[task[1]] == self.tasks[task[1]]["total"]:
-                            self.tasks[task[1]]["tasks"] = self.datas[task[1]]
+                            self.tasks[task[1]]["tasks"], flag = self.mapping.get(task[0]).reduce(0, task[2])
+                        if flag and self.tasks[task[1]]["flag"] is False:
                             self.tasks[task[1]]["flag"] = True
                     else:
                         break
@@ -222,7 +226,7 @@ class Manager(Process):
                               backup_count = 5,
                               console = True)
         LOG = logging.getLogger("manager")
-        LOG.propagate = False
+        # LOG.propagate = False
         LOG.info("Manager start")
         try:
             threads = []
@@ -247,12 +251,17 @@ class Manager(Process):
                     while self.tasks[task_key]["flag"] == False:
                         time.sleep(0.1)
                     self.pipe_client.send((command, self.tasks[task_key]))
+                    del self.tasks[task_key]
                 elif command == ImportRich:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import rich %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False}
                     self.queue.put((command, file_name, user, user_key, password))
+                    while self.tasks[task_key]["flag"] == False:
+                        time.sleep(0.1)
+                    self.pipe_client.send((command, self.tasks[task_key]))
+                    del self.tasks[task_key]
                 # elif command == Get:
                 #     if self.tasks.has_key(task_key):
                 #         self.pipe_client.send((command, self.tasks[task_key]))
@@ -283,6 +292,7 @@ class ManagerClient(object):
             ManagerClient.WRITE_LOCK = toro.Lock()
             mapping = Mapping()
             mapping.add(NoteImportProcesser())
+            mapping.add(RichImportProcesser())
             p = Manager(pipe_client, TaskQueue, ResultQueue, mapping)
             p.daemon = True
             ManagerClient.PROCESS_LIST.append(p)
@@ -317,7 +327,30 @@ class ManagerClient(object):
             LOG.debug("End import notes %s[%s]", file_name, user.user_name)
         LOG.info("import notes result: %s", r[1])
         if r[1]["flag"]:
-            result = True
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def import_rich_notes(self, file_name, user, user_key, password):
+        """
+        file_name: is uploaded file's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start import rich notes %s[%s]", file_name, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get import rich notes Lock %s[%s]", file_name, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((ImportRich, file_name, user, user_key, password))
+            LOG.debug("Send import rich notes %s[%s] end", file_name, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV import rich notes %s[%s]", file_name, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End import rich notes %s[%s]", file_name, user.user_name)
+        LOG.info("import notes rich result: %s", r[1])
+        if r[1]["flag"]:
+            result = r[1]
         raise gen.Return(result)
 
     def close(self):

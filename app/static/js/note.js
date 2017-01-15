@@ -224,6 +224,14 @@ function noteInit (scheme, locale) {
                 });
             }
 
+            if (data.option) {
+                if (data.option == "import_notes_success") {
+                    $("#import_note_success_modal").modal('show');
+                } else if (data.option == "import_notes_fail") {
+                    $("#import_note_fail_modal").modal('show');
+                }
+            }
+
             $body.removeClass("loading");
             $div_note_text.removeClass("loading");
         };
@@ -516,7 +524,7 @@ function noteInit (scheme, locale) {
         }
 
         function importNotesAjax() {
-            var result = false;
+            var result = {"flag": false, "total": 0, "tasks": 0};
             var file_name = $('form#form_import input#up_file').val();
             var password = $('form#form_import input#notes_passwd').val();
             var xsrf = $('form#form_import input[name=_xsrf]').val();
@@ -527,13 +535,21 @@ function noteInit (scheme, locale) {
                 url: location.protocol + "//" + local + "/importnotesajax",
                 data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
                 success: function(data, textStatus) {
-                    result = true;
+                    result = data;
                 },
                 error: function() {
                     alert("import notes failed!");
                 }
             });
-            window.location.href = location.protocol + "//" + local + "/note";
+            var option = "";
+            if (result.flag == true && result.total == result.tasks) {
+                option = "import_notes_success";
+            } else {
+                option = "import_notes_fail";
+            }
+            var data = {};
+            data['reinit'] = {'cmd':'search', 'option':option};
+            socket.send(JSON.stringify(data));
             $body.removeClass("loading");
             return result;
         }
@@ -542,7 +558,6 @@ function noteInit (scheme, locale) {
             $body.addClass("loading");
             action = "import_notes";
             uploadNotesAjax();
-            console.log("uploadnotes success!");
         }
 
         $('#form_search').submit(function () {

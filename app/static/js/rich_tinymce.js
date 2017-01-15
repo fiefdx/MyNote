@@ -343,6 +343,14 @@ function noteInit (scheme, locale) {
                     tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
                 }
 
+                if (data.option) {
+                    if (data.option == "import_notes_success") {
+                        $("#import_note_success_modal").modal('show');
+                    } else if (data.option == "import_notes_fail") {
+                        $("#import_note_fail_modal").modal('show');
+                    }
+                }
+
                 $body.removeClass("loading");
                 $body.removeClass("saving");
                 $div_note_text.removeClass("loading");
@@ -633,11 +641,10 @@ function noteInit (scheme, locale) {
     function importNotes() {
         $body.addClass("loading");
         action = "import_notes";
-        $('#form_import').submit();
-        // upload_notes_ajax();
+        uploadNotesAjax();
     }
 
-    function upload_notes_ajax() {
+    function uploadNotesAjax() {
         /*
             prepareing ajax file upload
             url: the url of script file handling the uploaded files
@@ -648,14 +655,15 @@ function noteInit (scheme, locale) {
             error: callback function when the ajax failed
 
             <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
-        */
-        result = false;
+         */
+        var file_name = $('form#form_import input#up_file').val();
+        var password = $('form#form_import input#notes_passwd').val();
+        var xsrf = $('form#form_import input[name=_xsrf]').val();
         $.ajaxFileUpload({
-            url:'/importrichnotes',
+            url:'/uploadrichnotesajax',
             secureuri:false,
             fileElementId:'up_file',
             dataType: 'xml',
-            async: false,
             success: function (data, status) {
                 if(typeof(data.error) != 'undefined') {
                     if(data.error != '') {
@@ -664,19 +672,42 @@ function noteInit (scheme, locale) {
                         alert(data.msg);
                     }
                 } else {
-                    // var name = data.getElementById("name").innerHTML;
-                    // var url = data.getElementById("url").innerHTML;
-                    // document.getElementById('bootstrap-wysihtml5-insert-image-url').value = url;
-                    console.log("up_file ok");
-                    result = true;
+                    importNotesAjax(file_name, password, xsrf);
                 }
             },
             error: function (data, status, e) {
                 alert(e);
             }
         })
+    }
+
+    function importNotesAjax(file_name, password, xsrf) {
+        var result = {"flag": false, "total": 0, "tasks": 0};
+        $.ajax({
+            type: "post",
+            async: false,
+            url: location.protocol + "//" + local + "/importrichnotesajax",
+            data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
+            success: function(data, textStatus) {
+                result = data;
+            },
+            error: function() {
+                alert("import notes failed!");
+            }
+        });
+        var option = "";
+        if (result.flag == true && result.total == result.tasks) {
+            option = "import_notes_success";
+        } else {
+            option = "import_notes_fail";
+        }
+        var data = {};
+        data['reinit'] = {'cmd':'reinit', 'option':option};
+        console.log(data);
+        socket.send(JSON.stringify(data));
+        $body.removeClass("loading");
         return result;
-    }  
+    }
 
     function onChange() {
         // $('.wysihtml5-sandbox').contents().find('html,body').scrollTop(note_scroll);

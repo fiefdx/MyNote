@@ -29,7 +29,6 @@ from utils import common
 from threading import Thread
 import multiprocessing
 from utils.multi_async_tea import MultiProcessNoteTea
-from utils.multi_async_rich_import import MultiProcessNoteImport as RichNoteImport
 from utils.processer import ManagerClient
 
 PLATFORM = [platform.system(), platform.architecture()[0]]
@@ -38,8 +37,6 @@ PLATFORM = [platform.system(), platform.architecture()[0]]
 if PLATFORM[0].lower() != "windows":
     crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     common.Servers.CRYPT_SERVER = crypt_server
-    rich_server = RichNoteImport(CONFIG["PROCESS_NUM"])
-    common.Servers.RICH_SERVER = rich_server
     processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
     common.Servers.PROCESSER_SERVER = processer_server
 else:
@@ -99,7 +96,8 @@ class Application(tornado.web.Application):
                     (r"/rich/websocket/", rich.RichSocketHandler),
                     (r"/exportrichnotes", rich.ExportHandler),
                     (r"/deleterichnotes", rich.DeleteHandler),
-                    (r"/importrichnotes", rich.ImportHandler),
+                    (r"/uploadrichnotesajax", rich.UploadAjaxHandler),
+                    (r"/importrichnotesajax", rich.ImportAjaxHandler),
                     (r"/picture", picture.PictureHandler),
                     (r"/picture/", picture.PictureHandler),
                     (r"/picture/(?P<sha1>[a-fA-F\d]{40})", picture.PictureHandler),
@@ -362,8 +360,6 @@ if __name__ == "__main__":
         if PLATFORM[0].lower() == "windows":
             crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
             common.Servers.CRYPT_SERVER = crypt_server
-            rich_server = RichNoteImport(CONFIG["PROCESS_NUM"])
-            common.Servers.RICH_SERVER = rich_server
             processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
             common.Servers.PROCESSER_SERVER = processer_server
         webserver = WebServer()

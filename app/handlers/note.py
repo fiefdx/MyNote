@@ -612,6 +612,19 @@ class NoteSocketHandler(BaseSocketHandler):
             cmd = msg['notes']['cmd']
             if cmd == 'delete':
                 pass
+        if msg.has_key('reinit'):
+            data = {}
+            data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
+            if data['notes'] != []:
+                data['note'] = data['notes'][0]
+                data['current_note_id'] = data['notes'][0]['id']
+            else:
+                data['note'] = {'file_title':'', 'file_content':''}
+                data['current_note_id'] = None
+            data['note_list_action'] = 'init'
+            data['books'] = yield update_categories(user_locale, user)
+            data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
+            send_msg(json.dumps(data), user, self)
 
 class ExportHandler(BaseHandler):
     @tornado.web.authenticated
@@ -771,17 +784,18 @@ class ImportAjaxHandler(BaseHandler):
     def post(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
+        result = {"flag": False, "total": 0, "tasks": 0}
         try:
             fname = self.get_argument("file_name", "")
             password = self.get_argument("passwd", "")
-            LOG.debug("ImportAjaxHandler: file_name: %s, password: %s", fname, password)
             password = common_utils.md5twice(password) if password != "" else ""
             LOG.info("import notes encrypted: %s", True if password != "" else False)
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
             flag = yield manager_client.import_notes(fname, user_info, user_key, password)
             # index all notes
-            if flag:
+            if flag is not False and flag["flag"] == True:
+                result = flag
                 flag = index_whoosh.index_all_note_by_num_user(1000,
                                                                user,
                                                                key = user_key if CONFIG["ENCRYPT"] else "",
@@ -804,3 +818,4 @@ class ImportAjaxHandler(BaseHandler):
                 LOG.info("delete import_path[%s] success.", import_path)
         except Exception, e:
             LOG.exception(e)
+        self.write(result)
