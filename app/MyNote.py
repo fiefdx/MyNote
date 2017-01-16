@@ -56,7 +56,7 @@ cwd = "."
 
 define("host", default = CONFIG["SERVER_HOST"], help = "run bind the given host", type = str)
 define("port", default = CONFIG["SERVER_PORT"], help = "run on the given port", type = int)
-define("log", default = "MyNote.log", help = "specify the log file", type = str)
+define("log", default = CONFIG["LOG_FILE_NAME"], help = "specify the log file", type = str)
 
 LOG = logging.getLogger(__name__)
 

@@ -71,6 +71,7 @@ try:
     CONFIG["PID_PATH"] = cwd
     if not CONFIG.has_key("FUNCTIONS"):
         CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
+    CONFIG["LOG_FILE_NAME"] = "MyNote.log"
 except Exception, e:
     print e
 
