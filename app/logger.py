@@ -9,7 +9,8 @@ import os
 import logging
 import logging.handlers
 
-CWD = os.path.split(os.path.realpath(__file__))[0]
+#CWD = os.path.split(os.path.realpath(__file__))[0]
+CWD = "."
 
 LEVELS = {'NOSET': logging.NOTSET,
           'DEBUG': logging.DEBUG,

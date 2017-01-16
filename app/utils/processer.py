@@ -97,8 +97,7 @@ class Worker(Process):
         LOG.warning("Worker(%03d) Caught signal: %s", self.wid, sig)
 
     def run(self):
-        logger.config_logging(logger_name = "worker",
-                              file_name = ("worker_%s" % self.wid + ".log"),
+        logger.config_logging(file_name = ("worker_%s" % self.wid + ".log"),
                               log_level = CONFIG["LOG_LEVEL"],
                               dir_name = "logs",
                               day_rotate = False,
@@ -107,8 +106,8 @@ class Worker(Process):
                               max_size = 20,
                               backup_count = 5,
                               console = True)
-        LOG = logging.getLogger("worker")
-        # LOG.propagate = False
+        LOG = logging.getLogger(__name__)
+        LOG.propagate = False
         LOG.info("Worker(%03d) start", self.wid)
         try:
             threads = []
@@ -136,7 +135,7 @@ class Dispatcher(StoppableThread):
         self.mapping = mapping
 
     def run(self):
-        LOG = logging.getLogger("manager")
+        LOG = logging.getLogger(__name__)
         LOG.propagate = False
         LOG.info("Dispatcher start")
         try:
@@ -175,7 +174,7 @@ class Collector(StoppableThread):
         self.tasks = tasks
 
     def run(self):
-        LOG = logging.getLogger("manager")
+        LOG = logging.getLogger(__name__)
         LOG.info("Collector(%03d) start", self.pid)
         try:
             while True:
@@ -215,8 +214,7 @@ class Manager(Process):
         self.stop = True
 
     def run(self):
-        logger.config_logging(logger_name = "manager",
-                              file_name = "manager.log",
+        logger.config_logging(file_name = "manager.log",
                               log_level = CONFIG["LOG_LEVEL"],
                               dir_name = "logs",
                               day_rotate = False,
@@ -225,8 +223,8 @@ class Manager(Process):
                               max_size = 20,
                               backup_count = 5,
                               console = True)
-        LOG = logging.getLogger("manager")
-        # LOG.propagate = False
+        LOG = logging.getLogger(__name__)
+        LOG.propagate = False
         LOG.info("Manager start")
         try:
             threads = []

@@ -23,7 +23,7 @@ from models.item import NOTE, RICH, PICTURE
 from models.task import TaskProcesser, StopSignal
 from config import CONFIG
 
-LOG = logging.getLogger("worker")
+LOG = logging.getLogger(__name__)
 
 def get_key(file_name, user):
     return "%s_%s" % (file_name, user.sha1)
