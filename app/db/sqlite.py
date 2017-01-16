@@ -27,6 +27,7 @@ import json
 import time
 import sqlite3
 import logging
+from multiprocessing import Lock
 
 from models.item import PICTURE as PIC
 from models.item import HTML
@@ -36,6 +37,12 @@ from models.item import RICH
 from config import CONFIG
 
 LOG = logging.getLogger(__name__)
+
+NoteLock = Lock()
+ImageLock = Lock()
+RichLock = Lock()
+FlagLock = Lock()
+UserLock = Lock()
 
 class DB(object):
     html = "HTML"
@@ -52,7 +59,7 @@ class DB(object):
     db_note_path = None
     db_user_path = None
     db_flag_path = None
-    DB_PATHS = ["db_html_path", "db_pic_path", "db_rich_path", 
+    DB_PATHS = ["db_html_path", "db_pic_path", "db_rich_path",
                 "db_note_path", "db_user_path", "db_flag_path"]
 
     conn_html = None
@@ -242,11 +249,12 @@ def get_db_path(root_path, db_type):
 
 def update_flag(index_name, conn = None):
     result = False
+    # FlagLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_flag
-        sql = {DB.html: "UPDATE FLAG SET new_index_time = (SELECT old_index_time FROM FLAG WHERE index_name = 'HTML') WHERE index_name = 'HTML';", 
-               DB.rich: "UPDATE FLAG SET new_index_time = (SELECT old_index_time FROM FLAG WHERE index_name = 'RICH') WHERE index_name = 'RICH';", 
+        sql = {DB.html: "UPDATE FLAG SET new_index_time = (SELECT old_index_time FROM FLAG WHERE index_name = 'HTML') WHERE index_name = 'HTML';",
+               DB.rich: "UPDATE FLAG SET new_index_time = (SELECT old_index_time FROM FLAG WHERE index_name = 'RICH') WHERE index_name = 'RICH';",
                DB.note: "UPDATE FLAG SET new_index_time = (SELECT old_index_time FROM FLAG WHERE index_name = 'NOTE') WHERE index_name = 'NOTE';"
                }
         if conn != False:
@@ -259,16 +267,17 @@ def update_flag(index_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # FlagLock.release()
     return result
 
 def update_old_flag(index_name, conn = None):
     result = False
+    # FlagLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_flag
-        sql = {DB.html: "UPDATE FLAG SET old_index_time = datetime('now', 'localtime') WHERE index_name = 'HTML';", 
-               DB.rich: "UPDATE FLAG SET old_index_time = datetime('now', 'localtime') WHERE index_name = 'RICH';", 
+        sql = {DB.html: "UPDATE FLAG SET old_index_time = datetime('now', 'localtime') WHERE index_name = 'HTML';",
+               DB.rich: "UPDATE FLAG SET old_index_time = datetime('now', 'localtime') WHERE index_name = 'RICH';",
                DB.note: "UPDATE FLAG SET old_index_time = datetime('now', 'localtime') WHERE index_name = 'NOTE';"
                }
         if conn != False:
@@ -281,7 +290,7 @@ def update_old_flag(index_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # FlagLock.release()
     return result
 
 def get_flag_from_db(index_name, conn = None):
@@ -301,15 +310,18 @@ def get_flag_from_db(index_name, conn = None):
                 LOG.debug("Get a flag[%s] from db[%s] success.", result, index_name)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
+    # locks = {DB.rich: RichLock,
+    #          DB.note: NoteLock,
+    #          DB.pic: ImageLock,
+    #          DB.user: UserLock}
     result = False
-    sql = {DB.html: "INSERT INTO HTML VALUES (NULL,?,?,?,?,?)", 
-           DB.rich: "INSERT INTO RICH VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)", 
+    sql = {DB.html: "INSERT INTO HTML VALUES (NULL,?,?,?,?,?)",
+           DB.rich: "INSERT INTO RICH VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)",
            DB.note: "INSERT INTO NOTE VALUES (NULL,?,?,?,?,?,?,?,?,?)",
-           DB.pic: "INSERT INTO PIC VALUES (NULL,?,?,?,?)", 
+           DB.pic: "INSERT INTO PIC VALUES (NULL,?,?,?,?)",
            DB.user: "INSERT INTO USER VALUES (NULL,?,?,?,?,?,?,?)"
            }
     sql_update = {DB.html: ("UPDATE HTML SET "
@@ -317,7 +329,7 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                             "file_name = ?, "
                             "file_content = ?, "
                             "file_path = ? "
-                            "WHERE sha1 = ?;"), 
+                            "WHERE sha1 = ?;"),
                   DB.rich: ("UPDATE RICH SET "
                             "updated_at = ?, "
                             "sha1 = ?, "
@@ -328,7 +340,7 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                             "description = ?, "
                             "images = ?, "
                             "type = ? "
-                            "WHERE id = ?;"), 
+                            "WHERE id = ?;"),
                   DB.note: ("UPDATE NOTE SET "
                             "updated_at = ?, "
                             "sha1 = ?, "
@@ -341,7 +353,7 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                   DB.pic: ("UPDATE PIC SET "
                            "file_name = ?, "
                            "file_path = ? "
-                           "WHERE sha1 = ?;"), 
+                           "WHERE sha1 = ?;"),
                   DB.user: ("UPDATE USER SET "
                             "user_pass = ?, "
                             "note_books = ?, "
@@ -355,87 +367,89 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
     if db_type == DB.html:
         if conn == None:
             conn = DB.conn_html
-        sql_param = (item["sha1"], 
-                     item["updated_at"], 
-                     item["file_name"], 
-                     item["file_content"], 
+        sql_param = (item["sha1"],
+                     item["updated_at"],
+                     item["file_name"],
+                     item["file_content"],
                      item["file_path"])
-        sql_update_param = (item["updated_at"], 
-                            item["file_name"], 
-                            item["file_content"], 
-                            item["file_path"], 
+        sql_update_param = (item["updated_at"],
+                            item["file_name"],
+                            item["file_content"],
+                            item["file_path"],
                             item["sha1"])
     elif db_type == DB.rich:
         if conn == None:
             conn = DB.conn_rich
-        sql_param = (item["user_name"], 
-                     item["sha1"], 
-                     item["created_at"], 
-                     item["updated_at"], 
-                     item["file_title"], 
-                     item["file_content"], 
-                     item["rich_content"], 
-                     item["file_path"], 
-                     item["description"], 
-                     item["images"], 
+        sql_param = (item["user_name"],
+                     item["sha1"],
+                     item["created_at"],
+                     item["updated_at"],
+                     item["file_title"],
+                     item["file_content"],
+                     item["rich_content"],
+                     item["file_path"],
+                     item["description"],
+                     item["images"],
                      item["type"])
-        sql_update_param = (item["updated_at"], 
-                            item["sha1"], 
-                            item["file_title"], 
-                            item["file_content"], 
-                            item["rich_content"], 
-                            item["file_path"], 
-                            item["description"], 
-                            item["images"], 
-                            item["type"], 
+        sql_update_param = (item["updated_at"],
+                            item["sha1"],
+                            item["file_title"],
+                            item["file_content"],
+                            item["rich_content"],
+                            item["file_path"],
+                            item["description"],
+                            item["images"],
+                            item["type"],
                             item["id"])
     elif db_type == DB.note:
         if conn == None:
             conn = DB.conn_note
-        sql_param = (item["user_name"], 
-                     item["sha1"], 
-                     item["created_at"], 
-                     item["updated_at"], 
-                     item["file_title"], 
-                     item["file_content"], 
-                     item["file_path"], 
-                     item["description"], 
+        sql_param = (item["user_name"],
+                     item["sha1"],
+                     item["created_at"],
+                     item["updated_at"],
+                     item["file_title"],
+                     item["file_content"],
+                     item["file_path"],
+                     item["description"],
                      item["type"])
-        sql_update_param = (item["updated_at"], 
-                            item["sha1"], 
-                            item["file_title"], 
-                            item["file_content"], 
-                            item["file_path"], 
-                            item["description"], 
-                            item["type"], 
+        sql_update_param = (item["updated_at"],
+                            item["sha1"],
+                            item["file_title"],
+                            item["file_content"],
+                            item["file_path"],
+                            item["description"],
+                            item["type"],
                             item["id"])
     elif db_type == DB.pic:
         if conn == None:
             conn = DB.conn_pic
-        sql_param = (item["sha1"], 
-                     item["imported_at"], 
-                     item["file_name"], 
+        sql_param = (item["sha1"],
+                     item["imported_at"],
+                     item["file_name"],
                      item["file_path"])
-        sql_update_param = (item["file_name"], 
-                            item["file_path"], 
+        sql_update_param = (item["file_name"],
+                            item["file_path"],
                             item["sha1"])
     elif db_type == DB.user:
         if conn == None:
             conn = DB.conn_user
         sql_param = (item["sha1"],
-                     item["user_name"], 
-                     item["user_pass"], 
-                     item["note_books"], 
-                     item["rich_books"], 
-                     item["user_language"], 
+                     item["user_name"],
+                     item["user_pass"],
+                     item["note_books"],
+                     item["rich_books"],
+                     item["user_language"],
                      item["register_time"])
-        sql_update_param = (item["user_pass"], 
-                            item["note_books"], 
-                            item["rich_books"], 
-                            item["user_language"], 
+        sql_update_param = (item["user_pass"],
+                            item["note_books"],
+                            item["rich_books"],
+                            item["user_language"],
                             item["user_name"])
 
     for i in xrange(retries):
+        # if db_type in locks:
+        #     locks[db_type].acquire()
         try:
             if conn != False:
                 c = conn.cursor()
@@ -471,7 +485,8 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                 time.sleep(0.5)
             else:
                 LOG.exception(e)
-            result = False
+        # if db_type in locks:
+        #     locks[db_type].release()
     # finally:
     #     if conn:
     #         conn.close()
@@ -503,7 +518,6 @@ def get_data_from_db(conn = None):
             LOG.debug("get all picture from db success.")
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_data_by_sha1(sha1, conn = None):
@@ -531,7 +545,6 @@ def get_data_by_sha1(sha1, conn = None):
             LOG.debug("get picture from db by sha1[%s] success."%sha1)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 #
 # functions for note
@@ -568,7 +581,6 @@ def get_note_by_user_type_created_at(user_name, note_type, order = "DESC", offse
             LOG.debug("get all note from db success.")
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_note_by_flag_iter(flag, conn = None):
@@ -715,7 +727,6 @@ def get_note_by_id(doc_id, user_name, conn = None):
             LOG.debug("Get a user[%s]'s note[%s] from db success.", user_name, doc_id)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_note_by_sha1(sha1, user_name, conn = None):
@@ -747,7 +758,6 @@ def get_note_by_sha1(sha1, user_name, conn = None):
             LOG.debug("Get a user[%s]'s note[%s] from db success.", user_name, sha1)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_note_num_by_type_user(note_type, user_name, conn = None):
@@ -763,11 +773,11 @@ def get_note_num_by_type_user(note_type, user_name, conn = None):
             LOG.debug("Get user[%s]'s notebook[%s] num[%s] from db success.", user_name, note_type, i)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def delete_note_by_id(user_name, doc_id, conn = None):
     result = False
+    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -781,11 +791,12 @@ def delete_note_by_id(user_name, doc_id, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # NoteLock.release()
     return result
 
 def delete_note_by_type(user_name, note_type, conn = None):
     result = False
+    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -799,12 +810,13 @@ def delete_note_by_type(user_name, note_type, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # NoteLock.release()
     return result
 
 
 def delete_note_by_user(user_name, conn = None):
     result = False
+    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -819,7 +831,7 @@ def delete_note_by_user(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # NoteLock.release()
     return result
 
 #
@@ -859,7 +871,6 @@ def get_rich_by_user_type_created_at(user_name, note_type, order = "DESC", offse
             LOG.debug("get all rich from db success.")
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_rich_by_flag_iter(flag, conn = None):
@@ -1016,7 +1027,6 @@ def get_rich_by_id(doc_id, user_name, conn = None):
             LOG.debug("Get a user[%s]'s rich[%s] from db success.", user_name, doc_id)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
@@ -1055,7 +1065,6 @@ def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
                 time.sleep(0.5)
             else:
                 LOG.exception(e)
-            result = False
     return result
 
 def get_rich_num_by_type_user(note_type, user_name, conn = None):
@@ -1072,11 +1081,11 @@ def get_rich_num_by_type_user(note_type, user_name, conn = None):
             LOG.debug("Get user[%s]'s rich notebook[%s] num[%s] from db success.", user_name, note_type, i)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def delete_rich_by_id(user_name, doc_id, conn = None):
     result = False
+    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1090,11 +1099,12 @@ def delete_rich_by_id(user_name, doc_id, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # RichLock.release()
     return result
 
 def delete_rich_by_type(user_name, note_type, conn = None):
     result = False
+    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1108,11 +1118,12 @@ def delete_rich_by_type(user_name, note_type, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # RichLock.release()
     return result
 
 def delete_rich_by_user(user_name, conn = None):
     result = False
+    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1127,7 +1138,7 @@ def delete_rich_by_user(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # RichLock.release()
     return result
 
 #
@@ -1156,7 +1167,6 @@ def get_html_from_db(conn = None):
             LOG.debug("Get all html[%s] from db success."%len(result))
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_html_from_db_iter(conn = None):
@@ -1232,7 +1242,6 @@ def get_html_by_id(doc_id, conn = None):
             LOG.debug("Get a html[%s] from db success.", doc_id)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_html_by_sha1(sha1, conn = None):
@@ -1260,7 +1269,6 @@ def get_html_by_sha1(sha1, conn = None):
             LOG.debug("Get a html[%s] from db success.", sha1)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def get_html_num_from_db(conn = None):
@@ -1276,7 +1284,6 @@ def get_html_num_from_db(conn = None):
             LOG.debug("Get a html num[%s] from db success.", i)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 #
@@ -1309,11 +1316,11 @@ def get_user_from_db(user_name, conn = None):
             LOG.debug("Get user[%s] data from db success.", user_name)
     except Exception, e:
         LOG.exception(e)
-        result = False
     return result
 
 def delete_user_from_db(user_name, conn = None):
     result = False
+    # UserLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_user
@@ -1327,8 +1334,5 @@ def delete_user_from_db(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-        result = False
+    # UserLock.release()
     return result
-
-
-

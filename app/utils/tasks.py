@@ -13,10 +13,9 @@ import logging
 import datetime
 import hashlib
 import dateutil
-from multiprocessing import Lock
 
 from db import sqlite
-from db.sqlite import DB
+from db.sqlite import DB, NoteLock, ImageLock, RichLock
 from utils.archive import Archive
 from utils import common_utils
 from utils import htmlparser
@@ -25,10 +24,6 @@ from models.task import TaskProcesser, StopSignal
 from config import CONFIG
 
 LOG = logging.getLogger("worker")
-
-NoteLock = Lock()
-ImageLock = Lock()
-RichLock = Lock()
 
 def get_key(file_name, user):
     return "%s_%s" % (file_name, user.sha1)
