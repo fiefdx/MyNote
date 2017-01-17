@@ -1,7 +1,7 @@
 ################## requirements.txt ##################
 
 setuptools
-tornado
+tornado >= 4.4.2
 toro
 whoosh
 jieba

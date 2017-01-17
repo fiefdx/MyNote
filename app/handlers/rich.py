@@ -832,7 +832,13 @@ class ImportAjaxHandler(BaseHandler):
             LOG.info("import notes encrypted: %s", True if password != "" else False)
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
-            flag = yield manager_client.import_rich_notes(fname, user_info, user_key, password)
+            _ = yield manager_client.import_rich_notes(fname, user_info, user_key, password)
+            flag = yield manager_client.get_rate_of_progress(fname, user_info)
+            while flag is not False and flag["flag"] == False:
+                LOG.debug("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
+                yield gen.sleep(1)
+                flag = yield manager_client.get_rate_of_progress(fname, user_info)
+            LOG.info("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
             # index all notes
             if flag is not False and flag["flag"] == True:
                 result = flag

@@ -28,7 +28,7 @@ ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ImportRich = "IMPORT_RICH"
 ImportNote = "IMPORT_NOTE"
 Exit = "EXIT"
-Get = "GET"
+GetRate = "GET_RATE"
 
 class StoppableThread(Thread):
     """
@@ -266,26 +266,23 @@ class Manager(Process):
                     if not self.tasks.has_key(task_key):
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False}
                     self.queue.put((command, file_name, user, user_key, password))
-                    while self.tasks[task_key]["flag"] == False:
-                        time.sleep(0.1)
                     self.pipe_client.send((command, self.tasks[task_key]))
-                    del self.tasks[task_key]
                 elif command == ImportRich:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import rich %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False}
                     self.queue.put((command, file_name, user, user_key, password))
-                    while self.tasks[task_key]["flag"] == False:
-                        time.sleep(0.1)
                     self.pipe_client.send((command, self.tasks[task_key]))
-                    del self.tasks[task_key]
-                # elif command == Get:
-                #     if self.tasks.has_key(task_key):
-                #         self.pipe_client.send((command, self.tasks[task_key]))
-                #     else:
-                #         self.pipe_client.send((command, None))
-                #     LOG.debug("Manager get %s[%s]", user.sha1, user.user_name)
+                elif command == GetRate:
+                    task_key = get_key(file_name, user)
+                    LOG.debug("Manager get rate %s[%s]", user.sha1, user.user_name)
+                    if self.tasks.has_key(task_key):
+                        self.pipe_client.send((command, self.tasks[task_key]))
+                        if self.tasks[task_key]["flag"] == True:
+                            del self.tasks[task_key]
+                    else:
+                        self.pipe_client.send((command, None))
                 elif command == Exit:
                     self.task_queue.put(StopSignal)
                     self.result_queue.put(StopSignal)
@@ -344,7 +341,7 @@ class ManagerClient(object):
             r = ManagerClient.PROCESS_DICT["manager"][1].recv()
             LOG.debug("End import notes %s[%s]", file_name, user.user_name)
         LOG.info("import notes result: %s", r[1])
-        if r[1]["flag"]:
+        if r[1]:
             result = r[1]
         raise gen.Return(result)
 
@@ -366,8 +363,31 @@ class ManagerClient(object):
             LOG.debug("RECV import rich notes %s[%s]", file_name, user.user_name)
             r = ManagerClient.PROCESS_DICT["manager"][1].recv()
             LOG.debug("End import rich notes %s[%s]", file_name, user.user_name)
-        LOG.info("import notes rich result: %s", r[1])
-        if r[1]["flag"]:
+        LOG.info("import rich notes result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def get_rate_of_progress(self, file_name, user):
+        """
+        file_name: is uploaded file's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start get rate %s[%s]", file_name, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get rate Lock %s[%s]", file_name, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((GetRate, file_name, user, "", ""))
+            LOG.debug("Send get rate %s[%s] end", file_name, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV get rate %s[%s]", file_name, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End get rate %s[%s]", file_name, user.user_name)
+        LOG.info("get rate result: %s", r[1])
+        if r[1]:
             result = r[1]
         raise gen.Return(result)
 
