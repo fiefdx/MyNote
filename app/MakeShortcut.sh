@@ -10,6 +10,6 @@ Exec=\"$cmd_path/MyNote.sh\" %F
 Icon=$cmd_path/static/favicon.ico
 Type=Application
 Terminal=false
-Categories=GNOME;GTK;Utility;Development;"
+Categories=GNOME;GTK;Utility;Network;Office;"
 echo -e "$content" > ./MyNote.desktop
 sudo chmod +x ./MyNote.desktop
