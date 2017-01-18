@@ -182,7 +182,7 @@ function noteInit (scheme, locale) {
                 loading_notes_list = false;
             }
             // init current_note_id
-            if (data.current_note_id){
+            if (data.current_note_id) {
                 console.log("note_id: " + current_note_id);
                 $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
                 current_note_id = data.current_note_id;
@@ -199,12 +199,14 @@ function noteInit (scheme, locale) {
                     }
                 }
             }
+
             // init selected note
-            if (data.note){
+            if (data.note) {
                 console.log("selected note: " + current_note_id);
                 $note_title.val(data.note.file_title);
                 $note_content.val(data.note.file_content);
             }
+
             // init current_category
             if (data.current_category && data.current_category != current_category){
                 $('a#' + current_category + '_query').attr("class","list-group-item");
@@ -216,8 +218,21 @@ function noteInit (scheme, locale) {
             }
             // info for save note
             if (data.save) {
-                $('#save_note_modal').modal('show');
+                if (data.save == "save_ok") {
+                    $('#save_note_ok_modal').modal('show');
+                } else if (data.save == "save_exist") {
+                    $('#save_note_exist_modal').modal('show');
+                } else if (data.save == "save_fail") {
+                    $('#save_note_fail_modal').modal('show');
+                } else if (data.save == "create_ok") {
+                    $('#create_note_ok_modal').modal('show');
+                } else if (data.save == "create_exist") {
+                    $('#create_note_exist_modal').modal('show');
+                } else if (data.save == "create_fail") {
+                    $('#create_note_fail_modal').modal('show');
+                }
             }
+
             if (data.note_list_action && data.note_list_action == "init") {
                 $(document).ready(function() {
                     $notes_list.scrollTop(0);
@@ -333,11 +348,11 @@ function noteInit (scheme, locale) {
             console.log("save note: " + current_note_id);
             $div_note_text.addClass("loading");
             var data = {};
-            data['note'] = {'cmd':'save', 
-                            'note_id':current_note_id, 
-                            'note_title':$note_title.val(), 
-                            'note_content':$note_content.val(), 
-                            'type':current_category, 
+            data['note'] = {'cmd':'save',
+                            'note_id':current_note_id,
+                            'note_title':$note_title.val(),
+                            'note_content':$note_content.val(),
+                            'type':current_category,
                             'q':$('#search_input').val()};
             socket.send(JSON.stringify(data));
         }
@@ -356,10 +371,17 @@ function noteInit (scheme, locale) {
             if (current_category != 'Search' && current_category != 'All') {
                 $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
                 current_note_id = null;
-                $note_title.val($new_note_title.val());
+                console.log("create note: " + current_note_id);
+                $div_note_text.addClass("loading");
+                var data = {};
+                data['note'] = {'cmd':'save',
+                                'note_id':current_note_id,
+                                'note_title':$new_note_title.val(),
+                                'note_content':'',
+                                'type':current_category,
+                                'q':$('#search_input').val()};
                 $new_note_title.val('');
-                $note_content.val('');
-                saveNote();
+                socket.send(JSON.stringify(data));
                 setTimeout(function() {
                     $note_content.focus();
                 }, 0);

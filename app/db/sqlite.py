@@ -312,7 +312,7 @@ def get_flag_from_db(index_name, conn = None):
         LOG.exception(e)
     return result
 
-def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
+def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retries = 3):
     # locks = {DB.rich: RichLock,
     #          DB.note: NoteLock,
     #          DB.pic: ImageLock,
@@ -465,18 +465,27 @@ def save_data_to_db(item, db_type, mode = "INSERT", conn = None, retries = 3):
                     LOG.debug("Save data item[%s] to %s success."%(item["id"], db_type))
                 break
         except sqlite3.IntegrityError:
-            if db_type != DB.user: # and db_type != db.pic:
-                LOG.info("The item[%s] have been in %s service, so update it!"%(item["id"], db_type))
-                if conn != False:
-                    c = conn.cursor()
-                    c.execute(sql_update[db_type], sql_update_param)
-                    conn.commit()
-                    result = True
-                    LOG.debug("Update data item[%s] to %s success."%(item["id"], db_type))
+            try:
+                if mode == "INSERT OR UPDATE":
+                    if db_type != DB.user: # and db_type != db.pic:
+                        LOG.info("The item[%s] have been in %s service, so update it!"%(item["id"], db_type))
+                        if conn != False:
+                            c = conn.cursor()
+                            c.execute(sql_update[db_type], sql_update_param)
+                            conn.commit()
+                            result = True
+                            LOG.debug("Update data item[%s] to %s success."%(item["id"], db_type))
+                            break
+                    else:
+                        result = False
+                        LOG.info("The item[%s] have been in %s service, so ignore the insert action!"%(item["id"], db_type))
+                        break
+                else:
+                    result = None
                     break
-            else:
-                result = False
-                LOG.info("The item[%s] have been in %s service, so ignore the insert action!"%(item["id"], db_type))
+            except sqlite3.IntegrityError:
+                result = None
+                LOG.info("The same item[%s] have been in %s service, so ignore the insert & update action!"%(item["id"], db_type))
                 break
         except Exception, e:
             if conn:

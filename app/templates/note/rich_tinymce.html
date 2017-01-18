@@ -281,10 +281,64 @@
         </div>
     </form>
 </div>
-<div id="save_note_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+<div id="create_note_ok_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
     <form id="form_save_note" class="form-horizontal">
         {% raw xsrf_form_html() %}
-        <div id="dialog_save" class="modal-dialog">
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Message")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Create note success!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="create_note_exist_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("The same title and content note already exists, please try other title or content!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="create_note_fail_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Create note failed!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="save_note_ok_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -292,6 +346,42 @@
                 </div>
                 <div class="modal-body">
                     <span class="col-xs-12">{{_("Save note success!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="save_note_exist_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("The same title and content note already exists, please try other title or content!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="save_note_fail_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="saveNoteModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_save_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="saveNoteModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Save note failed!")}}</span>
                 </div>
                 <div class="modal-footer">
                 </div>

@@ -362,6 +362,7 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
         data = {}
         if note.type != 'Search' and note.type != 'All':
             LOG.debug("Create Note")
+            save = "create_fail"
             note.created_at = datetime.datetime.now(dateutil.tz.tzlocal())
             note.updated_at = note.created_at
             note.description = common_utils.get_description_text(note.file_content, 
@@ -369,18 +370,23 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
             if user_key != "":
                 # note.encrypt(user_key)
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
-            flag = sqlite.save_data_to_db(note.to_dict(), DB.note, conn = DB.conn_note)
+            flag = sqlite.save_data_to_db(note.to_dict(), DB.note, conn = DB.conn_note, mode = "INSERT")
             if flag == True:
                 flag = index_whoosh.index_all_note_by_num_flag(100, key = user_key)
                 if flag == True:
                     LOG.info("Index note[%s] user[%s] success.", note.file_title, user)
                 else:
                     LOG.info("Index note[%s] user[%s] failed.", note.file_title, user)
+                save = "create_ok"
+            elif flag == None:
+                save = "create_exist"
                 # should index new note here.
             if user_key != "":
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
             data['notes'] = (yield update_notes(note.type, user, user_key = user_key))['notes_list']
+            if save != "create_ok":
+                note.parse_dict(data['notes'][0])
             data['current_note_id'] = data['notes'][0]['id']
             data['note_list_action'] = 'init'
             tmp_books = yield update_categories(user_locale, user)
@@ -388,6 +394,7 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
             note.created_at = str(note.created_at)[:19]
             note.updated_at = str(note.updated_at)[:19]
             data['note'] = note.to_dict()
+            data['save'] = save
             send_msg(json.dumps(data), user, handler)
     except Exception, e:
         LOG.exception(e)
@@ -459,6 +466,7 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             delete_note(note_dict, user, handler, user_locale, page = 1, user_key = user_key)
         elif flag.sha1 != note.sha1:
             LOG.debug("Update Note")
+            save = "save_fail"
             note.created_at = flag.created_at
             note.updated_at = datetime.datetime.now(dateutil.tz.tzlocal())
             note.description = common_utils.get_description_text(note.file_content, 
@@ -467,18 +475,25 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
                 # note.encrypt(user_key)
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
             flag = sqlite.save_data_to_db(note.to_dict(), DB.note, mode = "UPDATE", conn = DB.conn_note)
-            if flag == True:
+            if flag == True: # save note success
                 flag = index_whoosh.index_all_note_by_num_flag(100, user_key)
                 if flag == True:
                     LOG.info("Update index note[%s] user[%s] success.", note.file_title, user)
                 else:
                     LOG.info("Update index note[%s] user[%s] failed.", note.file_title, user)
-                # should index updated note here.
+                save = "save_ok"
+            elif flag == None: # have a same content note exist
+                save = "save_exist"
+
             if user_key != "":
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
+
             if note_dict["type"] != "Search":
-                data['note_list_action'] = 'update'
+                if save == "save_ok":
+                    data['note_list_action'] = 'update'
+                else:
+                    data['note_list_action'] = 'append'
                 data['current_note_id'] = note.id
                 note.created_at = str(note.created_at)[:19]
                 note.updated_at = str(note.updated_at)[:19]
@@ -486,19 +501,22 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             # save note in Search category
             else:
                 data['current_note_id'] = note.id
-                note = sqlite.get_note_by_id(data['current_note_id'], user, conn = DB.conn_note)
-                if user_key != "":
-                    # note.decrypt(user_key)
-                    note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
+                if save == "save_ok":
+                    note = sqlite.get_note_by_id(data['current_note_id'], user, conn = DB.conn_note)
+                    if user_key != "":
+                        # note.decrypt(user_key)
+                        note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
+
                 note.created_at = str(note.created_at)[:19]
                 note.updated_at = str(note.updated_at)[:19]
                 data['note'] = note.to_dict()
                 data['note_list_action'] = 'append'
                 data['current_category'] = 'Search'
-            data['save'] = 'ok'
+
+            data['save'] = save
             send_msg(json.dumps(data), user, handler)
         elif flag.sha1 == note.sha1:
-            data['save'] = 'ok'
+            data['save'] = 'save_ok'
             send_msg(json.dumps(data), user, handler)
     except Exception, e:
         LOG.exception(e)
