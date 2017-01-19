@@ -48,7 +48,6 @@ import handlers.note as note
 import handlers.rich as rich
 import handlers.help as help
 import handlers.picture as picture
-import handlers.test as test
 import logger
 
 # cwd = os.path.split(os.path.realpath(__file__))[0]
@@ -96,12 +95,6 @@ class Application(tornado.web.Application):
                     (r"/picture/(?P<sha1>[a-fA-F\d]{40})/", picture.PictureHandler),
                     (r"/help", help.HelpHandler),
                     (r"/help/", help.HelpHandler),
-                    (r"/upload", test.TestHandler),
-                    (r"/upload/", test.TestHandler),
-                    (r"/uploadget", test.TestHandler1),
-                    (r"/uploadget/", test.TestHandler1),
-                    (r"/websocket", test.SocketHandler),
-                    (r"/websocket/", test.SocketHandler),
                     ]
         settings = dict(template_path = os.path.join(cwd, "templates"),
                         static_path = os.path.join(cwd, "static"),
@@ -149,8 +142,8 @@ if __name__ == "__main__":
         http_server = tornado.httpserver.HTTPServer(Application(), 
                                                     no_keep_alive = False, 
                                                     ssl_options = {
-                                                    "certfile": os.path.join(cwd, "server_test.crt"),
-                                                    "keyfile": os.path.join(cwd, "server_test.key")},
+                                                    "certfile": os.path.join(cwd, "keys", "server.crt"),
+                                                    "keyfile": os.path.join(cwd, "keys", "server.key")},
                                                     max_buffer_size = CONFIG["MAX_BUFFER_SIZE"])
         LOG.info("Scheme: %s", CONFIG["SERVER_SCHEME"])
     elif CONFIG["SERVER_SCHEME"].lower() == "http":
