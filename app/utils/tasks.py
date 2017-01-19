@@ -222,7 +222,7 @@ class RichImportProcesser(TaskProcesser):
                     os.makedirs(notes_path)
                     LOG.info("create rich notes path[%s] success", notes_path)
         user.rich_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "INSERT OR UPDATE", conn = self.db.conn_user)
+        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "UPDATE", conn = self.db.conn_user)
         if flag:
             LOG.info("import rich notes user[%s] categories success", user.user_name)
         else:
