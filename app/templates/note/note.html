@@ -107,7 +107,7 @@
 
 {% block modal %}
 <div id="import_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="importModalLabel" aria-hidden="true" onfocus="this.blur();">
-    <form id="form_import" class="form-horizontal" enctype="multipart/form-data" action="/importnotes" method="post">
+    <form id="form_import" class="form-horizontal" enctype="multipart/form-data">
         {% raw xsrf_form_html() %}
         <div id="dialog_import" class="modal-dialog">
             <div class="modal-content">

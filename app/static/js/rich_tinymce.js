@@ -733,6 +733,17 @@ function noteInit (scheme, locale) {
         console.log(data);
         socket.send(JSON.stringify(data));
         $body.removeClass("loading");
+
+        $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+            var input = $(this).parents('.input-group').find(':text'),
+                log = numFiles > 1 ? numFiles + ' files selected' : label;
+            if( input.length ) {
+                input.val(log);
+            } else {
+                if( log ) alert(log);
+            }
+        });
+
         return result;
     }
 

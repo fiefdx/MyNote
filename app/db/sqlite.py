@@ -467,7 +467,7 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
         except sqlite3.IntegrityError:
             try:
                 if mode == "INSERT OR UPDATE":
-                    if db_type != DB.user: # and db_type != db.pic:
+                    if db_type != DB.user:
                         LOG.info("The item[%s] have been in %s service, so update it!"%(item["id"], db_type))
                         if conn != False:
                             c = conn.cursor()

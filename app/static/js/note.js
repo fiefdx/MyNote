@@ -522,7 +522,7 @@ function noteInit (scheme, locale) {
                 error: callback function when the ajax failed
 
                 <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
-             */
+            */
             $.ajaxFileUpload({
                 url:'/uploadnotesajax',
                 secureuri:false,
@@ -550,7 +550,7 @@ function noteInit (scheme, locale) {
             var file_name = $('form#form_import input#up_file').val();
             var password = $('form#form_import input#notes_passwd').val();
             var xsrf = $('form#form_import input[name=_xsrf]').val();
-            $('#export_modal').modal('hide');
+            // $('#export_modal').modal('hide');
             $.ajax({
                 type: "post",
                 async: false,
@@ -570,9 +570,20 @@ function noteInit (scheme, locale) {
                 option = "import_notes_fail";
             }
             var data = {};
-            data['reinit'] = {'cmd':'search', 'option':option};
+            data['reinit'] = {'cmd':'reinit', 'option':option};
             socket.send(JSON.stringify(data));
             $body.removeClass("loading");
+
+            $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+                var input = $(this).parents('.input-group').find(':text'),
+                    log = numFiles > 1 ? numFiles + ' files selected' : label;
+                if( input.length ) {
+                    input.val(log);
+                } else {
+                    if( log ) alert(log);
+                }
+            });
+
             return result;
         }
 

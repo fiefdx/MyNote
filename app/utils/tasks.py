@@ -127,7 +127,7 @@ class NoteImportProcesser(TaskProcesser):
                     # type is unicode
                     note_dict["type"] = common_utils.sha1sum(note_dict["type"])
                 NoteLock.acquire()
-                flag = sqlite.save_data_to_db(note_dict, self.db.note, mode = "INSERT", conn = self.db.conn_note)
+                flag = sqlite.save_data_to_db(note_dict, self.db.note, mode = "INSERT OR UPDATE", conn = self.db.conn_note)
                 NoteLock.release()
                 if flag == True:
                     LOG.debug("write note to database success")
@@ -222,7 +222,7 @@ class RichImportProcesser(TaskProcesser):
                     os.makedirs(notes_path)
                     LOG.info("create rich notes path[%s] success", notes_path)
         user.rich_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "UPDATE", conn = self.db.conn_user)
+        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "INSERT OR UPDATE", conn = self.db.conn_user)
         if flag:
             LOG.info("import rich notes user[%s] categories success", user.user_name)
         else:
@@ -314,7 +314,7 @@ class RichImportProcesser(TaskProcesser):
                         # type is unicode
                         note_dict["type"] = common_utils.sha1sum(note_dict["type"])
                     RichLock.acquire()
-                    flag = sqlite.save_data_to_db(note_dict, self.db.rich, mode = "INSERT", conn = self.db.conn_rich)
+                    flag = sqlite.save_data_to_db(note_dict, self.db.rich, mode = "INSERT OR UPDATE", conn = self.db.conn_rich)
                     RichLock.release()
                     if flag == True:
                         LOG.debug("write rich note to database success")
