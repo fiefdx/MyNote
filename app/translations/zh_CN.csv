@@ -83,6 +83,8 @@
 "Are you sure to update all notes index?","你确定要更新所有笔记的索引？"
 "You must create a category first by click 'Create Category', then create note under the category!","你必须先通过‘新建类别’创建自己的类别，再在新创建的类别下创建笔记！"
 "You can't create note under the 'Search' category, please to create note under your own category!","你不可以在‘搜索’类别下创建笔记，请在自己创建的类别下创建笔记！"
+"You can't delete 'All' category, you just can delete your own categories!","你无法删除‘所有笔记’类别，你只可以删除自己建立的类别！"
+"You can't delete 'Search' category, you just can delete your own categories!","你无法删除‘搜索’类别，你只可以删除自己建立的类别！"
 "Update","更新"
 "Are you sure to delete all notes?","你确定要删除所有的笔记吗？"
 "Are you sure to sign out?","你确定要登出笔记系统吗？"

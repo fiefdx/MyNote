@@ -530,6 +530,42 @@
         </div>
     </form>
 </div>
+<div id="delete_all_category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteAllModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_create_note_all" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_create_note_all" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="createNoteAllModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("You can't delete 'All' category, you just can delete your own categories!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="delete_search_category_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="createNoteSearchModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_create_note_search" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_create_note_search" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="createNoteSearchModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("You can't delete 'Search' category, you just can delete your own categories!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
 {% end %}
 
 {% block javascript %}

@@ -593,6 +593,10 @@ function noteInit (scheme, locale) {
         if (current_category != 'Search' && current_category != 'All') {
             changeDialogMarginTop();
             $('#delete_category_modal').modal('show');
+        } else if (current_category == 'All') {
+            $('#delete_all_category_modal').modal('show');
+        } else if (current_category == 'Search') {
+            $('#delete_search_category_modal').modal('show');
         }
     }
 
