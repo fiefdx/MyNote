@@ -343,6 +343,12 @@ function noteInit (scheme, locale) {
                         $('#create_note_exist_modal').modal('show');
                     } else if (data.save == "create_fail") {
                         $('#create_note_fail_modal').modal('show');
+                    } else if (data.save == "create_category_ok") {
+                        $('#create_category_ok_modal').modal('show');
+                    } else if (data.save == "create_category_exist") {
+                        $('#create_category_exist_modal').modal('show');
+                    } else if (data.save == "create_category_fail") {
+                        $('#create_category_fail_modal').modal('show');
                     }
                 }
 

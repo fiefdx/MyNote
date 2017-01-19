@@ -242,30 +242,46 @@ def search_query(msg_category, user, handler, user_locale, page = 1, user_key = 
     send_msg(json.dumps(data), user, handler)
 
 @gen.coroutine
-def create_category(category_name, user, handler, user_locale):
+def create_category(category_name, user, handler, user_locale, user_key = ""):
     sha1_category_name = common_utils.sha1sum(category_name)
     category = {"name":category_name, "sha1":sha1_category_name}
     LOG.info("create category: %s[%s] for %s", category_name, sha1_category_name, user)
     user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
     if user_info:
+        save = "create_category_fail"
         note_books = json.loads(user_info.note_books)
         if category not in note_books:
             note_books.append(category)
+            save = "create_category_ok"
+        else:
+            save = "create_category_exist"
         user_info.note_books = json.dumps(note_books)
         flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
-        if flag:
-            data = {}
-            data['note_list_action'] = 'init'
+        data = {}
+        data['note_list_action'] = 'init'
+        if flag and save == "create_category_ok":
             data['notes'] = []
             data['note'] = {'file_title':'', 'file_content':''}
             data['current_note_id'] = None
             tmp_books = yield update_categories(user_locale, user)
             data['books'] = tmp_books
             data['current_category'] = sha1_category_name
-            send_msg(json.dumps(data), user, handler)
+            data['save'] = save
             LOG.info("create category[%s] success", category_name)
         else:
-            LOG.error("create category[%s] failed", category_name)
+            data['notes'] = (yield update_notes('All', user, user_key = user_key))['notes_list']
+            if data['notes'] != []:
+                data['note'] = data['notes'][0]
+                data['current_note_id'] = data['notes'][0]['id']
+            else:
+                data['note'] = {'file_title':'', 'file_content':''}
+                data['current_note_id'] = None
+            tmp_books = yield update_categories(user_locale, user)
+            data['current_category'] = 'All'
+            data['books'] = tmp_books
+            data['save'] = save
+            LOG.warning("create category[%s] failed: %s", category_name, save)
+        send_msg(json.dumps(data), user, handler)
 
 @gen.coroutine
 def delete_category(sha1_category_name, user, handler, user_locale, user_key = ""):
@@ -611,7 +627,7 @@ class NoteSocketHandler(BaseSocketHandler):
             LOG.info("category operation: %s", cmd)
             if cmd == 'create':
                 category_name = msg['category']['category_name'].strip()
-                yield create_category(category_name, user, self, user_locale);
+                yield create_category(category_name, user, self, user_locale, user_key = user_key);
             elif cmd == 'delete':
                 category_name = msg['category']['category_name'].strip()
                 yield delete_category(category_name, user, self, user_locale, user_key = user_key);
