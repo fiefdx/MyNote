@@ -1,5 +1,5 @@
 ---
-# MyNote-0.0.8-beta by YangHaitao
+# MyNote by YangHaitao
 
 # APP_DEBUG
 # if true: listen localhost:SERVER_PORT, and ignore the SERVER_HOST, and ignore the BIND_LOCAL.
@@ -71,6 +71,11 @@ DELETE_ORIGINAL_FILE: false
 # a number config how many process start for import file task.
 # default 4
 PROCESS_NUM: 1
+
+# THREAD_NUM
+# a number config how many thread per process start for import file task.
+# default 1
+THREAD_NUM: 1
 
 # FUNCTIONS
 # functions that you want to use
