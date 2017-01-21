@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
 Created on 2013-10-27
@@ -55,11 +55,9 @@ import handlers.help as help
 import handlers.picture as picture
 import logger
 
+cwd = CONFIG["APP_PATH"]
 TRAY_TOOLTIP = "MyNote"
-TRAY_ICON = "./static/favicon.ico"
-
-# cwd = os.path.split(os.path.realpath(__file__))[0]
-cwd = "."
+TRAY_ICON = os.path.join(cwd, "static", "favicon.ico")
 
 define("host", default = CONFIG["SERVER_HOST"], help = "run bind the given host", type = str)
 define("port", default = CONFIG["SERVER_PORT"], help = "run on the given port", type = int)

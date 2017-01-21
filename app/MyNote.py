@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
 Created on 2013-10-27
@@ -50,8 +51,7 @@ import handlers.help as help
 import handlers.picture as picture
 import logger
 
-# cwd = os.path.split(os.path.realpath(__file__))[0]
-cwd = "."
+cwd = CONFIG["APP_PATH"]
 
 define("host", default = CONFIG["SERVER_HOST"], help = "run bind the given host", type = str)
 define("port", default = CONFIG["SERVER_PORT"], help = "run on the given port", type = int)

@@ -86,6 +86,8 @@ class ConsoleStreamHandler(logging.StreamHandler):
             stream = self.stream
             if unicode and isinstance(message, unicode):
                 enc = getattr(stream, 'encoding', 'utf-8')
+                if not enc: # just for pyinstaller None bugfix
+                    enc = 'utf-8'
                 message = message.encode(enc, 'replace')
             stream.write(message)
             stream.write(getattr(self, 'terminator', '\n'))

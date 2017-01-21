@@ -22,8 +22,10 @@ except ImportError:
 import os
 #
 # default config
-cwd = '.'
+# cwd = '.'
+cwd = os.path.split(os.path.realpath(__file__))[0]
 configpath = os.path.join(cwd, "configuration.yml")
+print configpath
 
 def update(**kwargs):
     config = load(stream = file(configpath), Loader = Loader)

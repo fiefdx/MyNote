@@ -17,6 +17,7 @@
 # ignore dirs
 
 requires/*
+dist/*
 
 # track dirs
 !requires/requirements.txt
