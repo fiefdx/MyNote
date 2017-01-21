@@ -1024,7 +1024,7 @@ def get_rich_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
                 if note_type == "All":
                     c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, limit, offset))
                 else:
-                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' and type = '%s' ORDER BY id %s LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
+                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' and type = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()

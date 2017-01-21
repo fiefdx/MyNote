@@ -12,6 +12,7 @@ Features
 4. note's content & title can be encrypt (images are not encryted)
 5. you can copy html web page content to rich text note, when you save it, MyNote will try to save the web page's images to local, it's very helpful when you read the note offline
 6. you can backup your notes by export your notes as one compressed file, and you can restore them by import the compressed file
+7. interface support english and chinese
 
 Configuration
 =============
