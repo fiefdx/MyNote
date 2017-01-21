@@ -11,7 +11,7 @@ block_cipher = None
 a = Analysis(['app/MyNote.py'],
              pathex=['/home/breeze/Develop/MyNote'],
              binaries=[],
-             datas=[('README', '.'),
+             datas=[('README.md', '.'),
                     ('app/keys', 'keys'),
                     ('app/static', 'static'),
                     ('app/templates', 'templates'),
