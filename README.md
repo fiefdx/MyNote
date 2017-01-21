@@ -4,6 +4,9 @@ An application for daily notes, you can write pure text note or rich text note, 
 by search some keywords. I have used it a few years in my daily life and work, and it help me a lot. I code it by myself, some
 code is old and may be ugly. It's not perfect, it's work well, it's very useful.
 
+It works like this:
+![Alt text](/doc/rich_note_en.png?raw=true "rich_text_note_page")
+
 Features
 ========
 1. local html pages import & search (it used in the early version, I'm not use it, since MyNote support rich text note)
@@ -100,13 +103,12 @@ FUNCTIONS:
   - search # home & search is for local html search, I'm not use it since MyNote support rich text note
   - note   # pure text note
   - rich   # rich text note
-  - help   # it's a empty page now will be complete in the future
+  - help   # it's a empty page right now, it will be complete in the future
 ```
 
 Installation
 ============
-You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, so I just show how to setup & install it on Xubuntu,
-I build a binary package by pyinstaller for Linux 64 bit.
+You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, so I just show how to setup & install it on Xubuntu.
 
 1. from source
    ```bash
@@ -149,4 +151,25 @@ I build a binary package by pyinstaller for Linux 64 bit.
    # you should see the login page, and the register button at top-right corner
    ```
 
+3. build binary package
+   ```bash
+   # run MyNote/build.sh
+   cd MyNote
+   ./build.sh
+   # it will generate a dist/MyNote directory
+   ```
+
+Operations & Screenshots
+========================
+
+1. login page, register a user, then you can login
+   ![Alt text](/doc/login_page_en.png?raw=true "login_page")
+
+2. rich text note page, create a category, then you can create note under it
+   ![Alt text](/doc/rich_note_en.png?raw=true "rich_text_note_page")
+
+3. pure text note page, create a category, then you can create note under it
+   ![Alt text](/doc/text_note_en.png?raw=true "pure_text_note_page")
+
+4. there is no direct operation for delete a note, you should empty the note's title & content, then save it, that will delete a note
 
