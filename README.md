@@ -1,6 +1,7 @@
 MyNote
 ======
 (中文版本请参看[这里](#mynote_zh))
+
 An application for daily notes, you can write pure text note or rich text note, and you can quickly find what you noted earlier
 by search some keywords. I have used it a few years in my daily life and work, and it help me a lot. I code it by myself, some
 code is old and may be ugly. It's not perfect, it's work well, it's very useful.
@@ -173,6 +174,14 @@ Operations & Screenshots
    ![Alt text](/doc/text_note_en.png?raw=true "pure_text_note_page")
 
 4. there is no direct operation for delete a note, you should empty the note's title & content, then save it, that will delete a note
+
+Binary Package Download Links
+=============================
+
+I build Windows 32bit package and Linux 64bit package, under windows the performance is not as good as under linux, but it still work well
+
+1. [Windows 32bit](https://pan.baidu.com/s/1pLnTRtx)
+2. [Linux 64bit](https://pan.baidu.com/s/1slRfu37)
 
 <a name="mynote_zh"><a>
 
@@ -350,3 +359,11 @@ FUNCTIONS:
    ![Alt text](/doc/text_note_zh.png?raw=true "pure_text_note_page")
 
 4. 笔记中没有直接删除一篇笔记的功能，把想要删除的笔记的标题和内容清空，再保存该笔记，该篇笔记就会被删除了
+
+二进制包下载地址
+=============
+
+我打包了Windows 32位和Linux 64位的二进制包，笔记在windows下的性能没有在linux下的性能好，不过依然工作正常
+
+1. [Windows 32位](https://pan.baidu.com/s/1pLnTRtx)
+2. [Linux 64位](https://pan.baidu.com/s/1slRfu37)
