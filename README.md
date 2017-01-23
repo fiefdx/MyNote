@@ -2,7 +2,7 @@ MyNote
 ======
 (中文版本请参看[这里](#mynote_zh))
 
-An application for daily notes, you can write pure text note or rich text note, and you can quickly find what you noted earlier
+An application for daily note-taking, you can write pure text note or rich text note, and you can quickly find what you noted earlier
 by search some keywords. I have used it a few years in my daily life and work, and it help me a lot. I code it by myself, some
 code is old and may be ugly. It's not perfect, it's work well, it's very useful.
 
