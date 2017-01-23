@@ -7,14 +7,15 @@ Created on 2016-01-09
 
 import time
 import logging
+import platform
 import threading
 from threading import Thread
-from Queue import Queue as TQueue
 from multiprocessing import Process, Queue, Pipe
 
 import toro
 from tornado import gen
 
+from db.sqlite import DB
 from utils.tasks import get_key, NoteImportProcesser, RichImportProcesser
 from models.mapping import Mapping
 from models.task import StopSignal
@@ -22,6 +23,8 @@ from config import CONFIG
 import logger
 
 LOG = logging.getLogger(__name__)
+
+PLATFORM = [platform.system(), platform.architecture()[0]]
 
 TaskQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
@@ -120,6 +123,11 @@ class Worker(Process):
         LOG.propagate = False
         LOG.info("Worker(%03d) start", self.wid)
         try:
+            if PLATFORM[0].lower() == "windows":
+                n = self.mapping.get("note")
+                n.db = DB()
+                n = self.mapping.get("rich")
+                n.db = DB()
             threads = []
             for i in xrange(CONFIG["THREAD_NUM"]):
                 t = Processer(i, self.task_queue, self.result_queue, self.mapping)
@@ -212,7 +220,7 @@ class Manager(Process):
     def __init__(self, pipe_client, task_queue, result_queue, mapping):
         Process.__init__(self)
         self.pipe_client = pipe_client
-        self.queue = TQueue(100)
+        self.queue = Queue(100)
         self.tasks = {}
         self.task_queue = task_queue
         self.result_queue = result_queue
@@ -247,6 +255,11 @@ class Manager(Process):
         LOG.propagate = False
         LOG.info("Manager start")
         try:
+            if PLATFORM[0].lower() == "windows":
+                n = self.mapping.get("note")
+                n.db = DB()
+                n = self.mapping.get("rich")
+                n.db = DB()
             threads = []
             dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queue, self.mapping)
             dispatcher.daemon = True
