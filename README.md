@@ -1,6 +1,7 @@
+
 MyNote
 ======
-(中文版本请参看[这里](#mynote_zh))
+(中文文档请参看[这里](#mynote_zh))
 
 An application for daily note-taking, you can write pure text note or rich text note, and you can quickly find what you noted earlier
 by search some keywords. I have used it a few years in my daily life and work, and it help me a lot. I code it by myself, some
@@ -8,6 +9,7 @@ code is old and may be ugly. It's not perfect, it's work well, it's very useful.
 
 It works like this:
 ![Alt text](/doc/rich_note_en.png?raw=true "rich_text_note_page")
+
 
 Features
 ========
@@ -18,6 +20,7 @@ Features
 5. you can copy html web page content to rich text note, when you save it, MyNote will try to save the web page's images to local, it's very helpful when you read the note offline
 6. you can backup your notes by export your notes as one compressed file, and you can restore them by import the compressed file
 7. interface support english and chinese
+
 
 Configuration
 =============
@@ -108,6 +111,7 @@ FUNCTIONS:
   - help   # it's a empty page right now, it will be complete in the future
 ```
 
+
 Installation
 ============
 You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, so I just show how to setup & install it on Xubuntu.
@@ -161,6 +165,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    # it will generate a dist/MyNote directory
    ```
 
+
 Operations & Screenshots
 ========================
 
@@ -175,6 +180,7 @@ Operations & Screenshots
 
 4. there is no direct operation for delete a note, you should empty the note's title & content, then save it, that will delete a note
 
+
 Binary Package Download Links
 =============================
 
@@ -185,6 +191,7 @@ I build Windows 32bit package and Linux 64bit package, under windows the perform
 
 <a name="mynote_zh"><a>
 
+
 MyNote
 ======
 这一个笔记应用，可以用来写纯文本笔记，或者富文本笔记，提供全文搜索功能可以快速查阅以往的笔记。在过去的几年里，我一直在用它来帮助我记住工作和生活中碰到的新知识。
@@ -193,6 +200,7 @@ MyNote
 
 笔记工作界面如下:
 ![Alt text](/doc/rich_note_zh.png?raw=true "rich_text_note_page")
+
 
 笔记特性
 ======
@@ -203,6 +211,7 @@ MyNote
 5. 复制到富文本笔记中的网页中的图片会自动保存到本地，方便离线时阅读笔记
 6. 可以将笔记备份成压缩包，也可以将备份的压缩包导入恢复笔记
 7. 笔记界面支持中文和英文
+
 
 笔记配置项
 ========
@@ -293,6 +302,7 @@ FUNCTIONS:
   - help   # 目前帮助页面还是空白页，之后会添加帮助文档内容
 ```
 
+
 笔记安装步骤
 ==========
 你可以从源码直接运行，也可以打包成可执行文件后运行，由于我用的是Xubuntu 64位，所以，就只写一下在Xubuntu下的安装步骤。
@@ -346,6 +356,7 @@ FUNCTIONS:
    # 脚本会自动生成dist/MyNote目录，MyNote就是打好的二进制包的根目录
    ```
 
+
 常见操作和截屏
 ===========
 
@@ -359,6 +370,7 @@ FUNCTIONS:
    ![Alt text](/doc/text_note_zh.png?raw=true "pure_text_note_page")
 
 4. 笔记中没有直接删除一篇笔记的功能，把想要删除的笔记的标题和内容清空，再保存该笔记，该篇笔记就会被删除了
+
 
 二进制包下载地址
 =============
