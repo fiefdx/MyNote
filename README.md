@@ -14,12 +14,13 @@ It works like this:
 Features
 ========
 1. local html pages import & search (it used in the early version, I'm not use it, since MyNote support rich text note)
-2. pure text notes
+2. pure text notes(now, I use it for old notes's compatibility)
 3. rich text notes based on html
 4. note's content & title can be encrypt (images are not encryted)
 5. you can copy html web page content to rich text note, when you save it, MyNote will try to save the web page's images to local, it's very helpful when you read the note offline
 6. you can backup your notes by export your notes as one compressed file, and you can restore them by import the compressed file
 7. interface support english and chinese
+
 
 
 Configuration
@@ -130,6 +131,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    # edit the configuration.yml file, before run it.
    # you can try to run MyNote.py or MyNoteGUI.py in terminal, check if error occur
    cd MyNote/app
+   # MyNote.py is a terminal application, MyNoteGUI.py is a GUI application(have a system tray icon) based on Wxpython
    python ./MyNote.py or python ./MyNoteGUI.py
 
    # run app/Install.sh
@@ -146,6 +148,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    # edit the configuration.yml
    # you can try to run MyNote or MyNoteGUI in terminal, check if error occur
    cd MyNote
+   # MyNote is a terminal application, MyNoteGUI is a GUI application(have a system tray icon) based on Wxpython
    ./MyNote or ./MyNoteGUI
 
    # run app/Install.sh
@@ -166,6 +169,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    ```
 
 
+
 Operations & Screenshots
 ========================
 
@@ -179,6 +183,7 @@ Operations & Screenshots
    ![Alt text](/doc/text_note_en.png?raw=true "pure_text_note_page")
 
 4. there is no direct operation for delete a note, you should empty the note's title & content, then save it, that will delete a note
+
 
 
 Binary Package Download Links
@@ -203,9 +208,9 @@ MyNote
 
 
 笔记特性
-======
+========
 1. 本地html文件导入和搜索功能（这个功能在我实现了富文本笔记后就基本不用了）
-2. 纯文本笔记功能
+2. 纯文本笔记功能（这个功能在我实现了富文本笔记后也基本不用了，目前，只用于老笔记的兼容）
 3. 富文本笔记功能（基于html）
 4. 笔记标题和内容加密功能（笔记中的图片是不会被加密的）
 5. 复制到富文本笔记中的网页中的图片会自动保存到本地，方便离线时阅读笔记
@@ -213,8 +218,9 @@ MyNote
 7. 笔记界面支持中文和英文
 
 
+
 笔记配置项
-========
+==========
 配置文件为 MyNote/app/configuration.yml 或 MyNote/configuration.yml （取决于是生成的二进制包运行，还是源码运行）
 ```yaml
 # APP_DEBUG
@@ -321,6 +327,7 @@ FUNCTIONS:
    # 在运行笔记之前要先更改configuration.yml配置文件
    # 可以在终端中运行MyNote.py或者MyNoteGUI.py，观察是否有报错
    cd MyNote/app
+   # MyNote.py是一个终端程序，MyNoteGUI.py是一个基于Wxpython的图形界面程序（会显示一个系统托盘图标）
    python ./MyNote.py 或 python ./MyNoteGUI.py
 
    # 运行app/Install.sh安装脚本
@@ -337,6 +344,7 @@ FUNCTIONS:
    # 在运行笔记之前要先更改configuration.yml配置文件
    # 可以在终端中运行MyNote或者MyNoteGUI，观察是否有报错
    cd MyNote
+   # MyNote是一个终端程序，MyNoteGUI是一个基于Wxpython的图形界面程序（会显示一个系统托盘图标）
    ./MyNote or ./MyNoteGUI
 
    # 运行app/Install.sh安装脚本
@@ -357,6 +365,7 @@ FUNCTIONS:
    ```
 
 
+
 常见操作和截屏
 ===========
 
@@ -370,6 +379,7 @@ FUNCTIONS:
    ![Alt text](/doc/text_note_zh.png?raw=true "pure_text_note_page")
 
 4. 笔记中没有直接删除一篇笔记的功能，把想要删除的笔记的标题和内容清空，再保存该笔记，该篇笔记就会被删除了
+
 
 
 二进制包下载地址
