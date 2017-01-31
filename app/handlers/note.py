@@ -53,7 +53,7 @@ from utils.processer import ManagerClient
 
 LOG = logging.getLogger(__name__)
 
-NOTE_NUM_PER_FETCH = 20
+NOTE_NUM_PER_FETCH = CONFIG["NOTE_NUM_PER_FETCH"]
 
 
 @gen.coroutine
@@ -107,8 +107,8 @@ class NoteHandler(BaseHandler):
                 LOG.info("Reindex all notes user[%s] success", user)
             else:
                 LOG.error("Reindex all notes user[%s] failed!", user)
-            self.render("note/note.html", 
-                        user = user, 
+            self.render("note/note.html",
+                        user = user,
                         current_nav = "Note",
                         scheme = CONFIG["SERVER_SCHEME"],
                         functions = CONFIG["FUNCTIONS"],
@@ -120,8 +120,8 @@ class NoteHandler(BaseHandler):
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
             fp = StringIO.StringIO(note.file_content.encode("utf-8"))
-            self.set_header("Content-Disposition", 
-                            "attachment; filename=%s.txt"%note.file_title.encode("utf-8").replace(" ", "_"))
+            self.set_header("Content-Disposition",
+                            "attachment; filename=%s.txt" % note.file_title.encode("utf-8").replace(" ", "_"))
             while True:
                 buf = fp.read(1024 * 4)
                 if not buf:
@@ -130,8 +130,8 @@ class NoteHandler(BaseHandler):
                 self.write(buf)
             self.finish()
         else:
-            self.render("note/note.html", 
-                    user = user, 
+            self.render("note/note.html",
+                    user = user,
                     current_nav = "Note",
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
@@ -192,18 +192,18 @@ def process_query(query, user, page = 1, user_key = ""):
     LOG.info("process query: %s", query)
     try:
         if query != "":
-            result = yield search_whoosh.search_query_page_note_user(IX.ix_note, 
-                                                                     query, 
-                                                                     DB.note, 
-                                                                     user, 
-                                                                     page = page, 
-                                                                     limits = NOTE_NUM_PER_FETCH, 
+            result = yield search_whoosh.search_query_page_note_user(IX.ix_note,
+                                                                     query,
+                                                                     DB.note,
+                                                                     user,
+                                                                     page = page,
+                                                                     limits = NOTE_NUM_PER_FETCH,
                                                                      key = user_key)
             if not result:
                 LOG.error("search_query_no_page_note_user result False!")
                 result = {}
                 result["totalcount"] = 0
-                result["result"] = []   
+                result["result"] = []
         else:
             result["totalcount"] = 0
             result["result"] = []
@@ -381,7 +381,7 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
             save = "create_fail"
             note.created_at = datetime.datetime.now(dateutil.tz.tzlocal())
             note.updated_at = note.created_at
-            note.description = common_utils.get_description_text(note.file_content, 
+            note.description = common_utils.get_description_text(note.file_content,
                                                                  CONFIG["NOTE_DESCRIPTION_LENGTH"])
             if user_key != "":
                 # note.encrypt(user_key)
@@ -551,44 +551,54 @@ class NoteSocketHandler(BaseSocketHandler):
     def open(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
-        if not CONFIG["ENCRYPT"]:
-            user_key = ""
-        user_locale = self.get_user_locale()
-        user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
-        if user_info:
-            if NoteSocketHandler.socket_handlers.has_key(user):
-                NoteSocketHandler.socket_handlers[user].add(self)
-                LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+        if user:
+            if not CONFIG["ENCRYPT"]:
+                user_key = ""
+            user_locale = self.get_user_locale()
+            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            if user_info:
+                if NoteSocketHandler.socket_handlers.has_key(user):
+                    NoteSocketHandler.socket_handlers[user].add(self)
+                    LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+                else:
+                    NoteSocketHandler.socket_handlers[user] = set()
+                    NoteSocketHandler.socket_handlers[user].add(self)
+                    LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+
+                LOG.info("open note websocket: %s", user)
+                LOG.info("note websocket users: %s", NoteSocketHandler.socket_handlers.keys())
+                data = {}
+                data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
+                if data['notes'] != []:
+                    data['note'] = data['notes'][0]
+                    data['current_note_id'] = data['notes'][0]['id']
+                else:
+                    data['note'] = {'file_title':'', 'file_content':''}
+                    data['current_note_id'] = None
+                data['note_list_action'] = 'init'
+                data['books'] = yield update_categories(user_locale, user)
+                send_msg(json.dumps(data), user, self)
             else:
-                NoteSocketHandler.socket_handlers[user] = set()
-                NoteSocketHandler.socket_handlers[user].add(self)
-                LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+                self.close()
+                LOG.info("Server close websocket!")
         else:
-            self.redirect("/login")
-        LOG.info("open note websocket: %s", user)
-        LOG.info("note websocket users: %s", NoteSocketHandler.socket_handlers.keys())
-        data = {}
-        data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
-        if data['notes'] != []:
-            data['note'] = data['notes'][0]
-            data['current_note_id'] = data['notes'][0]['id']
-        else:
-            data['note'] = {'file_title':'', 'file_content':''}
-            data['current_note_id'] = None
-        data['note_list_action'] = 'init'
-        data['books'] = yield update_categories(user_locale, user)
-        send_msg(json.dumps(data), user, self)
+            self.close()
+            LOG.info("Server close websocket!")
 
     @tornado.web.authenticated
     @gen.coroutine
     def on_close(self):
         user = self.get_current_user_name()
-        NoteSocketHandler.socket_handlers[user].remove(self)
-        LOG.info("close note websocket: %s", user)
-        LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
-        if len(NoteSocketHandler.socket_handlers[user]) == 0:
-            NoteSocketHandler.socket_handlers.pop(user)
-            LOG.info("note websocket remove user: %s", user)
+        if user and NoteSocketHandler.socket_handlers.has_key(user):
+            NoteSocketHandler.socket_handlers[user].remove(self)
+            LOG.info("close note websocket: %s", user)
+            LOG.info("note websocket[%s] len: %s", user, len(NoteSocketHandler.socket_handlers[user]))
+            if len(NoteSocketHandler.socket_handlers[user]) == 0:
+                NoteSocketHandler.socket_handlers.pop(user)
+                LOG.info("note websocket remove user: %s", user)
+        else:
+            self.close()
+            LOG.info("Server close websocket!")
 
     @tornado.web.authenticated
     @gen.coroutine
@@ -596,69 +606,73 @@ class NoteSocketHandler(BaseSocketHandler):
         multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
-        if not CONFIG["ENCRYPT"]:
-            user_key = ""
-        user_locale = self.get_user_locale()
-        msg = json.loads(msg)
-        data = {}
-        note_list = []
-        if msg.has_key('note'):
-            cmd = msg['note']['cmd']
-            if cmd == 'select':
-                note_id = msg['note']['note_id']
-                note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
-                if user_key != "":
-                    start_time = time.time()
-                    # note.decrypt(user_key)
-                    note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
-                    end_time = time.time()
-                    LOG.info("Decrypt note Time: %s", end_time - start_time)
-                data['note'] = note.to_dict()
-                data['current_note_id'] = note_id
-                send_msg(json.dumps(data), user, self)
-            elif cmd == 'save':
-                note_id = msg['note']['note_id']
-                if note_id == None:
-                    yield create_note(msg['note'], user, self, user_locale, user_key = user_key)
-                elif note_id != None:
-                    yield save_note(msg['note'], user, self, user_locale, page = 1, user_key = user_key)
-        if msg.has_key('category'):
-            cmd = msg['category']['cmd']
-            LOG.info("category operation: %s", cmd)
-            if cmd == 'create':
-                category_name = msg['category']['category_name'].strip()
-                yield create_category(category_name, user, self, user_locale, user_key = user_key);
-            elif cmd == 'delete':
-                category_name = msg['category']['category_name'].strip()
-                yield delete_category(category_name, user, self, user_locale, user_key = user_key);
-            elif cmd == 'select':
-                category_name = msg['category']['category_name'].strip()
-                yield select_catedory(category_name, user, self, user_locale, user_key = user_key);
-            elif cmd == 'search':
-                yield search_query(msg['category'], user, self, user_locale, page = 1, user_key = user_key);
-            elif cmd =='load':
-                category_name = msg['category']['category_name'].strip()
-                offset = msg['category']['offset']
-                note_id = msg['category']['note_id']
-                q = msg['category']['q']
-                yield load_category(category_name, note_id, user, self, user_locale, user_key, offset, q)
-        if msg.has_key('notes'):
-            cmd = msg['notes']['cmd']
-            if cmd == 'delete':
-                pass
-        if msg.has_key('reinit'):
+        if user:
+            if not CONFIG["ENCRYPT"]:
+                user_key = ""
+            user_locale = self.get_user_locale()
+            msg = json.loads(msg)
             data = {}
-            data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
-            if data['notes'] != []:
-                data['note'] = data['notes'][0]
-                data['current_note_id'] = data['notes'][0]['id']
-            else:
-                data['note'] = {'file_title':'', 'file_content':''}
-                data['current_note_id'] = None
-            data['note_list_action'] = 'init'
-            data['books'] = yield update_categories(user_locale, user)
-            data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
-            send_msg(json.dumps(data), user, self)
+            note_list = []
+            if msg.has_key('note'):
+                cmd = msg['note']['cmd']
+                if cmd == 'select':
+                    note_id = msg['note']['note_id']
+                    note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
+                    if user_key != "":
+                        start_time = time.time()
+                        # note.decrypt(user_key)
+                        note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
+                        end_time = time.time()
+                        LOG.info("Decrypt note Time: %s", end_time - start_time)
+                    data['note'] = note.to_dict()
+                    data['current_note_id'] = note_id
+                    send_msg(json.dumps(data), user, self)
+                elif cmd == 'save':
+                    note_id = msg['note']['note_id']
+                    if note_id == None:
+                        yield create_note(msg['note'], user, self, user_locale, user_key = user_key)
+                    elif note_id != None:
+                        yield save_note(msg['note'], user, self, user_locale, page = 1, user_key = user_key)
+            if msg.has_key('category'):
+                cmd = msg['category']['cmd']
+                LOG.info("category operation: %s", cmd)
+                if cmd == 'create':
+                    category_name = msg['category']['category_name'].strip()
+                    yield create_category(category_name, user, self, user_locale, user_key = user_key)
+                elif cmd == 'delete':
+                    category_name = msg['category']['category_name'].strip()
+                    yield delete_category(category_name, user, self, user_locale, user_key = user_key)
+                elif cmd == 'select':
+                    category_name = msg['category']['category_name'].strip()
+                    yield select_catedory(category_name, user, self, user_locale, user_key = user_key)
+                elif cmd == 'search':
+                    yield search_query(msg['category'], user, self, user_locale, page = 1, user_key = user_key)
+                elif cmd =='load':
+                    category_name = msg['category']['category_name'].strip()
+                    offset = msg['category']['offset']
+                    note_id = msg['category']['note_id']
+                    q = msg['category']['q']
+                    yield load_category(category_name, note_id, user, self, user_locale, user_key, offset, q)
+            if msg.has_key('notes'):
+                cmd = msg['notes']['cmd']
+                if cmd == 'delete':
+                    pass
+            if msg.has_key('reinit'):
+                data = {}
+                data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
+                if data['notes'] != []:
+                    data['note'] = data['notes'][0]
+                    data['current_note_id'] = data['notes'][0]['id']
+                else:
+                    data['note'] = {'file_title':'', 'file_content':''}
+                    data['current_note_id'] = None
+                data['note_list_action'] = 'init'
+                data['books'] = yield update_categories(user_locale, user)
+                data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
+                send_msg(json.dumps(data), user, self)
+        else:
+            self.close()
+            LOG.info("Server close websocket!")
 
 class ExportHandler(BaseHandler):
     @tornado.web.authenticated
@@ -687,11 +701,11 @@ class ExportHandler(BaseHandler):
             os.makedirs(user_notes_path)
             LOG.info("create user[%s] path[%s]", user, user_notes_path)
             for note in notes_iter:
-                yield create_note_file(CONFIG["STORAGE_USERS_PATH"], 
-                                       user, 
+                yield create_note_file(CONFIG["STORAGE_USERS_PATH"],
+                                       user,
                                        user_info.sha1,
-                                       note, 
-                                       key = user_key if CONFIG["ENCRYPT"] else "", 
+                                       note,
+                                       key = user_key if CONFIG["ENCRYPT"] else "",
                                        key1 = password)
             category = ""
             if export_category == "All":
@@ -703,10 +717,10 @@ class ExportHandler(BaseHandler):
             create_category_info(CONFIG["STORAGE_USERS_PATH"], user_info, category)
             arch = Archive(user_info)
             arch.archive("tar.gz", category["name"])
-            LOG.debug("arch.package_path: %s"%arch.package_path)
+            LOG.debug("arch.package_path: %s", arch.package_path)
             if os.path.exists(arch.package_path) and os.path.isfile(arch.package_path):
                 fp = open(arch.package_path, 'rb')
-                self.set_header("Content-Disposition", "attachment; filename=%s"%arch.package)
+                self.set_header("Content-Disposition", "attachment; filename=%s" % arch.package)
                 while True:
                     buf = fp.read(1024 * 4)
                     if not buf:
@@ -741,26 +755,26 @@ class DeleteHandler(BaseHandler):
                         LOG.error("Delete user[%s] all notes categories failed", user)
                 flag = sqlite.delete_note_by_user(user, conn = DB.conn_note)
                 yield gen.moment
-                import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                           user_info.sha1, 
-                                           "tmp", 
-                                           "import", 
+                import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                           user_info.sha1,
+                                           "tmp",
+                                           "import",
                                            "notes")
-                user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], 
-                                               user_info.sha1, 
+                user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                               user_info.sha1,
                                                "notes")
                 if os.path.exists(user_notes_path) and os.path.isdir(user_notes_path):
                     shutil.rmtree(user_notes_path)
                     os.makedirs(user_notes_path)
                 if os.path.exists(import_path) and os.path.isdir(import_path):
                     shutil.rmtree(import_path)
-                    LOG.debug("delete import_path[%s] success."%import_path)
+                    LOG.debug("delete import_path[%s] success.", import_path)
             else:
                 LOG.info("Delete user[%s] all notes index failed", user)
             self.redirect("/note")
         except Exception, e:
             LOG.exception(e)
-            self.render("info.html", info_msg = "Delete user[%s]'s notes failed."%user)
+            self.render("info.html", info_msg = "Delete user[%s]'s notes failed." % user)
 
 class AjaxNoteHandler(BaseHandler):
     @tornado.web.authenticated
@@ -810,7 +824,7 @@ class UploadAjaxHandler(BaseHandler):
                     shutil.move(up_file_path, fpath)
         except Exception, e:
             LOG.exception(e)
-        self.write({"result":"ok"})
+        self.write({"result": "ok"})
 
 class ImportAjaxHandler(BaseHandler):
     @tornado.web.authenticated

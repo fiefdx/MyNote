@@ -31,7 +31,7 @@ from utils import common_utils
 
 LOG = logging.getLogger(__name__)
 
-COOKIE_TIME = 1 # day
+COOKIE_TIME = CONFIG["MAX_AGE_DAYS"] # day
 
 
 class LoginHandler(BaseHandler):
@@ -51,12 +51,12 @@ class LoginHandler(BaseHandler):
                     self.set_secure_cookie("user", self.get_argument("user"), COOKIE_TIME)
                     self.set_secure_cookie("user_key", user_key, COOKIE_TIME)
                     self.set_secure_cookie("user_locale", flag.user_language, COOKIE_TIME)
-                    LOG.debug("User: %s sign in."%user)
+                    LOG.debug("User: %s sign in.", user)
                     self.redirect("/")
                 else:
                     self.render("info.html", info_msg = self.locale.translate("Sorry, Invalid User or Invalid Password!"))
             else:
-                LOG.debug("User: %s Invalid."%user)
+                LOG.debug("User: %s Invalid.", user)
                 self.render("info.html", info_msg = self.locale.translate("Sorry, Invalid User!"))
         except Exception, e:
             LOG.exception(e)
@@ -87,19 +87,19 @@ class RegisterHandler(BaseHandler):
                     if flag == True:
                         flag = sqlite.save_data_to_db(r_user.to_dict(), DB.user, conn = DB.conn_user)
                         if flag == True:
-                            LOG.debug("register user[%s] success"%r_user.user_name)
+                            LOG.debug("register user[%s] success", r_user.user_name)
                             self.render("login/login.html", USER = user)
                         else:
-                            LOG.debug("register user[%s] failed: add user error!"%r_user.user_name)
+                            LOG.debug("register user[%s] failed: add user error!", r_user.user_name)
                             self.render("info.html", info_msg = self.locale.translate("Sorry, service error[add user error], please retry it!"))
                     else:
-                        LOG.debug("register user[%s] failed: init user storage error!"%r_user.user_name)
+                        LOG.debug("register user[%s] failed: init user storage error!", r_user.user_name)
                         self.render("info.html", info_msg = self.locale.translate("Sorry, service error[init user storage error], please retry it!"))
                 else:
-                    LOG.debug("register user[%s] failed: the user name have been used!"%r_user.user_name)
+                    LOG.debug("register user[%s] failed: the user name have been used!", r_user.user_name)
                     self.render("info.html", info_msg = self.locale.translate("Sorry, the user name have been used, please use another one!"))
             else:
-                LOG.debug("register user[%s] failed: user name or Password error!"%r_user.user_name)
+                LOG.debug("register user[%s] failed: user name or Password error!", r_user.user_name)
                 self.render("info.html", info_msg = self.locale.translate("Sorry, User name or Password error!"))
         except Exception, e:
             LOG.exception(e)
@@ -140,7 +140,7 @@ class SettingsHandler(BaseHandler):
             redirect_to = self.get_argument("redirect_to", "")
             old_user_pass = common_utils.sha256sum(old_passwd)
             user = self.get_current_user_name()
-            LOG.info("user unicode: %s", isinstance(user, unicode))
+            LOG.debug("user unicode: %s", isinstance(user, unicode))
             user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
             change_passwd_flag = False
             if user_info:
@@ -211,20 +211,20 @@ class DeleteUserHandler(BaseHandler):
                         flag == sqlite.delete_rich_by_user(user, conn = DB.conn_rich)
                         yield gen.moment
                         if flag == True:
-                            LOG.debug("Delete the User[%s] success!"%user)
+                            LOG.debug("Delete the User[%s] success!", user)
                             # do something to reindex
                             self.render("info.html", info_msg = delete_success)
                         else:
-                            LOG.debug("Delete the User[%s] success! but, user notes is exists"%user)
+                            LOG.debug("Delete the User[%s] success! but, user notes is exists", user)
                             self.render("info.html", info_msg = delete_success)
                     else:
-                        LOG.debug("Delete the User[%s] success! but, user notes is exists"%user)
+                        LOG.debug("Delete the User[%s] success! but, user notes is exists", user)
                         self.render("info.html", info_msg = delete_success)
                 else:
-                    LOG.debug("Delete the User[%s] success! but, user storage is exists"%user)
+                    LOG.debug("Delete the User[%s] success! but, user storage is exists", user)
                     self.render("info.html", info_msg = delete_success)
             else:
-                LOG.debug("Delete the User[%s] failed!"%user)
+                LOG.debug("Delete the User[%s] failed!", user)
                 self.render("info.html", info_msg = delete_failed)
         except Exception, e:
             LOG.exception(e)

@@ -53,7 +53,7 @@ from utils.processer import ManagerClient
 
 LOG = logging.getLogger(__name__)
 
-NOTE_NUM_PER_FETCH = 20
+NOTE_NUM_PER_FETCH = CONFIG["NOTE_NUM_PER_FETCH"]
 
 
 @gen.coroutine
@@ -144,15 +144,15 @@ class RichHandler(BaseHandler):
                 LOG.info("Reindex all rich notes user[%s] success", user)
             else:
                 LOG.error("Reindex all rich notes user[%s] failed!", user)
-            self.render("note/rich_tinymce.html", 
-                        user = user, 
+            self.render("note/rich_tinymce.html",
+                        user = user,
                         current_nav = "Rich",
                         scheme = CONFIG["SERVER_SCHEME"],
                         functions = CONFIG["FUNCTIONS"],
                         locale = locale)
         else:
-            self.render("note/rich_tinymce.html", 
-                    user = user, 
+            self.render("note/rich_tinymce.html",
+                    user = user,
                     current_nav = "Rich",
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
@@ -212,18 +212,18 @@ def process_query(query, user, page = 1, user_key = ""):
     LOG.info("process query: %s", query)
     try:
         if query != "":
-            result = yield search_whoosh.search_query_page_rich_user(IX.ix_rich, 
-                                                                     query, 
-                                                                     DB.rich, 
-                                                                     user, 
-                                                                     page = page, 
-                                                                     limits = NOTE_NUM_PER_FETCH, 
+            result = yield search_whoosh.search_query_page_rich_user(IX.ix_rich,
+                                                                     query,
+                                                                     DB.rich,
+                                                                     user,
+                                                                     page = page,
+                                                                     limits = NOTE_NUM_PER_FETCH,
                                                                      key = user_key)
             if not result:
                 LOG.error("search_query_no_page_rich_user result False!")
                 result = {}
                 result["totalcount"] = 0
-                result["result"] = []   
+                result["result"] = []
         else:
             result["totalcount"] = 0
             result["result"] = []
@@ -591,21 +591,23 @@ class RichSocketHandler(BaseSocketHandler):
                     RichSocketHandler.socket_handlers[user] = set()
                     RichSocketHandler.socket_handlers[user].add(self)
                     LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
+
+                LOG.info("open rich note websocket: %s", user)
+                LOG.info("rich note websocket users: %s", RichSocketHandler.socket_handlers.keys())
+                data = {}
+                data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
+                if data['notes'] != []:
+                    data['note'] = data['notes'][0]
+                    data['current_note_id'] = data['notes'][0]['id']
+                else:
+                    data['note'] = {'file_title':'', 'file_content':'', 'rich_content':''}
+                    data['current_note_id'] = None
+                data['note_list_action'] = 'init' # init, append
+                data['books'] = yield update_categories(user_locale, user)
+                send_msg(json.dumps(data), user, self)
             else:
-                self.redirect("/login")
-            LOG.info("open rich note websocket: %s", user)
-            LOG.info("rich note websocket users: %s", RichSocketHandler.socket_handlers.keys())
-            data = {}
-            data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
-            if data['notes'] != []:
-                data['note'] = data['notes'][0]
-                data['current_note_id'] = data['notes'][0]['id']
-            else:
-                data['note'] = {'file_title':'', 'file_content':'', 'rich_content':''}
-                data['current_note_id'] = None
-            data['note_list_action'] = 'init' # init, append
-            data['books'] = yield update_categories(user_locale, user)
-            send_msg(json.dumps(data), user, self)
+                self.close()
+                LOG.info("Server close websocket!")
         else:
             self.close()
             LOG.info("Server close websocket!")
@@ -614,12 +616,16 @@ class RichSocketHandler(BaseSocketHandler):
     @gen.coroutine
     def on_close(self):
         user = self.get_current_user_name()
-        RichSocketHandler.socket_handlers[user].remove(self)
-        LOG.info("close rich note websocket: %s", user)
-        LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
-        if len(RichSocketHandler.socket_handlers[user]) == 0:
-            RichSocketHandler.socket_handlers.pop(user)
-            LOG.info("rich note websocket remove user: %s", user)
+        if user and RichSocketHandler.socket_handlers.has_key(user):
+            RichSocketHandler.socket_handlers[user].remove(self)
+            LOG.info("close rich note websocket: %s", user)
+            LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
+            if len(RichSocketHandler.socket_handlers[user]) == 0:
+                RichSocketHandler.socket_handlers.pop(user)
+                LOG.info("rich note websocket remove user: %s", user)
+        else:
+            self.close()
+            LOG.info("Server close websocket!")
 
     @tornado.web.authenticated
     @gen.coroutine
@@ -723,11 +729,11 @@ class ExportHandler(BaseHandler):
             os.makedirs(user_images_path)
             LOG.info("create user[%s] path[%s]", user, user_images_path)
             for note in notes_iter:
-                yield create_rich_file(CONFIG["STORAGE_USERS_PATH"], 
-                                       user, 
-                                       user_info.sha1, 
-                                       note, 
-                                       key = user_key if CONFIG["ENCRYPT"] else "", 
+                yield create_rich_file(CONFIG["STORAGE_USERS_PATH"],
+                                       user,
+                                       user_info.sha1,
+                                       note,
+                                       key = user_key if CONFIG["ENCRYPT"] else "",
                                        key1 = password)
             category = ""
             if export_category == "All":
@@ -739,10 +745,10 @@ class ExportHandler(BaseHandler):
             create_category_info(CONFIG["STORAGE_USERS_PATH"], user_info, category)
             arch = Archive(user_info)
             arch.archive("tar.gz", category["name"])
-            LOG.debug("arch.package_path: %s"%arch.package_path)
+            LOG.debug("arch.package_path: %s", arch.package_path)
             if os.path.exists(arch.package_path) and os.path.isfile(arch.package_path):
                 fp = open(arch.package_path, 'rb')
-                self.set_header("Content-Disposition", "attachment; filename=%s"%arch.package)
+                self.set_header("Content-Disposition", "attachment; filename=%s" % arch.package)
                 while True:
                     buf = fp.read(1024 * 4)
                     if not buf:
@@ -799,7 +805,7 @@ class DeleteHandler(BaseHandler):
                         LOG.error("delete user[%s] all rich note categories failed", user)
                 if os.path.exists(import_path) and os.path.isdir(import_path):
                     shutil.rmtree(import_path)
-                    LOG.debug("delete import_path[%s] success."%import_path)
+                    LOG.debug("delete import_path[%s] success.", import_path)
             else:
                 LOG.error("Delete user[%s] all rich notes index failed", user)
             self.redirect("/rich")

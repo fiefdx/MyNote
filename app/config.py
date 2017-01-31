@@ -7,7 +7,7 @@ Created on 2013-10-26 21:29
 Modified on 2014-10-25
 @summary: simplify the configuration.yml
 @author: YangHaitao
-''' 
+'''
 try:
     import yaml
 except ImportError:
@@ -73,6 +73,10 @@ try:
     if not CONFIG.has_key("FUNCTIONS"):
         CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
     CONFIG["LOG_FILE_NAME"] = "MyNote.log"
+    if not CONFIG.has_key("MAX_AGE_DAYS"):
+        CONFIG["MAX_AGE_DAYS"] = 1 # for cookie expiration time
+    if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
+        CONFIG["NOTE_NUM_PER_FETCH"] = 20
 except Exception, e:
     print e
 
