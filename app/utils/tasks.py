@@ -292,7 +292,7 @@ class RichImportProcesser(TaskProcesser):
                         result = [self.name, self.task_key, True]
                         LOG.debug("write image to [%s] success", storage_file_path)
                     else:
-                        LOG.debug("write image to [%s] failed", storage_file_path)
+                        LOG.error("write image to [%s] failed", storage_file_path)
                 else:
                     note = RICH()
                     note.parse_xml(fpath)

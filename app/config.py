@@ -78,7 +78,7 @@ try:
     if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
         CONFIG["NOTE_NUM_PER_FETCH"] = 20
     if not CONFIG.has_key("DB_LOCK"):
-        CONFIG["DB_LOCK"] = False
+        CONFIG["DB_LOCK"] = True
 except Exception, e:
     print e
 
