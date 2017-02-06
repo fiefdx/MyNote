@@ -112,6 +112,23 @@
                 <div class="modal-body">
                     <div class="">
                         <div class="form-group">
+                            <label class="control-label col-xs-4" for="lang">{{_("Language")}}</label>
+                            <div class="col-xs-8">
+                                <div class="radio col-xs-4">
+                                    <label>
+                                        <input type="radio" name="optionsRadios" id="optionsRadios1" value="en_US" checked>
+                                        {{_("English")}}
+                                    </label>
+                                </div>
+                                <div class="radio col-xs-4">
+                                    <label>
+                                        <input type="radio" name="optionsRadios" id="optionsRadios2" value="zh_CN">
+                                        {{_("Chinese")}}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
                             <label class="control-label col-xs-4" for="user">{{_("User Name")}}</label>
                             <div class="col-xs-8">
                                 <input class="r_user form-control col-md-10" type="text" name="user" autocomplete="off" id="user" placeholder="{{_("User Name")}}" >

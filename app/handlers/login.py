@@ -70,6 +70,7 @@ class RegisterHandler(BaseHandler):
         try:
             user = self.get_argument("user", "")
             passwd = self.get_argument("passwd", "")
+            user_language = self.get_argument("optionsRadios", "en_US")
             user_sha1 = common_utils.sha1sum(user)
             if user != "" and passwd != "":
                 r_user = USER()
@@ -78,7 +79,7 @@ class RegisterHandler(BaseHandler):
                 r_user.user_pass = common_utils.sha256sum(passwd)
                 r_user.note_books = json.dumps([])
                 r_user.rich_books = json.dumps([])
-                r_user.user_language = "en_US"
+                r_user.user_language = user_language
                 r_user.register_time = datetime.datetime.now(dateutil.tz.tzlocal())
                 storage = Storage(CONFIG["STORAGE_USERS_PATH"], r_user.sha1)
                 flag = sqlite.get_user_from_db(r_user.user_name, conn = DB.conn_user)
