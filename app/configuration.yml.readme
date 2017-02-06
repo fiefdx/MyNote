@@ -80,7 +80,7 @@ THREAD_NUM: 1
 # DB_LOCK
 # if true: import notes use mutex lock for database operations.
 # if false: import notes don't use mutex lock for database operations.
-DB_LOCK: true
+DB_LOCK: false
 
 # FUNCTIONS
 # functions that you want to use

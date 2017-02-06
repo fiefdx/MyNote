@@ -123,11 +123,10 @@ class Worker(Process):
         LOG.propagate = False
         LOG.info("Worker(%03d) start", self.wid)
         try:
-            if PLATFORM[0].lower() == "windows":
-                n = self.mapping.get("note")
-                n.db = DB()
-                n = self.mapping.get("rich")
-                n.db = DB()
+            n = self.mapping.get("note")
+            n.db = DB()
+            n = self.mapping.get("rich")
+            n.db = DB()
             threads = []
             for i in xrange(CONFIG["THREAD_NUM"]):
                 t = Processer(i, self.task_queue, self.result_queue, self.mapping)
@@ -255,11 +254,10 @@ class Manager(Process):
         LOG.propagate = False
         LOG.info("Manager start")
         try:
-            if PLATFORM[0].lower() == "windows":
-                n = self.mapping.get("note")
-                n.db = DB()
-                n = self.mapping.get("rich")
-                n.db = DB()
+            n = self.mapping.get("note")
+            n.db = DB()
+            n = self.mapping.get("rich")
+            n.db = DB()
             threads = []
             dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queue, self.mapping)
             dispatcher.daemon = True
