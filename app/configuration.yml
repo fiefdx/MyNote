@@ -14,6 +14,7 @@ SERVER_PORT: 8008
 SERVER_SCHEME: https
 USB_MODE: false
 WITH_NGINX: false
+DB_LOCK: false
 FUNCTIONS:
   - rich
   - note

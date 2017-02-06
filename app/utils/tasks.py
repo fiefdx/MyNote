@@ -126,19 +126,14 @@ class NoteImportProcesser(TaskProcesser):
                 if note_dict["version"] == "":
                     # type is unicode
                     note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                NoteLock.acquire()
+                if CONFIG["DB_LOCK"]:
+                    NoteLock.acquire()
                 flag = sqlite.save_data_to_db(note_dict, self.db.note, mode = "INSERT OR UPDATE", conn = self.db.conn_note)
-                NoteLock.release()
+                if CONFIG["DB_LOCK"]:
+                    NoteLock.release()
                 if flag == True:
                     LOG.debug("write note to database success")
-                    target = ""
-                    if storage_path != None:
-                        target = os.path.join(storage_path, note_dict["type"], fname)
-                        shutil.copyfile(fpath, target)
-                        result = [self.name, self.task_key, True]
-                        LOG.debug("copy note[%s] to [%s] success", fpath, target)
-                    else:
-                        LOG.error("copy note[%s] to user[%s] failed", fpath, user_name)
+                    result = [self.name, self.task_key, True]
                 else:
                     LOG.error("write note to database failed")
             else:
@@ -288,9 +283,11 @@ class RichImportProcesser(TaskProcesser):
                     fp = open(storage_file_path, "wb")
                     fp.write(image)
                     fp.close()
-                    ImageLock.acquire()
+                    if CONFIG["DB_LOCK"]:
+                        ImageLock.acquire()
                     flag = sqlite.save_data_to_db(pic.to_dict(), self.db.pic, conn = self.db.conn_pic)
-                    ImageLock.release()
+                    if CONFIG["DB_LOCK"]:
+                        ImageLock.release()
                     if flag == True:
                         result = [self.name, self.task_key, True]
                         LOG.debug("write image to [%s] success", storage_file_path)
@@ -313,27 +310,14 @@ class RichImportProcesser(TaskProcesser):
                     if note_dict["version"] == "":
                         # type is unicode
                         note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                    RichLock.acquire()
+                    if CONFIG["DB_LOCK"]:
+                        RichLock.acquire()
                     flag = sqlite.save_data_to_db(note_dict, self.db.rich, mode = "INSERT OR UPDATE", conn = self.db.conn_rich)
-                    RichLock.release()
+                    if CONFIG["DB_LOCK"]:
+                        RichLock.release()
                     if flag == True:
                         LOG.debug("write rich note to database success")
-                        target = ""
-                        RichLock.acquire()
-                        note = sqlite.get_rich_by_sha1(note_dict["sha1"], user_name, conn = self.db.conn_rich)
-                        RichLock.release()
-                        if note:
-                            if storage_path != None:
-                                target = os.path.join(storage_path, note_dict["type"], str(note.id))
-                                shutil.copyfile(fpath, target)
-                                result = [self.name, self.task_key, True]
-                                LOG.debug("copy rich note[%s] to [%s] success", fpath, target)
-                            else:
-                                LOG.error("copy rich note[%s] to user[%s] failed", fpath, user_name)
-                        elif note == False:
-                            LOG.error("get rich note[%s] from db user[%s] failed", fpath, user_name)
-                        else:
-                            LOG.error("get rich note[%s] from db user[%s] failed, note not exist", fpath, user_name)
+                        result = [self.name, self.task_key, True]
                     else:
                         LOG.error("write rich note to database failed")
             else:
