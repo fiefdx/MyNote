@@ -31,7 +31,7 @@ from utils import common_utils
 
 LOG = logging.getLogger(__name__)
 
-COOKIE_TIME = CONFIG["MAX_AGE_DAYS"] # day
+COOKIE_TIME = CONFIG["EXPIRES_DAYS"] # day
 
 
 class LoginHandler(BaseHandler):
@@ -48,9 +48,9 @@ class LoginHandler(BaseHandler):
             flag = sqlite.get_user_from_db(user, conn = DB.conn_user)
             if flag != None:
                 if flag.user_pass == user_pass:
-                    self.set_secure_cookie("user", self.get_argument("user"), COOKIE_TIME)
-                    self.set_secure_cookie("user_key", user_key, COOKIE_TIME)
-                    self.set_secure_cookie("user_locale", flag.user_language, COOKIE_TIME)
+                    self.set_secure_cookie("user", self.get_argument("user"), expires_days = COOKIE_TIME)
+                    self.set_secure_cookie("user_key", user_key, expires_days = COOKIE_TIME)
+                    self.set_secure_cookie("user_locale", flag.user_language, expires_days = COOKIE_TIME)
                     LOG.debug("User: %s sign in.", user)
                     self.redirect("/")
                 else:
@@ -240,6 +240,8 @@ class LogoutHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         self.clear_cookie("user")
+        self.clear_cookie("user_key")
+        self.clear_cookie("user_locale")
         self.redirect("/login")
 
 class TestHandler(BaseHandler):

@@ -12,7 +12,11 @@ import tornado.web
 import tornado.locale
 import tornado.websocket
 
+from config import CONFIG
+
 LOG = logging.getLogger(__name__)
+
+COOKIE_TIME = CONFIG["MAX_AGE_DAYS"]
 
 def bytes_2_unicode(string):
     string_unicode = string
@@ -27,44 +31,44 @@ def bytes_2_unicode(string):
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):
-        return self.get_secure_cookie("user", max_age_days = 1)
+        return self.get_secure_cookie("user", max_age_days = COOKIE_TIME)
 
     def get_current_user_name(self):
-        user = self.get_secure_cookie("user", max_age_days = 1)
+        user = self.get_secure_cookie("user", max_age_days = COOKIE_TIME)
         if user:
             return bytes_2_unicode(user)
         return None
 
     def get_current_user_key(self):
-        user_key = self.get_secure_cookie("user_key", max_age_days = 1)
+        user_key = self.get_secure_cookie("user_key", max_age_days = COOKIE_TIME)
         if user_key:
             return bytes_2_unicode(user_key)
         return None
 
     def get_user_locale(self):
-        user_locale = self.get_secure_cookie("user_locale", max_age_days = 1)
+        user_locale = self.get_secure_cookie("user_locale", max_age_days = COOKIE_TIME)
         if user_locale:
             return tornado.locale.get(user_locale)
         return None
 
 class BaseSocketHandler(tornado.websocket.WebSocketHandler):
     def get_current_user(self):
-        return self.get_secure_cookie("user", max_age_days = 1)
+        return self.get_secure_cookie("user", max_age_days = COOKIE_TIME)
 
     def get_current_user_name(self):
-        user = self.get_secure_cookie("user", max_age_days = 1)
+        user = self.get_secure_cookie("user", max_age_days = COOKIE_TIME)
         if user:
             return bytes_2_unicode(user)
         return None
 
     def get_current_user_key(self):
-        user_key = self.get_secure_cookie("user_key", max_age_days = 1)
+        user_key = self.get_secure_cookie("user_key", max_age_days = COOKIE_TIME)
         if user_key:
             return bytes_2_unicode(user_key)
         return None
 
     def get_user_locale(self):
-        user_locale = self.get_secure_cookie("user_locale", max_age_days = 1)
+        user_locale = self.get_secure_cookie("user_locale", max_age_days = COOKIE_TIME)
         if user_locale:
             return tornado.locale.get(user_locale)
         return None

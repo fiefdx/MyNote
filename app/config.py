@@ -74,7 +74,9 @@ try:
         CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
     CONFIG["LOG_FILE_NAME"] = "MyNote.log"
     if not CONFIG.has_key("MAX_AGE_DAYS"):
-        CONFIG["MAX_AGE_DAYS"] = 1 # for cookie expiration time
+        CONFIG["MAX_AGE_DAYS"] = 1 # cookie expiration time for service
+    if not CONFIG.has_key("EXPIRES_DAYS"):
+        CONFIG["EXPIRES_DAYS"] = 1 # cookie expiration time for browser
     if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
         CONFIG["NOTE_NUM_PER_FETCH"] = 20
 except Exception, e:

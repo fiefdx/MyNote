@@ -177,7 +177,7 @@ def get_html_content(file_content):
 def get_html_content_BS(file_content):
     result = ""
     try:
-        soup = BS(file_content)
+        soup = BS(file_content, "html.parser")
         result = soup.get_text().encode("utf-8")
         result_list = result.split("\n")
         result = ""
@@ -401,7 +401,7 @@ def html_change_image_src_BS(html_content, images):
     result = ["", []]
     local_images = set()
     try:
-        soup = BS(html_content)
+        soup = BS(html_content, "html.parser")
         # for web images
         if images != []:
             imgs = soup.find_all('img')
@@ -410,7 +410,7 @@ def html_change_image_src_BS(html_content, images):
                 for j in images:
                     if i["src"] == j[0]:
                         i["src"] = j[1]
-                        if i.has_key("data-mce-src"):
+                        if i.has_attr("data-mce-src"):
                             i["data-mce-src"] = j[1]
             for i in imgs:
                 if i["src"].startswith("picture/") or i["src"].startswith("/picture/"):
