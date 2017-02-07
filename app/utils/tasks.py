@@ -15,7 +15,7 @@ import hashlib
 import dateutil
 
 from db import sqlite
-from db.sqlite import DB, NoteLock, ImageLock, RichLock
+from db.sqlite import DB
 from utils.archive import Archive
 from utils import common_utils
 from utils import htmlparser
@@ -126,11 +126,7 @@ class NoteImportProcesser(TaskProcesser):
                 if note_dict["version"] == "":
                     # type is unicode
                     note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                if CONFIG["DB_LOCK"]:
-                    NoteLock.acquire()
                 flag = sqlite.save_data_to_db(note_dict, self.db.note, mode = "INSERT OR UPDATE", conn = self.db.conn_note)
-                if CONFIG["DB_LOCK"]:
-                    NoteLock.release()
                 if flag == True:
                     LOG.debug("write note to database success")
                     result = [self.name, self.task_key, True]
@@ -283,11 +279,7 @@ class RichImportProcesser(TaskProcesser):
                     fp = open(storage_file_path, "wb")
                     fp.write(image)
                     fp.close()
-                    if CONFIG["DB_LOCK"]:
-                        ImageLock.acquire()
                     flag = sqlite.save_data_to_db(pic.to_dict(), self.db.pic, conn = self.db.conn_pic)
-                    if CONFIG["DB_LOCK"]:
-                        ImageLock.release()
                     if flag == True:
                         result = [self.name, self.task_key, True]
                         LOG.debug("write image to [%s] success", storage_file_path)
@@ -310,11 +302,7 @@ class RichImportProcesser(TaskProcesser):
                     if note_dict["version"] == "":
                         # type is unicode
                         note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                    if CONFIG["DB_LOCK"]:
-                        RichLock.acquire()
                     flag = sqlite.save_data_to_db(note_dict, self.db.rich, mode = "INSERT OR UPDATE", conn = self.db.conn_rich)
-                    if CONFIG["DB_LOCK"]:
-                        RichLock.release()
                     if flag == True:
                         LOG.debug("write rich note to database success")
                         result = [self.name, self.task_key, True]

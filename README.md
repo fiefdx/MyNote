@@ -98,11 +98,6 @@ PROCESS_NUM: 4
 # default 1
 THREAD_NUM: 1
 
-# DB_LOCK
-# if true: import notes use mutex lock for database operations.
-# if false: import notes don't use mutex lock for database operations.
-DB_LOCK: false
-
 # FUNCTIONS
 # functions that you want to use
 FUNCTIONS:
@@ -289,11 +284,6 @@ PROCESS_NUM: 4
 # a number config how many thread per process start for import file task.
 # default 1
 THREAD_NUM: 1
-
-# DB_LOCK
-# if true: import notes use mutex lock for database operations.
-# if false: import notes don't use mutex lock for database operations.
-DB_LOCK: false
 
 # FUNCTIONS
 # functions that you want to use

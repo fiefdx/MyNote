@@ -77,8 +77,6 @@ try:
         CONFIG["MAX_AGE_DAYS"] = 1 # for cookie expiration time
     if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
         CONFIG["NOTE_NUM_PER_FETCH"] = 20
-    if not CONFIG.has_key("DB_LOCK"):
-        CONFIG["DB_LOCK"] = False
 except Exception, e:
     print e
 

@@ -27,7 +27,6 @@ import json
 import time
 import sqlite3
 import logging
-from multiprocessing import Lock
 
 from models.item import PICTURE as PIC
 from models.item import HTML
@@ -37,12 +36,6 @@ from models.item import RICH
 from config import CONFIG
 
 LOG = logging.getLogger(__name__)
-
-NoteLock = Lock()
-ImageLock = Lock()
-RichLock = Lock()
-FlagLock = Lock()
-UserLock = Lock()
 
 class DB(object):
     html = "HTML"
@@ -247,7 +240,6 @@ def get_db_path(root_path, db_type):
 
 def update_flag(index_name, conn = None):
     result = False
-    # FlagLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_flag
@@ -265,12 +257,10 @@ def update_flag(index_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # FlagLock.release()
     return result
 
 def update_old_flag(index_name, conn = None):
     result = False
-    # FlagLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_flag
@@ -288,7 +278,6 @@ def update_old_flag(index_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # FlagLock.release()
     return result
 
 def get_flag_from_db(index_name, conn = None):
@@ -311,10 +300,6 @@ def get_flag_from_db(index_name, conn = None):
     return result
 
 def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retries = 3):
-    # locks = {DB.rich: RichLock,
-    #          DB.note: NoteLock,
-    #          DB.pic: ImageLock,
-    #          DB.user: UserLock}
     result = False
     sql = {DB.html: "INSERT INTO HTML VALUES (NULL,?,?,?,?,?)",
            DB.rich: "INSERT INTO RICH VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)",
@@ -807,7 +792,6 @@ def get_note_num_by_type_user(note_type, user_name, conn = None):
 
 def delete_note_by_id(user_name, doc_id, conn = None):
     result = False
-    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -821,12 +805,10 @@ def delete_note_by_id(user_name, doc_id, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # NoteLock.release()
     return result
 
 def delete_note_by_type(user_name, note_type, conn = None):
     result = False
-    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -840,13 +822,11 @@ def delete_note_by_type(user_name, note_type, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # NoteLock.release()
     return result
 
 
 def delete_note_by_user(user_name, conn = None):
     result = False
-    # NoteLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_note
@@ -861,7 +841,6 @@ def delete_note_by_user(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # NoteLock.release()
     return result
 
 #
@@ -1139,7 +1118,6 @@ def get_rich_num_by_type_user(note_type, user_name, conn = None):
 
 def delete_rich_by_id(user_name, doc_id, conn = None):
     result = False
-    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1153,12 +1131,10 @@ def delete_rich_by_id(user_name, doc_id, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # RichLock.release()
     return result
 
 def delete_rich_by_type(user_name, note_type, conn = None):
     result = False
-    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1172,12 +1148,10 @@ def delete_rich_by_type(user_name, note_type, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # RichLock.release()
     return result
 
 def delete_rich_by_user(user_name, conn = None):
     result = False
-    # RichLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_rich
@@ -1192,7 +1166,6 @@ def delete_rich_by_user(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # RichLock.release()
     return result
 
 #
@@ -1373,7 +1346,6 @@ def get_user_from_db(user_name, conn = None):
 
 def delete_user_from_db(user_name, conn = None):
     result = False
-    # UserLock.acquire()
     try:
         if conn == None:
             conn = DB.conn_user
@@ -1387,5 +1359,4 @@ def delete_user_from_db(user_name, conn = None):
         if conn:
             conn.rollback()
         LOG.exception(e)
-    # UserLock.release()
     return result
