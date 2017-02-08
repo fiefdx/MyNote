@@ -177,7 +177,7 @@ def get_html_content(file_content):
 def get_html_content_BS(file_content):
     result = ""
     try:
-        soup = BS(file_content, "html.parser")
+        soup = BS(file_content, "lxml")
         result = soup.get_text().encode("utf-8")
         result_list = result.split("\n")
         result = ""
@@ -401,7 +401,7 @@ def html_change_image_src_BS(html_content, images):
     result = ["", []]
     local_images = set()
     try:
-        soup = BS(html_content, "html.parser")
+        soup = BS(html_content, "lxml")
         # for web images
         if images != []:
             imgs = soup.find_all('img')
