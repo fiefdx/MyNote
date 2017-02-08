@@ -289,49 +289,64 @@ function noteInit (scheme, locale) {
 
         function initCategoryClick(category) {
             $('a#' + category + '_query').bind("click", function () {
-                $body.addClass("loading");
-                $('a#' + current_category + '_query').attr("class","list-group-item");
-                current_category = category;
-                $('a#' + current_category + '_query').attr("class","list-group-item active");
-                // clear search input
-                $('#search_input').val('');
-                var data = {};
-                data['category'] = {'cmd':'select', 'category_name': current_category};
-                socket.send(JSON.stringify(data));
-                $notes_list.scrollTop(0);
+                if (socket.readyState === socket.CLOSED) {
+                    $('#offline_modal').modal('show');
+                } else {
+                    $body.addClass("loading");
+                    $('a#' + current_category + '_query').attr("class","list-group-item");
+                    current_category = category;
+                    $('a#' + current_category + '_query').attr("class","list-group-item active");
+                    // clear search input
+                    $('#search_input').val('');
+                    var data = {};
+                    data['category'] = {'cmd':'select', 'category_name': current_category};
+                    if (socket.readyState === socket.CLOSED) {
+                        $('#offline_modal').modal('show');
+                    }
+                    socket.send(JSON.stringify(data));
+                    $notes_list.scrollTop(0);
+                }
             });
         }
 
         function loadMoreNotes() {
-            var offset = $note_list_ul.children().length;
-            console.log("note list scroll: ", $(this).scrollTop(), " ", $(this).height(), " ", $note_list_ul.height(), " ", loading_notes_list);
-            if (loading_notes_list == false && offset < book_numbers[current_category] && ($(this).scrollTop() + $(this).height() >= $note_list_ul.height())) {
-                console.log("loadMoreNotes");
-                var data = {};
-                data['category'] = {'cmd':'load',
-                                    'category_name': current_category,
-                                    'note_id':current_note_id, 
-                                    'offset':offset,
-                                    'q':$('#search_input').val()};
-                console.log(data);
-                socket.send(JSON.stringify(data));
-                loading_notes_list = true;
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                var offset = $note_list_ul.children().length;
+                console.log("note list scroll: ", $(this).scrollTop(), " ", $(this).height(), " ", $note_list_ul.height(), " ", loading_notes_list);
+                if (loading_notes_list == false && offset < book_numbers[current_category] && ($(this).scrollTop() + $(this).height() >= $note_list_ul.height())) {
+                    console.log("loadMoreNotes");
+                    var data = {};
+                    data['category'] = {'cmd':'load',
+                                        'category_name': current_category,
+                                        'note_id':current_note_id,
+                                        'offset':offset,
+                                        'q':$('#search_input').val()};
+                    console.log(data);
+                    socket.send(JSON.stringify(data));
+                    loading_notes_list = true;
+                }
             }
         }
 
         function initNoteClick(note_id) {
             $('a#a_' + note_id).bind("click", function () {
-                $div_note_text.addClass("loading");
-                var data = {};
-                data['note'] = {'cmd':'select', 'note_id':note_id};
-                console.log("click old_id: " + current_note_id);
-                if (current_note_id != null)
-                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
-                current_note_id = note_id;
-                console.log("click new_id: " + current_note_id);
-                $('a#a_' + current_note_id).attr("class","note_list_item list-group-item active");
-                socket.send(JSON.stringify(data));
-                $note_content.scrollTop(0);
+                if (socket.readyState === socket.CLOSED) {
+                    $('#offline_modal').modal('show');
+                } else {
+                    $div_note_text.addClass("loading");
+                    var data = {};
+                    data['note'] = {'cmd':'select', 'note_id':note_id};
+                    console.log("click old_id: " + current_note_id);
+                    if (current_note_id != null)
+                        $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
+                    current_note_id = note_id;
+                    console.log("click new_id: " + current_note_id);
+                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item active");
+                    socket.send(JSON.stringify(data));
+                    $note_content.scrollTop(0);
+                }
             });
         }
 
@@ -351,16 +366,20 @@ function noteInit (scheme, locale) {
         }
 
         function saveNote() {
-            console.log("save note: " + current_note_id);
-            $div_note_text.addClass("loading");
-            var data = {};
-            data['note'] = {'cmd':'save',
-                            'note_id':current_note_id,
-                            'note_title':$note_title.val(),
-                            'note_content':$note_content.val(),
-                            'type':current_category,
-                            'q':$('#search_input').val()};
-            socket.send(JSON.stringify(data));
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                console.log("save note: " + current_note_id);
+                $div_note_text.addClass("loading");
+                var data = {};
+                data['note'] = {'cmd':'save',
+                                'note_id':current_note_id,
+                                'note_title':$note_title.val(),
+                                'note_content':$note_content.val(),
+                                'type':current_category,
+                                'q':$('#search_input').val()};
+                socket.send(JSON.stringify(data));
+            }
         }
 
         function showCreateNote() {
@@ -374,23 +393,27 @@ function noteInit (scheme, locale) {
         }
 
         function createNote() {
-            if (current_category != 'Search' && current_category != 'All') {
-                $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
-                current_note_id = null;
-                console.log("create note: " + current_note_id);
-                $div_note_text.addClass("loading");
-                var data = {};
-                data['note'] = {'cmd':'save',
-                                'note_id':current_note_id,
-                                'note_title':$new_note_title.val(),
-                                'note_content':'',
-                                'type':current_category,
-                                'q':$('#search_input').val()};
-                $new_note_title.val('');
-                socket.send(JSON.stringify(data));
-                setTimeout(function() {
-                    $note_content.focus();
-                }, 0);
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                if (current_category != 'Search' && current_category != 'All') {
+                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
+                    current_note_id = null;
+                    console.log("create note: " + current_note_id);
+                    $div_note_text.addClass("loading");
+                    var data = {};
+                    data['note'] = {'cmd':'save',
+                                    'note_id':current_note_id,
+                                    'note_title':$new_note_title.val(),
+                                    'note_content':'',
+                                    'type':current_category,
+                                    'q':$('#search_input').val()};
+                    $new_note_title.val('');
+                    socket.send(JSON.stringify(data));
+                    setTimeout(function() {
+                        $note_content.focus();
+                    }, 0);
+                }
             }
         }
 
@@ -409,13 +432,17 @@ function noteInit (scheme, locale) {
         }
 
         function createCategory() {
-            console.log("create category");
-            $body.addClass("loading");
-            var data = {};
-            data['category'] = {'cmd':'create', 
-                                'category_name': escapeHtml($('#category_name').val())};
-            socket.send(JSON.stringify(data));
-            $('#category_name').val('');
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                console.log("create category");
+                $body.addClass("loading");
+                var data = {};
+                data['category'] = {'cmd':'create',
+                                    'category_name': escapeHtml($('#category_name').val())};
+                socket.send(JSON.stringify(data));
+                $('#category_name').val('');
+            }
         }
 
         function deleteCategoryModal() {
@@ -429,14 +456,18 @@ function noteInit (scheme, locale) {
         }
 
         function deleteCategory() {
-            $body.addClass("loading");
-            if (current_category != 'Search' && current_category != 'All') {
-                console.log("delete category");
-                var data = {};
-                data['category'] = {'cmd':'delete', 
-                                    'category_name': current_category};
-                socket.send(JSON.stringify(data));
-                current_category = 'All';
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $body.addClass("loading");
+                if (current_category != 'Search' && current_category != 'All') {
+                    console.log("delete category");
+                    var data = {};
+                    data['category'] = {'cmd':'delete',
+                                        'category_name': current_category};
+                    socket.send(JSON.stringify(data));
+                    current_category = 'All';
+                }
             }
         }
 
@@ -447,19 +478,23 @@ function noteInit (scheme, locale) {
         }
 
         function search() {
-            console.log("search note");
-            $body.addClass("loading");
-            $('a#' + current_category + '_query').attr("class","list-group-item");
-            var data = {};
-            data['category'] = {'cmd':'search', 
-                                'category_name':current_category, 
-                                'q':$('#search_input').val()};
-            socket.send(JSON.stringify(data));
-            current_category = 'Search';
-            $('a#' + current_category + '_query').attr("class","list-group-item active");
-            $('#search_input').blur();
-            $notes_list.scrollTop(0);
-            $note_content.scrollTop(0);
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                console.log("search note");
+                $body.addClass("loading");
+                $('a#' + current_category + '_query').attr("class","list-group-item");
+                var data = {};
+                data['category'] = {'cmd':'search',
+                                    'category_name':current_category,
+                                    'q':$('#search_input').val()};
+                socket.send(JSON.stringify(data));
+                current_category = 'Search';
+                $('a#' + current_category + '_query').attr("class","list-group-item active");
+                $('#search_input').blur();
+                $notes_list.scrollTop(0);
+                $note_content.scrollTop(0);
+            }
         }
 
         function displayPassword() {
@@ -579,9 +614,14 @@ function noteInit (scheme, locale) {
             } else {
                 option = "import_notes_fail";
             }
-            var data = {};
-            data['reinit'] = {'cmd':'reinit', 'option':option};
-            socket.send(JSON.stringify(data));
+
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                var data = {};
+                data['reinit'] = {'cmd':'reinit', 'option':option};
+                socket.send(JSON.stringify(data));
+            }
 
             $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
                 var input = $(this).parents('.input-group').find(':text'),
