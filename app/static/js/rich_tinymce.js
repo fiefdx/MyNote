@@ -742,7 +742,6 @@ function noteInit (scheme, locale) {
         data['reinit'] = {'cmd':'reinit', 'option':option};
         console.log(data);
         socket.send(JSON.stringify(data));
-        $body.removeClass("loading");
 
         $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
             var input = $(this).parents('.input-group').find(':text'),

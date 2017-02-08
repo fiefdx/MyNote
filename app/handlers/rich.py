@@ -691,6 +691,7 @@ class RichSocketHandler(BaseSocketHandler):
                     data['current_note_id'] = None
                 data['note_list_action'] = 'init' # init, append
                 data['books'] = yield update_categories(user_locale, user)
+                data['current_category'] = 'All'
                 data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
                 send_msg(json.dumps(data), user, self)
         else:
