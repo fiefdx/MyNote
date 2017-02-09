@@ -24,9 +24,14 @@ function noteInit (scheme, locale) {
     var $save_note = $('#save_note_button');
     var $create_note = $('a#create_note');
     var $create_note_modal = $('button#create_note');
+    var $show_create_category = $('a#create_category');
     var $create_category = $('button#create_category');
     var $delete_category = $('button#delete_category');
     var $delete_category_modal = $('a#delete_category');
+    var $show_import_notes = $('a#import_notes');
+    var $show_export_notes = $('a#export_notes');
+    var $show_delete_all = $('a#delete_all');
+    var $show_rebuild_index = $('a#rebuild_index');
     var $search_note = $('#search_button');
     var $download_note = $('#download_note_button');
     var $display_passwd = $('#display_passwd');
@@ -102,6 +107,12 @@ function noteInit (scheme, locale) {
             });
             $('form#form_create_note').submit(function() {return false;});
             $('form#form_category').submit(function() {return false;});
+
+            $show_create_category.bind("click", showCreateCategory);
+            $show_import_notes.bind("click", showImportNotes);
+            $show_export_notes.bind("click", showExportNotes);
+            $show_delete_all.bind("click", showDeleteNotes);
+            $show_rebuild_index.bind("click", showRebuildIndex);
         };
 
         socket.onmessage = function(msg) {
@@ -351,12 +362,16 @@ function noteInit (scheme, locale) {
         }
 
         function showSettings() {
-            if(locale == 'zh' || locale == 'zh_CN') {
-                $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
             } else {
-                $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
+                if(locale == 'zh' || locale == 'zh_CN') {
+                    $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
+                } else {
+                    $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
+                }
+                $('#settings_modal').modal('show');
             }
-            $('#settings_modal').modal('show');
         }
 
         function saveSettings() {
@@ -383,12 +398,56 @@ function noteInit (scheme, locale) {
         }
 
         function showCreateNote() {
-            if (current_category != 'Search' && current_category != 'All') {
-                $('#create_note_modal').modal('show');
-            } else if (current_category == 'All') {
-                $('#create_note_all_modal').modal('show');
-            } else if (current_category == 'Search') {
-                $('#create_note_search_modal').modal('show');
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                if (current_category != 'Search' && current_category != 'All') {
+                    $('#create_note_modal').modal('show');
+                } else if (current_category == 'All') {
+                    $('#create_note_all_modal').modal('show');
+                } else if (current_category == 'Search') {
+                    $('#create_note_search_modal').modal('show');
+                }
+            }
+        }
+
+        function showCreateCategory() {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $('#category_modal').modal('show');
+            }
+        }
+
+        function showImportNotes() {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $('#import_modal').modal('show');
+            }
+        }
+
+        function showExportNotes() {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $('#export_modal').modal('show');
+            }
+        }
+
+        function showDeleteNotes() {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $('#delete_notes_modal').modal('show');
+            }
+        }
+
+        function showRebuildIndex() {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $('div#reindex_modal').modal('show');
             }
         }
 
@@ -520,15 +579,19 @@ function noteInit (scheme, locale) {
         }
 
         function showExportModal(e) {
-            $("select#notes_category").empty();
-            books.books.forEach(function (value, index, array_books) {
-                if (value != "Search") {
-                    console.log(index + ' ' + value);
-                    $("select#notes_category").append(
-                        '<option value="' + value + '">' + books.trans[index] + '</option>'
-                    );
-                }
-            });
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $("select#notes_category").empty();
+                books.books.forEach(function (value, index, array_books) {
+                    if (value != "Search") {
+                        console.log(index + ' ' + value);
+                        $("select#notes_category").append(
+                            '<option value="' + value + '">' + books.trans[index] + '</option>'
+                        );
+                    }
+                });
+            }
         }
 
         function exportNotes() {

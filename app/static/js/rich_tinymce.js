@@ -478,13 +478,17 @@ function noteInit (scheme, locale) {
     }
 
     function showSettings() {
-        if(locale == 'zh' || locale == 'zh_CN') {
-            $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
         } else {
-            $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
+            if(locale == 'zh' || locale == 'zh_CN') {
+                $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
+            } else {
+                $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
+            }
+            changeDialogMarginTop();
+            $('#settings_modal').modal('show');
         }
-        changeDialogMarginTop();
-        $('#settings_modal').modal('show');
     }
 
     function saveSettings() {
@@ -519,39 +523,63 @@ function noteInit (scheme, locale) {
     }
 
     function showCreateNote() {
-        changeDialogMarginTop();
-        if (current_category != 'Search' && current_category != 'All') {
-            $('#create_note_modal').modal('show');
-        } else if (current_category == 'All') {
-            $('#create_note_all_modal').modal('show');
-        } else if (current_category == 'Search') {
-            $('#create_note_search_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            if (current_category != 'Search' && current_category != 'All') {
+                $('#create_note_modal').modal('show');
+            } else if (current_category == 'All') {
+                $('#create_note_all_modal').modal('show');
+            } else if (current_category == 'Search') {
+                $('#create_note_search_modal').modal('show');
+            }
         }
     }
 
     function showCreateCategory() {
-        changeDialogMarginTop();
-        $('#category_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            $('#category_modal').modal('show');
+        }
     }
 
     function showImportNotes() {
-        changeDialogMarginTop();
-        $('#import_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            $('#import_modal').modal('show');
+        }
     }
 
     function showExportNotes() {
-        changeDialogMarginTop();
-        $('#export_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            $('#export_modal').modal('show');
+        }
     }
 
     function showDeleteNotes() {
-        changeDialogMarginTop();
-        $('#delete_notes_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            $('#delete_notes_modal').modal('show');
+        }
     }
 
     function showRebuildIndex() {
-        changeDialogMarginTop();
-        $('div#reindex_modal').modal('show');
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            changeDialogMarginTop();
+            $('div#reindex_modal').modal('show');
+        }
     }
 
     function createNote() {
