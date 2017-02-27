@@ -119,8 +119,8 @@ class WebServer(Thread):
     def run(self):
         tornado.locale.load_translations(os.path.join(cwd, "translations"))
         if CONFIG["SERVER_SCHEME"].lower() == "https":
-            http_server = tornado.httpserver.HTTPServer(Application(), 
-                                                        no_keep_alive = False, 
+            http_server = tornado.httpserver.HTTPServer(Application(),
+                                                        no_keep_alive = False,
                                                         ssl_options = {
                                                         "certfile": os.path.join(cwd, "keys", "server.crt"),
                                                         "keyfile": os.path.join(cwd, "keys", "server.key")},
@@ -216,7 +216,7 @@ class TaskBarIcon(wx.TaskBarIcon):
         w = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_X)
         h = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y)
         if not self.preference:
-            self.preference = PreferenceFrame("Preference", (w / 2 - 90, h / 2 - 140), (180, 280))
+            self.preference = PreferenceFrame("Preference", (w / 2 - 90, h / 2 - 145), (180, 290))
             self.preference.Show()
 
     def on_restart(self, event):
@@ -244,12 +244,14 @@ class PreferenceFrame(wx.Frame):
         self.set_button()
         self.SetSizer(self.sizer)
         self.Layout()
+        self.Fit()
+        self.SetSizeWH(size[0], size[1])
 
     def set_checkbox(self):
         self.ch_bind_local = wx.CheckBox(self, -1, "BIND LOCAL", (35, 40), (145, 20))
-        self.ch_bind_local.SetValue(CONFIG["BIND_LOCAL"]) 
+        self.ch_bind_local.SetValue(CONFIG["BIND_LOCAL"])
         self.ch_encrypt = wx.CheckBox(self, -1, "ENCRYPT", (35, 40), (145, 20))
-        self.ch_encrypt.SetValue(CONFIG["ENCRYPT"]) 
+        self.ch_encrypt.SetValue(CONFIG["ENCRYPT"])
         box = self.MakeStaticBoxSizer("Options", [self.ch_bind_local, self.ch_encrypt])
         self.sizer.Add(box, 0, wx.ALL, 10)
 
