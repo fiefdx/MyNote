@@ -24,7 +24,15 @@ from tornado.options import define, options
 import wx
 
 from config import CONFIG, update
-from db.sqlite import DB
+from db.db_html import DB as HTML_DB
+from db.db_rich import DB as RICH_DB
+from db.db_note import DB as NOTE_DB
+from db.db_pic import DB as PIC_DB
+from db.db_user import DB as USER_DB
+from db.db_flag import DB as FLAG_DB
+from ix.ix_html import IX as HTML_IX
+from ix.ix_rich import IX as RICH_IX
+from ix.ix_note import IX as NOTE_IX
 from utils import common
 from threading import Thread
 import multiprocessing
@@ -42,8 +50,6 @@ if PLATFORM[0].lower() != "windows":
 else:
     import utils.win_compat
 
-from utils import index_whoosh
-from utils.index_whoosh import IX
 import modules.bootstrap as bootstrap
 import handlers.search as search
 import handlers.view as view
@@ -343,12 +349,17 @@ if __name__ == "__main__":
                               backup_count = 5,
                               console = True)
 
-        # init database conn
-        _ = DB(init_object = False)
-        common.Servers.DB_SERVER = DB
-        # init index conn
-        _ = IX(init_object = False)
-        common.Servers.IX_SERVER = IX
+        # init database conns
+        common.Servers.DB_SERVER = {"HTML": HTML_DB(),
+                                    "RICH": RICH_DB(),
+                                    "NOTE": NOTE_DB(),
+                                    "PIC": PIC_DB(),
+                                    "USER": USER_DB(),
+                                    "FLAG": FLAG_DB()}
+        # init index conns
+        common.Servers.IX_SERVER = {"HTML": HTML_IX(),
+                                    "RICH": RICH_IX(),
+                                    "NOTE": NOTE_IX()}
         # create service process for windows
         if PLATFORM[0].lower() == "windows":
             crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])

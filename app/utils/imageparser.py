@@ -6,6 +6,10 @@ Created on 2013-10-17 16:34
 
 Modified on 2013-11-10
 @author: YangHaitao
+
+Modified on 2017-03-04
+@summary: will be deprecated
+@author: YangHaitao
 ''' 
 
 

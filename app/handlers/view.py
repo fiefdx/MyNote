@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
 Created on 2013-10-31
-@summary: see an avml file
+@summary: see an html file
 @author: YangHaitao
 '''
 
@@ -11,14 +11,13 @@ import tornado.web
 
 from config import CONFIG
 from base import BaseHandler
-from db import sqlite
-from db.sqlite import DB
+from utils.common import Servers
 
 LOG = logging.getLogger(__name__)
 
 def get_html_path(file_sha1):
     try:
-        html = sqlite.get_html_by_sha1(file_sha1, conn = DB.conn_html)
+        html = Servers.DB_SERVER["HTML"].get_html_by_sha1(file_sha1)
         file_path = ""
         if html != False and html != None:
             file_path = html.file_path

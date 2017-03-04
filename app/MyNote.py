@@ -21,7 +21,15 @@ import tornado.netutil
 from tornado.options import define, options
 
 from config import CONFIG
-from db.sqlite import DB
+from db.db_html import DB as HTML_DB
+from db.db_rich import DB as RICH_DB
+from db.db_note import DB as NOTE_DB
+from db.db_pic import DB as PIC_DB
+from db.db_user import DB as USER_DB
+from db.db_flag import DB as FLAG_DB
+from ix.ix_html import IX as HTML_IX
+from ix.ix_rich import IX as RICH_IX
+from ix.ix_note import IX as NOTE_IX
 from utils import common
 import multiprocessing
 from utils.multi_async_tea import MultiProcessNoteTea
@@ -38,8 +46,6 @@ if PLATFORM[0].lower() != "windows":
 else:
     import utils.win_compat
 
-from utils import index_whoosh
-from utils.index_whoosh import IX
 import modules.bootstrap as bootstrap
 import handlers.search as search
 import handlers.view as view
@@ -124,12 +130,17 @@ if __name__ == "__main__":
                           backup_count = 5,
                           console = True)
 
-    # init database conn
-    _ = DB(init_object = False)
-    common.Servers.DB_SERVER = DB
-    # init index conn
-    _ = IX(init_object = False)
-    common.Servers.IX_SERVER = IX
+    # init database conns
+    common.Servers.DB_SERVER = {"HTML": HTML_DB(),
+                                "RICH": RICH_DB(),
+                                "NOTE": NOTE_DB(),
+                                "PIC": PIC_DB(),
+                                "USER": USER_DB(),
+                                "FLAG": FLAG_DB()}
+    # init index conns
+    common.Servers.IX_SERVER = {"HTML": HTML_IX(),
+                                "RICH": RICH_IX(),
+                                "NOTE": NOTE_IX()}
     # create service process for windows
     if PLATFORM[0].lower() == "windows":
         crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
@@ -139,20 +150,20 @@ if __name__ == "__main__":
 
     tornado.locale.load_translations(os.path.join(cwd, "translations"))
     if CONFIG["SERVER_SCHEME"].lower() == "https":
-        http_server = tornado.httpserver.HTTPServer(Application(), 
-                                                    no_keep_alive = False, 
+        http_server = tornado.httpserver.HTTPServer(Application(),
+                                                    no_keep_alive = False,
                                                     ssl_options = {
                                                     "certfile": os.path.join(cwd, "keys", "server.crt"),
                                                     "keyfile": os.path.join(cwd, "keys", "server.key")},
                                                     max_buffer_size = CONFIG["MAX_BUFFER_SIZE"])
         LOG.info("Scheme: %s", CONFIG["SERVER_SCHEME"])
     elif CONFIG["SERVER_SCHEME"].lower() == "http":
-        http_server = tornado.httpserver.HTTPServer(Application(), 
+        http_server = tornado.httpserver.HTTPServer(Application(),
                                                     no_keep_alive = False,
                                                     max_buffer_size = CONFIG["MAX_BUFFER_SIZE"])
         LOG.info("Scheme: %s", CONFIG["SERVER_SCHEME"])
     else:
-        http_server = tornado.httpserver.HTTPServer(Application(), 
+        http_server = tornado.httpserver.HTTPServer(Application(),
                                                     no_keep_alive = False,
                                                     max_buffer_size = CONFIG["MAX_BUFFER_SIZE"])
         LOG.warning("Scheme: http ignore SERVER_SCHEME")

@@ -39,11 +39,13 @@ def shutdown():
         Servers.NOTE_SERVER.close()
         LOG.info("Stop note server!")
     if Servers.DB_SERVER:
-        Servers.DB_SERVER.cls_close()
-        LOG.info("Stop db server!")
+        for n in Servers.DB_SERVER:
+            Servers.DB_SERVER[n].close()
+            LOG.info("Stop db[%s] server!", Servers.DB_SERVER[n].name)
     if Servers.IX_SERVER:
-        Servers.IX_SERVER.cls_close()
-        LOG.info("Stop ix server!")
+        for n in Servers.IX_SERVER:
+            Servers.IX_SERVER[n].close()
+            LOG.info("Stop ix[%s] server!", Servers.IX_SERVER[n].name)
     if Servers.CRYPT_SERVER:
         Servers.CRYPT_SERVER.close()
         LOG.info("Stop encrypt & decrypt server!")
@@ -79,11 +81,13 @@ def shutdown_thread():
         Servers.NOTE_SERVER.close()
         LOG.info("Stop note server!")
     if Servers.DB_SERVER:
-        Servers.DB_SERVER.cls_close()
-        LOG.info("Stop db server!")
+        for n in Servers.DB_SERVER:
+            Servers.DB_SERVER[n].close()
+            LOG.info("Stop db[%s] server!", Servers.DB_SERVER[n].name)
     if Servers.IX_SERVER:
-        Servers.IX_SERVER.cls_close()
-        LOG.info("Stop ix server!")
+        for n in Servers.IX_SERVER:
+            Servers.IX_SERVER[n].close()
+            LOG.info("Stop ix[%s] server!", Servers.IX_SERVER[n].name)
     if Servers.CRYPT_SERVER:
         Servers.CRYPT_SERVER.close()
         LOG.info("Stop encrypt & decrypt server!")

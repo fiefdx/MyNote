@@ -29,8 +29,6 @@ from whoosh.highlight import HtmlFormatter
 from whoosh.analysis import CharsetFilter, StemmingAnalyzer
 from whoosh.support.charset import accent_map
 
-from db import sqlite
-from db.sqlite import DB
 from config import CONFIG
 from utils.html import ThumbnailItem, ThumnailNote, add_params_to_url
 from utils.multi_async_tea import MultiProcessNoteTea 
@@ -45,9 +43,9 @@ LOG = logging.getLogger(__name__)
 def search_index_page(index, query, index_name, page, limits, filter = None):
     result = []
     try:
-        search_field = {DB.html: ["file_name", "file_content"],
-                        DB.note: ["file_title", "file_content"],
-                        DB.rich: ["file_title", "file_content"]}
+        search_field = {"HTML": ["file_name", "file_content"],
+                        "NOTE": ["file_title", "file_content"],
+                        "RICH": ["file_title", "file_content"]}
         searcher = index.searcher()
         mparser = MultifieldParser(search_field[index_name], schema = index.schema)
         q = mparser.parse(query)
@@ -61,9 +59,9 @@ def search_index_page(index, query, index_name, page, limits, filter = None):
 def search_index_no_page(index, query, index_name, limits = None, filter = None):
     result = []
     try:
-        search_field = {DB.html: ["file_name", "file_content"],
-                        DB.note: ["file_title", "file_content"],
-                        DB.rich: ["file_title", "file_content"]}
+        search_field = {"HTML": ["file_name", "file_content"],
+                        "NOTE": ["file_title", "file_content"],
+                        "RICH": ["file_title", "file_content"]}
         searcher = index.searcher()
         mparser = MultifieldParser(search_field[index_name], schema = index.schema)
         q = mparser.parse(query)
@@ -74,7 +72,7 @@ def search_index_no_page(index, query, index_name, limits = None, filter = None)
     raise gen.Return(result)
 
 @gen.coroutine
-def search_query_page(ix, query_string, index_name, page = 0, limits = None):
+def search_query_page(ix, query_string, index_name, page = 0, limits = None, db_html = None):
     result = {"result":[], "totalcount": 0}
     try:
         query_string = query_string
@@ -99,7 +97,7 @@ def search_query_page(ix, query_string, index_name, page = 0, limits = None):
             LOG.debug("Result: %s", results_num)
             fields = hit.fields()
             LOG.debug("Doc_id: %s", fields["doc_id"])
-            html = sqlite.get_html_by_id(fields["doc_id"], conn = DB.conn_html)
+            html = db_html.get_html_by_id(fields["doc_id"])
             title = hit.highlights("file_name", text = html.file_name[0:-5])
             item.title = title if title.strip() != "" else html.file_name[0:-5]
             item.title = html.file_name
@@ -116,12 +114,12 @@ def search_query_page(ix, query_string, index_name, page = 0, limits = None):
     raise gen.Return(result)
 
 @gen.coroutine
-def search_query_page_note_user(ix, query_string, index_name, user_name, page = 0, limits = None, key = ""):
+def search_query_page_note_user(ix, query_string, index_name, user_name, page = 0, limits = None, key = "", db_user = None, db_note = None):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     result = {"result":[], "totalcount": 0}
     try:
         note_books = {}
-        user_info = sqlite.get_user_from_db(user_name, conn = DB.conn_user)
+        user_info = db_user.get_user_from_db(user_name)
         if user_info:
             note_books_tmp = json.loads(user_info.note_books)
             for category in note_books_tmp:
@@ -151,7 +149,7 @@ def search_query_page_note_user(ix, query_string, index_name, user_name, page = 
 
             fields = hit.fields()
             LOG.debug("Doc_id: %s", fields["doc_id"])
-            note = sqlite.get_note_by_id(fields["doc_id"], user_name, conn = DB.conn_note)
+            note = db_note.get_note_by_id(fields["doc_id"], user_name)
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))
@@ -180,12 +178,12 @@ def search_query_page_note_user(ix, query_string, index_name, user_name, page = 
     raise gen.Return(result)
 
 @gen.coroutine
-def search_query_no_page_note_user(ix, query_string, index_name, user_name, limits = None, key = ""):
+def search_query_no_page_note_user(ix, query_string, index_name, user_name, limits = None, key = "", db_user = None, db_note = None):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     result = {"result":[], "totalcount": 0}
     try:
         note_books = {}
-        user_info = sqlite.get_user_from_db(user_name, conn = DB.conn_user)
+        user_info = db_user.get_user_from_db(user_name)
         if user_info:
             note_books_tmp = json.loads(user_info.note_books)
             for category in note_books_tmp:
@@ -214,7 +212,7 @@ def search_query_no_page_note_user(ix, query_string, index_name, user_name, limi
 
             fields = hit.fields()
             LOG.debug("Doc_id: %s", fields["doc_id"])
-            note = sqlite.get_note_by_id(fields["doc_id"], user_name, conn = DB.conn_note)
+            note = db_note.get_note_by_id(fields["doc_id"], user_name)
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))
@@ -243,12 +241,12 @@ def search_query_no_page_note_user(ix, query_string, index_name, user_name, limi
     raise gen.Return(result)
 
 @gen.coroutine
-def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 0, limits = None, key = ""):
+def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 0, limits = None, key = "", db_user = None, db_rich = None):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     result = {"result":[], "totalcount": 0}
     try:
         note_books = {}
-        user_info = sqlite.get_user_from_db(user_name, conn = DB.conn_user)
+        user_info = db_user.get_user_from_db(user_name)
         if user_info:
             note_books_tmp = json.loads(user_info.rich_books)
             for category in note_books_tmp:
@@ -279,7 +277,7 @@ def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 
 
             fields = hit.fields()
             LOG.debug("Doc_id: %s", fields["doc_id"])
-            note = sqlite.get_rich_by_id(fields["doc_id"], user_name, conn = DB.conn_rich)
+            note = db_rich.get_rich_by_id(fields["doc_id"], user_name)
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))
@@ -307,12 +305,12 @@ def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 
     raise gen.Return(result)
 
 @gen.coroutine
-def search_query_no_page_rich_user(ix, query_string, index_name, user_name, limits = None, key = ""):
+def search_query_no_page_rich_user(ix, query_string, index_name, user_name, limits = None, key = "", db_user = None, db_rich = None):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     result = {"result":[], "totalcount": 0}
     try:
         note_books = {}
-        user_info = sqlite.get_user_from_db(user_name, conn = DB.conn_user)
+        user_info = db_user.get_user_from_db(user_name)
         if user_info:
             note_books_tmp = json.loads(user_info.rich_books)
             for category in note_books_tmp:
@@ -341,7 +339,7 @@ def search_query_no_page_rich_user(ix, query_string, index_name, user_name, limi
 
             fields = hit.fields()
             LOG.debug("Doc_id: %s", fields["doc_id"])
-            note = sqlite.get_rich_by_id(fields["doc_id"], user_name, conn = DB.conn_rich)
+            note = db_rich.get_rich_by_id(fields["doc_id"], user_name)
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))

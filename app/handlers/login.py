@@ -21,13 +21,12 @@ import dateutil
 import tornado.web
 from tornado import gen
 
-from db import sqlite
-from db.sqlite import DB
 from config import CONFIG
 from base import BaseHandler
 from models.item import USER
 from utils.user_storage import Storage
 from utils import common_utils
+from utils.common import Servers
 
 LOG = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ class LoginHandler(BaseHandler):
             passwd = self.get_argument("passwd","")
             user_pass = common_utils.sha256sum(passwd)
             user_key = common_utils.md5twice(passwd)
-            flag = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            flag = Servers.DB_SERVER["USER"].get_user_from_db(user)
             if flag != None:
                 if flag.user_pass == user_pass:
                     self.set_secure_cookie("user", self.get_argument("user"), expires_days = COOKIE_TIME)
@@ -82,11 +81,11 @@ class RegisterHandler(BaseHandler):
                 r_user.user_language = user_language
                 r_user.register_time = datetime.datetime.now(dateutil.tz.tzlocal())
                 storage = Storage(CONFIG["STORAGE_USERS_PATH"], r_user.sha1)
-                flag = sqlite.get_user_from_db(r_user.user_name, conn = DB.conn_user)
+                flag = Servers.DB_SERVER["USER"].get_user_from_db(r_user.user_name)
                 if flag is None:
                     flag = storage.init()
                     if flag == True:
-                        flag = sqlite.save_data_to_db(r_user.to_dict(), DB.user, conn = DB.conn_user)
+                        flag = Servers.DB_SERVER["USER"].save_data_to_db(r_user.to_dict())
                         if flag == True:
                             LOG.debug("register user[%s] success", r_user.user_name)
                             self.render("login/login.html", USER = user)
@@ -142,14 +141,14 @@ class SettingsHandler(BaseHandler):
             old_user_pass = common_utils.sha256sum(old_passwd)
             user = self.get_current_user_name()
             LOG.debug("user unicode: %s", isinstance(user, unicode))
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             change_passwd_flag = False
             if user_info:
                 if user_info.user_pass == old_user_pass and new_passwd == passwd_confirm:
                     user_info.user_pass = common_utils.sha256sum(new_passwd)
                     change_passwd_flag = True
                 user_info.user_language = user_language
-                flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
+                flag = Servers.DB_SERVER["USER"].save_data_to_db(user_info.to_dict(), mode = "UPDATE")
                 if flag:
                     self.set_secure_cookie("user_locale", user_language, COOKIE_TIME)
                     if change_passwd_flag:
@@ -158,26 +157,26 @@ class SettingsHandler(BaseHandler):
                         if CONFIG["ENCRYPT"]:
                             LOG.info("Update user[%s] all rich notes for update password", user)
                             rich_id_list = []
-                            for rich in sqlite.get_rich_from_db_by_user_iter(user, conn = DB.conn_rich):
+                            for rich in Servers.DB_SERVER["RICH"].get_rich_from_db_by_user_iter(user):
                                 rich_id_list.append(rich.id)
                             for rich_id in rich_id_list:
-                                rich = sqlite.get_rich_by_id(rich_id, user, conn = DB.conn_rich)
+                                rich = Servers.DB_SERVER["RICH"].get_rich_by_id(rich_id, user)
                                 rich.decrypt(old_user_key)
                                 rich.encrypt(user_key)
-                                flag = sqlite.save_data_to_db(rich.to_dict(), DB.rich, conn = DB.conn_rich)
+                                flag = Servers.DB_SERVER["RICH"].save_data_to_db(rich.to_dict())
                                 if flag:
                                     LOG.info("update user[%s] rich note[%s] success", user, rich.id)
                                 else:
                                     LOG.error("update user[%s] rich note[%s] failed", user, rich.id)
                             LOG.info("Update user[%s] all notes for update password", user)
                             note_id_list = []
-                            for note in sqlite.get_note_from_db_by_user_iter(user, conn = DB.conn_note):
+                            for note in Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_iter(user):
                                 note_id_list.append(note.id)
                             for note_id in note_id_list:
-                                note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
+                                note = Servers.DB_SERVER["NOTE"].get_note_by_id(note_id, user)
                                 note.decrypt(old_user_key)
                                 note.encrypt(user_key)
-                                flag = sqlite.save_data_to_db(note.to_dict(), DB.note, conn = DB.conn_note)
+                                flag = Servers.DB_SERVER["NOTE"].save_data_to_db(note.to_dict())
                                 if flag:
                                     LOG.info("update user[%s] note[%s] success", user, note.id)
                                 else:
@@ -197,19 +196,19 @@ class DeleteUserHandler(BaseHandler):
         try:
             user = self.get_current_user_name()
             self.clear_cookie("user")
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             storage = Storage(CONFIG["STORAGE_USERS_PATH"], user_info.sha1)
-            flag = sqlite.delete_user_from_db(user, conn = DB.conn_user)
+            flag = Servers.DB_SERVER["USER"].delete_user_from_db(user)
             delete_success = self.locale.translate("Delete the User[") + user + self.locale.translate("] success!") # unicode
             delete_failed = self.locale.translate("Delete the User[") + user + self.locale.translate("] failed!")
             if flag == True:
                 flag = storage.rm()
                 yield gen.moment
                 if flag == True:
-                    flag = sqlite.delete_note_by_user(user, conn = DB.conn_note)
+                    flag = Servers.DB_SERVER["NOTE"].delete_note_by_user(user)
                     yield gen.moment
                     if flag == True:
-                        flag == sqlite.delete_rich_by_user(user, conn = DB.conn_rich)
+                        flag = Servers.DB_SERVER["RICH"].delete_rich_by_user(user)
                         yield gen.moment
                         if flag == True:
                             LOG.debug("Delete the User[%s] success!", user)

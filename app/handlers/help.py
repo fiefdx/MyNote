@@ -8,7 +8,6 @@ Created on 2013-11-11
 import logging
 import tornado
 
-
 from config import CONFIG
 from base import BaseHandler
 

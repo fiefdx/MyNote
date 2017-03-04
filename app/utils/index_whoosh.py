@@ -6,11 +6,15 @@ Created on 2013-10-27
 
 Modified on 2014-06-06
 @summary: add decrypt and encrypt for note index
-@summary: YangHaitao
+@author: YangHaitao
 
 Modified on 2015-03-03
 @summary: add IX class for singleton mode
-@summary: YangHaitao
+@author: YangHaitao
+
+Modified on 2017-03-04
+@summary: will be deprecated
+@author: YangHaitao
 '''
 
 import os

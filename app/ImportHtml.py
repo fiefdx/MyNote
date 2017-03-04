@@ -3,7 +3,7 @@
 Created on 2013-10-26 21:32
 @summary:  parse and import html
 @author: YangHaitao
-''' 
+'''
 
 import sys
 import os

@@ -37,11 +37,7 @@ import json
 import tornado.web
 from tornado import gen
 
-from db import sqlite
-from db.sqlite import DB
 from config import CONFIG
-from utils import index_whoosh
-from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive
@@ -49,6 +45,7 @@ from models.item import NOTE
 from utils import common_utils
 from utils.multi_async_tea import MultiProcessNoteTea
 from utils.processer import ManagerClient
+from utils.common import Servers
 
 
 LOG = logging.getLogger(__name__)
@@ -97,12 +94,12 @@ class NoteHandler(BaseHandler):
         option = (self.get_argument("option", "")).strip()
         note_id = (self.get_argument("id", "")).strip()
         if option == "rebuild_index":
-            flag = index_whoosh.index_delete_note_by_user(1000, user)
+            flag = Servers.IX_SERVER["NOTE"].index_delete_note_by_user(1000, user)
             if flag:
                 LOG.info("Delete all notes index user[%s] success", user)
             else:
                 LOG.error("Delete all notes index user[%s] failed!", user)
-            flag = index_whoosh.index_all_note_by_num_user(1000, user, key = user_key if CONFIG["ENCRYPT"] else "", merge = True)
+            flag = Servers.IX_SERVER["NOTE"].index_all_note_by_num_user(1000, user, key = user_key if CONFIG["ENCRYPT"] else "", db_note = Servers.DB_SERVER["NOTE"], merge = True)
             if flag:
                 LOG.info("Reindex all notes user[%s] success", user)
             else:
@@ -114,7 +111,7 @@ class NoteHandler(BaseHandler):
                         functions = CONFIG["FUNCTIONS"],
                         locale = locale)
         elif option == "download" and note_id != "":
-            note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
+            note = Servers.DB_SERVER["NOTE"].get_note_by_id(note_id, user)
             # note's file_content and file_title are unicode
             if CONFIG["ENCRYPT"]:
                 # note.decrypt(user_key)
@@ -139,7 +136,7 @@ class NoteHandler(BaseHandler):
 
 @gen.coroutine
 def update_categories(user_locale, user):
-    user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+    user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
     note_books = ['Search', 'All'] + [category['sha1'] for category in json.loads(user_info.note_books)]
     if user_locale != None:
         trans_books = [user_locale.translate("Search"), user_locale.translate("All")]
@@ -149,7 +146,7 @@ def update_categories(user_locale, user):
     note_num_dict = {}
     note_num_dict["All"] = 0
     for i in note_books:
-        note_num_dict[i] = sqlite.get_note_num_by_type_user(i, user, conn = DB.conn_note)
+        note_num_dict[i] = Servers.DB_SERVER["NOTE"].get_note_num_by_type_user(i, user)
         note_num_dict["All"] += note_num_dict[i]
     note_num_dict["Search"] = 0
     raise gen.Return({'books':note_books, 'trans':trans_books, 'numbers':note_num_dict})
@@ -157,7 +154,7 @@ def update_categories(user_locale, user):
 @gen.coroutine
 def update_notes(note_type, user, order = "DESC", user_key = "", offset = 0):
     notes_list = []
-    notes = sqlite.get_note_by_user_type_created_at(user, note_type, order = order, offset = offset, limit = NOTE_NUM_PER_FETCH, conn = DB.conn_note)
+    notes = Servers.DB_SERVER["NOTE"].get_note_by_user_type_created_at(user, note_type, order = order, offset = offset, limit = NOTE_NUM_PER_FETCH)
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     if len(notes) > 0:
         note = notes[0]
@@ -192,13 +189,15 @@ def process_query(query, user, page = 1, user_key = ""):
     LOG.info("process query: %s", query)
     try:
         if query != "":
-            result = yield search_whoosh.search_query_page_note_user(IX.ix_note,
+            result = yield search_whoosh.search_query_page_note_user(Servers.IX_SERVER["NOTE"].ix,
                                                                      query,
-                                                                     DB.note,
+                                                                     "NOTE",
                                                                      user,
                                                                      page = page,
                                                                      limits = NOTE_NUM_PER_FETCH,
-                                                                     key = user_key)
+                                                                     key = user_key,
+                                                                     db_user = Servers.DB_SERVER["USER"],
+                                                                     db_note = Servers.DB_SERVER["NOTE"])
             if not result:
                 LOG.error("search_query_no_page_note_user result False!")
                 result = {}
@@ -224,7 +223,7 @@ def search_query(msg_category, user, handler, user_locale, page = 1, user_key = 
     data['notes'] = result['result']
     if data["notes"] != []:
         data['current_note_id'] = data['notes'][0]['id']
-        note = sqlite.get_note_by_id(data['current_note_id'], user, conn = DB.conn_note)
+        note = Servers.DB_SERVER["NOTE"].get_note_by_id(data['current_note_id'], user)
         if user_key != "":
             # note.decrypt(user_key)
             note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
@@ -246,7 +245,7 @@ def create_category(category_name, user, handler, user_locale, user_key = ""):
     sha1_category_name = common_utils.sha1sum(category_name)
     category = {"name":category_name, "sha1":sha1_category_name}
     LOG.info("create category: %s[%s] for %s", category_name, sha1_category_name, user)
-    user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+    user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
     if user_info:
         save = "create_category_fail"
         note_books = json.loads(user_info.note_books)
@@ -256,7 +255,7 @@ def create_category(category_name, user, handler, user_locale, user_key = ""):
         else:
             save = "create_category_exist"
         user_info.note_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
+        flag = Servers.DB_SERVER["USER"].save_data_to_db(user_info.to_dict(), mode = "UPDATE")
         data = {}
         data['note_list_action'] = 'init'
         if flag and save == "create_category_ok":
@@ -286,7 +285,7 @@ def create_category(category_name, user, handler, user_locale, user_key = ""):
 @gen.coroutine
 def delete_category(sha1_category_name, user, handler, user_locale, user_key = ""):
     LOG.info("delete sha1_category_name: %s for %s", sha1_category_name, user)
-    user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+    user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
     category_name = sha1_category_name
     if user_info:
         note_books = json.loads(user_info.note_books)
@@ -295,18 +294,18 @@ def delete_category(sha1_category_name, user, handler, user_locale, user_key = "
                 category_name = category['name']
                 note_books.remove(category)
         user_info.note_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
+        flag = Servers.DB_SERVER["USER"].save_data_to_db(user_info.to_dict(), mode = "UPDATE")
         if flag:
-            notes = sqlite.get_note_from_db_by_user_type_iter(user, sha1_category_name, conn = DB.conn_note)
+            notes = Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_type_iter(user, sha1_category_name)
             if notes:
                 for note in notes:
-                    flag = index_whoosh.index_delete_note_by_id(str(note.id), user)
+                    flag = Servers.IX_SERVER["NOTE"].index_delete_note_by_id(str(note.id), user)
                     if flag == True:
                         LOG.info("Delete index note[%s] user[%s] category[%s] success.", note.id, user, category_name)
                     else:
                         LOG.info("Delete index note[%s] user[%s] category[%s] failed.", note.id, user, category_name)
             yield gen.moment
-            flag = sqlite.delete_note_by_type(user, sha1_category_name, conn = DB.conn_note)
+            flag = Servers.DB_SERVER["NOTE"].delete_note_by_type(user, sha1_category_name)
             if flag:
                 data = {}
                 data['notes'] = (yield update_notes('All', user, user_key = user_key))['notes_list']
@@ -386,9 +385,9 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
             if user_key != "":
                 # note.encrypt(user_key)
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
-            flag = sqlite.save_data_to_db(note.to_dict(), DB.note, conn = DB.conn_note, mode = "INSERT")
+            flag = Servers.DB_SERVER["NOTE"].save_data_to_db(note.to_dict(), mode = "INSERT")
             if flag == True:
-                flag = index_whoosh.index_all_note_by_num_flag(100, key = user_key)
+                flag = Servers.IX_SERVER["NOTE"].index_all_note_by_num_flag(100, key = user_key, db_flag = Servers.DB_SERVER["FLAG"], db_note = Servers.DB_SERVER["NOTE"])
                 if flag == True:
                     LOG.info("Index note[%s] user[%s] success.", note.file_title, user)
                 else:
@@ -422,9 +421,9 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         note_id = note_dict['note_id']
         LOG.debug("Delete Note")
         data = {}
-        flag = sqlite.delete_note_by_id(user, note_id, conn = DB.conn_note)
+        flag = Servers.DB_SERVER["NOTE"].delete_note_by_id(user, note_id)
         if flag == True:
-            flag = index_whoosh.index_delete_note_by_id(str(note_id), user)
+            flag = Servers.IX_SERVER["NOTE"].index_delete_note_by_id(str(note_id), user)
             if flag == True:
                 LOG.info("Delete index note[%s] user[%s] success.", note_id, user)
             else:
@@ -446,7 +445,7 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             data['notes'] = result['result']
             if data["notes"] != []:
                 data['current_note_id'] = data['notes'][0]['id']
-                note = sqlite.get_note_by_id(data['current_note_id'], user, conn = DB.conn_note)
+                note = Servers.DB_SERVER["NOTE"].get_note_by_id(data['current_note_id'], user)
                 if user_key != "":
                     # note.decrypt(user_key)
                     note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
@@ -476,7 +475,7 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         note.file_content = note_dict['note_content']
         note.sha1 = common_utils.sha1sum(note.file_title + note.file_content)
         data = {}
-        flag = sqlite.get_note_by_id(note.id, user, conn = DB.conn_note)
+        flag = Servers.DB_SERVER["NOTE"].get_note_by_id(note.id, user)
         note.type = flag.type
         if note.file_title.strip() == "" and note.file_content.strip() == "":
             delete_note(note_dict, user, handler, user_locale, page = 1, user_key = user_key)
@@ -490,9 +489,9 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             if user_key != "":
                 # note.encrypt(user_key)
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
-            flag = sqlite.save_data_to_db(note.to_dict(), DB.note, mode = "UPDATE", conn = DB.conn_note)
+            flag = Servers.DB_SERVER["NOTE"].save_data_to_db(note.to_dict(), mode = "UPDATE")
             if flag == True: # save note success
-                flag = index_whoosh.index_all_note_by_num_flag(100, user_key)
+                flag = Servers.IX_SERVER["NOTE"].index_all_note_by_num_flag(100, user_key, Servers.DB_SERVER["FLAG"], Servers.DB_SERVER["NOTE"])
                 if flag == True:
                     LOG.info("Update index note[%s] user[%s] success.", note.file_title, user)
                 else:
@@ -518,7 +517,7 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             else:
                 data['current_note_id'] = note.id
                 if save == "save_ok":
-                    note = sqlite.get_note_by_id(data['current_note_id'], user, conn = DB.conn_note)
+                    note = Servers.DB_SERVER["NOTE"].get_note_by_id(data['current_note_id'], user)
                     if user_key != "":
                         # note.decrypt(user_key)
                         note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
@@ -555,7 +554,7 @@ class NoteSocketHandler(BaseSocketHandler):
             if not CONFIG["ENCRYPT"]:
                 user_key = ""
             user_locale = self.get_user_locale()
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             if user_info:
                 if NoteSocketHandler.socket_handlers.has_key(user):
                     NoteSocketHandler.socket_handlers[user].add(self)
@@ -617,7 +616,7 @@ class NoteSocketHandler(BaseSocketHandler):
                 cmd = msg['note']['cmd']
                 if cmd == 'select':
                     note_id = msg['note']['note_id']
-                    note = sqlite.get_note_by_id(note_id, user, conn = DB.conn_note)
+                    note = Servers.DB_SERVER["NOTE"].get_note_by_id(note_id, user)
                     if user_key != "":
                         start_time = time.time()
                         # note.decrypt(user_key)
@@ -682,7 +681,7 @@ class ExportHandler(BaseHandler):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
         password = self.get_argument("passwd", "")
-        user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         encrypt = self.get_argument("encrypt","")
         encrypt = True if encrypt == "enable" else False
         export_category = self.get_argument("notes_category", "All")
@@ -695,7 +694,7 @@ class ExportHandler(BaseHandler):
             password = ""
         LOG.info("export notes encrypted: %s", encrypt)
         try:
-            notes_iter = sqlite.get_note_from_db_by_user_type_iter(user, export_category, conn = DB.conn_note)
+            notes_iter = Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_type_iter(user, export_category)
             user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "notes")
             shutil.rmtree(user_notes_path)
             LOG.info("remove user[%s] path[%s]", user, user_notes_path)
@@ -741,20 +740,20 @@ class DeleteHandler(BaseHandler):
     def get(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
-        user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         try:
-            flag = index_whoosh.index_delete_note_by_user(1000, user, merge = True)
+            flag = Servers.IX_SERVER["NOTE"].index_delete_note_by_user(1000, user, merge = True)
             yield gen.moment
             if flag:
                 LOG.info("Delete user[%s] all notes index success", user)
                 if user_info:
                     user_info.note_books = json.dumps([])
-                    flag = sqlite.save_data_to_db(user_info.to_dict(), DB.user, mode = "UPDATE", conn = DB.conn_user)
+                    flag = Servers.DB_SERVER["USER"].save_data_to_db(user_info.to_dict(), mode = "UPDATE")
                     if flag:
                         LOG.info("Delete user[%s] all notes categories success", user)
                     else:
                         LOG.error("Delete user[%s] all notes categories failed", user)
-                flag = sqlite.delete_note_by_user(user, conn = DB.conn_note)
+                flag = Servers.DB_SERVER["NOTE"].delete_note_by_user(user)
                 yield gen.moment
                 import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
                                            user_info.sha1,
@@ -797,7 +796,7 @@ class UploadAjaxHandler(BaseHandler):
             fbody = ""
             fileinfo = None
             up_file_path = None
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             try:
                 if not CONFIG["WITH_NGINX"]:
                     fileinfo = self.request.files["up_file"][0]
@@ -839,7 +838,7 @@ class ImportAjaxHandler(BaseHandler):
             password = self.get_argument("passwd", "")
             password = common_utils.md5twice(password) if password != "" else ""
             LOG.info("import notes encrypted: %s", True if password != "" else False)
-            user_info = sqlite.get_user_from_db(user, conn = DB.conn_user)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
             _ = yield manager_client.import_notes(fname, user_info, user_key, password)
             flag = yield manager_client.get_rate_of_progress(fname, user_info)
@@ -851,12 +850,11 @@ class ImportAjaxHandler(BaseHandler):
             # index all notes
             if flag is not False and flag["flag"] == True:
                 result = flag
-                flag = index_whoosh.index_all_note_by_num_user(1000,
-                                                               user,
-                                                               key = user_key if CONFIG["ENCRYPT"] else "",
-                                                               db = DB,
-                                                               ix = IX,
-                                                               merge = True)
+                flag = Servers.IX_SERVER["NOTE"].index_all_note_by_num_user(1000,
+                                                                            user,
+                                                                            key = user_key if CONFIG["ENCRYPT"] else "",
+                                                                            db_note = Servers.DB_SERVER["NOTE"],
+                                                                            merge = True)
                 if flag:
                     LOG.info("Reindex all notes user[%s] success", user)
                 else:

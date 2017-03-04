@@ -10,12 +10,10 @@ import logging
 import tornado.web
 from tornado import gen
 
-from db import sqlite
-from db.sqlite import DB
 from config import CONFIG
-from utils.index_whoosh import IX
 from utils import search_whoosh
 from base import BaseHandler
+from utils.common import Servers
 
 
 LOG = logging.getLogger(__name__)
@@ -46,22 +44,23 @@ class SearchHandler(BaseHandler):
         LOG.debug("page_number: %s, limits: %s", page_number, limits)
         result = {}
         if query != "":
-            result = yield search_whoosh.search_query_page(IX.ix_html,
+            result = yield search_whoosh.search_query_page(Servers.IX_SERVER["HTML"].ix,
                                                            query,
-                                                           DB.html,
+                                                           "HTML",
                                                            page = page_number,
-                                                           limits = limits)
+                                                           limits = limits,
+                                                           db_html = Servers.DB_SERVER["HTML"])
         else:
             result["totalcount"] = 0
             result["result"] = []
-        html_num = sqlite.get_html_num_from_db(conn = DB.conn_html)
-        html_num_string = self.locale.translate("from") + " %s "%html_num + self.locale.translate("documents")
+        html_num = Servers.DB_SERVER["HTML"].get_html_num_from_db()
+        html_num_string = self.locale.translate("from") + " %s " % html_num + self.locale.translate("documents")
         search_result_prompt = ""
         if result["totalcount"] < SEARCH_RESULT_THRESHOLD:
             search_result_prompt = self.locale.translate("Found") + \
                                    " %(totalcount)s " + \
                                    self.locale.translate("results")
-            search_result_prompt = search_result_prompt%(result) + ", " + html_num_string
+            search_result_prompt = search_result_prompt % (result) + ", " + html_num_string
         else:
             search_result_prompt = self.locale.translate("More than") + \
                                    " %(totalcount)s " + \

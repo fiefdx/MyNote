@@ -38,8 +38,6 @@ import traceback
 from bs4 import BeautifulSoup as BS
 
 from config import CONFIG
-from db import sqlite
-from db.sqlite import DB
 from models.item import PICTURE as PIC
 import utils.common_utils as util
 
@@ -345,10 +343,9 @@ def get_web_image_src(file_content):
         LOG.exception(e)
     return result
 
-def get_web_images(images):
+def get_web_images(images, db_pic = None):
     result = []
     image = ""
-    # db = DB()
     try:
         for i in images:
             try:
@@ -369,7 +366,6 @@ def get_web_images(images):
                             pic.imported_at = datetime.datetime.now(dateutil.tz.tzlocal())
                             pic.file_name = image_name
                             pic.file_path = construct_file_path(pic.sha1, pic.file_name)
-                            # db_file_path = sqlite.get_db_path(CONFIG["STORAGE_DB_PATH"], db.pic)
                             storage_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], os.path.split(pic.file_path)[0])
                             storage_file_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
                             if (not os.path.exists(storage_path)) or (not os.path.isdir(storage_path)):
@@ -377,7 +373,7 @@ def get_web_images(images):
                             fp = open(storage_file_path, "wb")
                             fp.write(image)
                             fp.close()
-                            flag = sqlite.save_data_to_db(pic.to_dict(), DB.pic, conn = DB.conn_pic)
+                            flag = db_pic.save_data_to_db(pic.to_dict())
                             if flag == True:
                                 image_url = "/picture/%s"%pic.sha1
                                 result.append([i[0], image_url])
@@ -431,13 +427,13 @@ def html_change_image_src_BS(html_content, images):
         LOG.exception(e)
     return result
 
-def get_rich_content(note_content):
+def get_rich_content(note_content, db_pic = None):
     local_images = []
     if note_content.strip() != "":
         images = get_web_image_src(note_content)
-        LOG.debug("imges: %s"%images)
-        images = get_web_images(images)
-        LOG.debug("imges_local: %s"%images)
+        LOG.debug("imges: %s", images)
+        images = get_web_images(images, db_pic)
+        LOG.debug("imges_local: %s", images)
         note_content, local_images = html_change_image_src_BS(note_content, images)
         LOG.info("local_images: %s", local_images)
     return (note_content, local_images)

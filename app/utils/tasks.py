@@ -14,8 +14,10 @@ import datetime
 import hashlib
 import dateutil
 
-from db import sqlite
-from db.sqlite import DB
+from db.db_rich import DB as RICH_DB
+from db.db_note import DB as NOTE_DB
+from db.db_pic import DB as PIC_DB
+from db.db_user import DB as USER_DB
 from utils.archive import Archive
 from utils import common_utils
 from utils import htmlparser
@@ -32,7 +34,8 @@ class NoteImportProcesser(TaskProcesser):
     name = "note"
 
     def __init__(self):
-        self.db = DB()
+        self.db_user = USER_DB()
+        self.db_note = NOTE_DB()
         self.task_key = ""
 
     def iter(self, file_name, user, user_key, password):
@@ -80,7 +83,7 @@ class NoteImportProcesser(TaskProcesser):
                     os.makedirs(notes_path)
                     LOG.info("create notes path[%s] success", notes_path)
         user.note_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "UPDATE", conn = self.db.conn_user)
+        flag = self.db_user.save_data_to_db(user.to_dict(), mode = "UPDATE")
         if flag:
             LOG.info("import notes user[%s] categories success", user.user_name)
         else:
@@ -126,7 +129,7 @@ class NoteImportProcesser(TaskProcesser):
                 if note_dict["version"] == "":
                     # type is unicode
                     note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                flag = sqlite.save_data_to_db(note_dict, self.db.note, mode = "INSERT OR UPDATE", conn = self.db.conn_note)
+                flag = self.db_note.save_data_to_db(note_dict, mode = "INSERT OR UPDATE")
                 if flag == True:
                     LOG.debug("write note to database success")
                     result = [self.name, self.task_key, True]
@@ -164,7 +167,9 @@ class RichImportProcesser(TaskProcesser):
     name = "rich"
 
     def __init__(self):
-        self.db = DB()
+        self.db_user = USER_DB()
+        self.db_rich = RICH_DB()
+        self.db_pic = PIC_DB()
         self.task_key = ""
 
     def iter(self, file_name, user, user_key, password):
@@ -213,7 +218,7 @@ class RichImportProcesser(TaskProcesser):
                     os.makedirs(notes_path)
                     LOG.info("create rich notes path[%s] success", notes_path)
         user.rich_books = json.dumps(note_books)
-        flag = sqlite.save_data_to_db(user.to_dict(), self.db.user, mode = "UPDATE", conn = self.db.conn_user)
+        flag = self.db_user.save_data_to_db(user.to_dict(), mode = "UPDATE")
         if flag:
             LOG.info("import rich notes user[%s] categories success", user.user_name)
         else:
@@ -279,7 +284,7 @@ class RichImportProcesser(TaskProcesser):
                     fp = open(storage_file_path, "wb")
                     fp.write(image)
                     fp.close()
-                    flag = sqlite.save_data_to_db(pic.to_dict(), self.db.pic, conn = self.db.conn_pic)
+                    flag = self.db_pic.save_data_to_db(pic.to_dict())
                     if flag == True:
                         result = [self.name, self.task_key, True]
                         LOG.debug("write image to [%s] success", storage_file_path)
@@ -302,7 +307,7 @@ class RichImportProcesser(TaskProcesser):
                     if note_dict["version"] == "":
                         # type is unicode
                         note_dict["type"] = common_utils.sha1sum(note_dict["type"])
-                    flag = sqlite.save_data_to_db(note_dict, self.db.rich, mode = "INSERT OR UPDATE", conn = self.db.conn_rich)
+                    flag = self.db_rich.save_data_to_db(note_dict, mode = "INSERT OR UPDATE")
                     if flag == True:
                         LOG.debug("write rich note to database success")
                         result = [self.name, self.task_key, True]
