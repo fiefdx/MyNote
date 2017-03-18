@@ -583,6 +583,13 @@ window.onload=window.onresize=function(){
         $("div#notes_list").height(window_height - 115);
         $("textarea#note_text").height(window_height - 160);
         $("div#note_area").width(window_width - 490);
+        setTimeout(function(){
+            var window_height = $(window).height();
+            var window_width = $(window).width();
+            $("div#notes_list").height(window_height - 115);
+            $("textarea#note_text").height(window_height - 160);
+            $("div#note_area").width(window_width - 490);
+        }, 5);
     });
 }
 
@@ -591,8 +598,8 @@ $(document).on('change', '.btn-file :file', function() {
     numFiles = input.get(0).files ? input.get(0).files.length : 1,
     label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
     input.trigger('fileselect', [numFiles, label]);
-});  
-    
+});
+
 $(document).ready(function(){
     var window_height = $(window).height();
     var window_width = $(window).width();

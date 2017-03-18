@@ -569,7 +569,7 @@
 <link href="{{ static_url("css/rich.css") }}" rel="stylesheet" >
 <script type="text/javascript">
 
-function upload_picture_ajax() {   
+function upload_picture_ajax() {
     /*
         prepareing ajax file upload
         url: the url of script file handling the uploaded files
@@ -580,7 +580,7 @@ function upload_picture_ajax() {
         error: callback function when the ajax failed
 
         <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
-        
+
             */
     result = false
     $.ajaxFileUpload({
@@ -606,7 +606,7 @@ function upload_picture_ajax() {
         }
     })
     return result;
-}  
+}
 
 window.onload=window.onresize=function(){
     $(document).ready(function(){
@@ -622,6 +622,20 @@ window.onload=window.onresize=function(){
             console.log(div_note_text_height);
             tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
         }
+        setTimeout(function(){
+            var window_height = $(window).height();
+            var window_width = $(window).width();
+            $("div#notes_list").height(window_height - 115);
+            $("textarea#note_text").height(window_height - 245);
+            $("div#div_note_text").height(window_height - 116);
+            $("div#note_area").width(window_width - 510);
+            if (tinymce.EditorManager.get(0) != null){
+                // tinymce.EditorManager.get(0).theme.resizeTo("100%", window_height - 188);
+                var div_note_text_height = $("div#div_note_text").height();
+                console.log(div_note_text_height);
+                tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+            }
+        }, 5);
     });
 }
 
@@ -631,7 +645,7 @@ $(document).on('change', '.btn-file :file', function() {
     numFiles = input.get(0).files ? input.get(0).files.length : 1,
     label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
     input.trigger('fileselect', [numFiles, label]);
-});  
+});
 
 $(document).ready(function(){
     var window_height = $(window).height();
@@ -658,12 +672,12 @@ $(document).ready(function(){
     //         if( log ) alert(log);
     //     }
     // });
-    
+
     $("#import_modal").on("hidden.bs.modal", resetModal);
     $("#create_note_modal").on("hidden.bs.modal", resetModal);
     $("#export_modal").on("hidden.bs.modal", resetModal);
     $("#category_modal").on("hidden.bs.modal", resetModal);
-    
+
     noteInit('{{scheme}}', '{{locale}}');
     // hljs.initHighlightingOnLoad();
 });
