@@ -1,5 +1,4 @@
-
-#MyNote
+# MyNote
 (中文文档请参看[这里](#mynote_zh))
 
 An application for daily note-taking, you can write pure text note or rich text note, and you can quickly find what you noted earlier
@@ -10,7 +9,7 @@ It works like this:
 ![Alt text](/doc/rich_note_en.png?raw=true "rich_text_note_page")
 
 
-#Features
+# Features
 1. local html pages import & search (it used in the early version, I'm not use it, since MyNote support rich text note)
 2. pure text notes(now, I use it for old notes's compatibility)
 3. rich text notes based on html
@@ -20,7 +19,7 @@ It works like this:
 7. interface support english and chinese
 
 
-#Configuration
+# Configuration
 MyNote/app/configuration.yml or MyNote/configuration.yml
 ```yaml
 # APP_DEBUG
@@ -109,7 +108,7 @@ FUNCTIONS:
 ```
 
 
-#Installation
+# Installation
 You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, so I just show how to setup & install it on Xubuntu.
 
 1. from source
@@ -136,7 +135,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    # now you can run it from then applications menu. it under the 'Internet' category
    # open a web browser, recommend firefox or chrome, open page https://localhost:8008
    # you should see the login page, and the register button at top-right corner
-```
+   ```
 
 2. from binary package
    ```bash
@@ -153,7 +152,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    # now you can run it from then applications menu. it under the 'Internet' category
    # open a web browser, recommend firefox or chrome, open page https://localhost:8008
    # you should see the login page, and the register button at top-right corner
-```
+   ```
 
 3. build binary package
    ```bash
@@ -161,10 +160,10 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
    cd MyNote
    ./build.sh
    # it will generate a dist/MyNote directory
-```
+   ```
 
 
-#Operations & Screenshots
+# Operations & Screenshots
 
 1. login page, register a user, then you can login
    ![Alt text](/doc/login_page_en.png?raw=true "login_page")
@@ -178,7 +177,7 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
 4. there is no direct operation for delete a note, you should empty the note's title & content, then save it, that will delete a note
 
 
-#Binary Package Download Links
+# Binary Package Download Links
 
 I build Windows 32bit package and Linux 64bit package, under windows the performance is not as good as under linux, but it still work well
 
@@ -188,7 +187,7 @@ I build Windows 32bit package and Linux 64bit package, under windows the perform
 <a name="mynote_zh"><a>
 
 
-#MyNote
+# MyNote
 这一个笔记应用，可以用来写纯文本笔记，或者富文本笔记，提供全文搜索功能可以快速查阅以往的笔记。在过去的几年里，我一直在用它来帮助我记住工作和生活中碰到的新知识。
 有些代码相对较老，也是限于当时本人的技术能力，所以，这些代码会很难看，但是，它们还是工作的不错的。到目前为止，它还不是一个很完美的工具，会有bug，不过，确实非
 常实用。
@@ -197,7 +196,7 @@ I build Windows 32bit package and Linux 64bit package, under windows the perform
 ![Alt text](/doc/rich_note_zh.png?raw=true "rich_text_note_page")
 
 
-#笔记特性
+# 笔记特性
 1. 本地html文件导入和搜索功能（这个功能在我实现了富文本笔记后就基本不用了）
 2. 纯文本笔记功能（这个功能在我实现了富文本笔记后也基本不用了，目前，只用于老笔记的兼容）
 3. 富文本笔记功能（基于html）
@@ -207,7 +206,7 @@ I build Windows 32bit package and Linux 64bit package, under windows the perform
 7. 笔记界面支持中文和英文
 
 
-#笔记配置项
+# 笔记配置项
 配置文件为 MyNote/app/configuration.yml 或 MyNote/configuration.yml （取决于是生成的二进制包运行，还是源码运行）
 ```yaml
 # APP_DEBUG
@@ -296,7 +295,7 @@ FUNCTIONS:
 ```
 
 
-#笔记安装步骤
+# 笔记安装步骤
 你可以从源码直接运行，也可以打包成可执行文件后运行，由于我用的是Xubuntu 64位，所以，就只写一下在Xubuntu下的安装步骤。
 
 1. 从源码运行
@@ -323,7 +322,7 @@ FUNCTIONS:
    # 现在你可以从系统程序菜单运行MyNote了
    # 在服务启动后，用浏览器（推荐用火狐或谷歌浏览器）打开https://localhost:8008
    # 应该就可以看到登录页面了，登录页面右上角有用户注册入口
-```
+   ```
 
 2. 从二进制包运行
    ```bash
@@ -340,7 +339,7 @@ FUNCTIONS:
    # 现在你可以从系统程序菜单运行MyNote了
    # 在服务启动后，用浏览器（推荐用火狐或谷歌浏览器）打开https://localhost:8008
    # 应该就可以看到登录页面了，登录页面右上角有用户注册入口
-```
+   ```
 
 3. 打二进制包
    ```bash
@@ -348,10 +347,10 @@ FUNCTIONS:
    cd MyNote
    ./build.sh
    # 脚本会自动生成dist/MyNote目录，MyNote就是打好的二进制包的根目录
-```
+   ```
 
 
-#常见操作和截屏
+# 常见操作和截屏
 
 1. 登录页面，注册用户后就可以登录了
    ![Alt text](/doc/login_page_zh.png?raw=true "login_page")
@@ -365,7 +364,7 @@ FUNCTIONS:
 4. 笔记中没有直接删除一篇笔记的功能，把想要删除的笔记的标题和内容清空，再保存该笔记，该篇笔记就会被删除了
 
 
-#二进制包下载地址
+# 二进制包下载地址
 
 我打包了Windows 32位和Linux 64位的二进制包，笔记在windows下的性能没有在linux下的性能好，不过依然工作正常
 
