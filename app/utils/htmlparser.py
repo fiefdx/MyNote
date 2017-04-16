@@ -343,16 +343,21 @@ def get_web_image_src(file_content):
         LOG.exception(e)
     return result
 
-def get_web_images(images, db_pic = None):
+def get_web_images(images, db_pic = None, proxy = {}):
     result = []
     image = ""
     try:
+        proxy = urllib2.ProxyHandler(proxy)
+        opener = urllib2.build_opener(proxy)
+        opener.addheaders = [('User-Agent', 'Mozilla/5.0 (X11;Centos;Linux x86_64;rv:42.0) Gecko/20100101 Firefox/42.0'),
+                             ('Accept-Language', 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3'),
+                             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')]
         for i in images:
             try:
                 # i[0] is the web src, i[1] is the local src
                 url_parts = list(urlparse.urlparse(i[0]))
                 if url_parts[1].split(":")[0] not in ["localhost", "127.0.0.1", CONFIG["SERVER_HOST"]]:
-                    p = urllib2.urlopen(i[0], timeout = 10)
+                    p = opener.open(i[0], timeout = 10)
                     if p.code == 200:
                         image = p.read()
                         image_name = os.path.split(list(urlparse.urlparse(i[0]))[2])[1]
@@ -427,12 +432,12 @@ def html_change_image_src_BS(html_content, images):
         LOG.exception(e)
     return result
 
-def get_rich_content(note_content, db_pic = None):
+def get_rich_content(note_content, db_pic = None, proxy = {}):
     local_images = []
     if note_content.strip() != "":
         images = get_web_image_src(note_content)
         LOG.debug("imges: %s", images)
-        images = get_web_images(images, db_pic)
+        images = get_web_images(images, db_pic, proxy = proxy)
         LOG.debug("imges_local: %s", images)
         note_content, local_images = html_change_image_src_BS(note_content, images)
         LOG.info("local_images: %s", local_images)

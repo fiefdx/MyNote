@@ -170,7 +170,9 @@ def init_sqlite(db_path, db_type):
                          "note_books text, "
                          "rich_books text, "
                          "user_language text, "
-                         "register_time timestamp)"), 
+                         "register_time timestamp, "
+                         "http_proxy text, "
+                         "https_proxy text)"), 
                DB.flag: ("CREATE TABLE FLAG (index_name text PRIMARY KEY, "
                          "old_index_time timestamp, "
                          "new_index_time timestamp)")
@@ -305,7 +307,7 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
            DB.rich: "INSERT INTO RICH VALUES (NULL,?,?,?,?,?,?,?,?,?,?,?)",
            DB.note: "INSERT INTO NOTE VALUES (NULL,?,?,?,?,?,?,?,?,?)",
            DB.pic: "INSERT INTO PIC VALUES (NULL,?,?,?,?)",
-           DB.user: "INSERT INTO USER VALUES (NULL,?,?,?,?,?,?,?)"
+           DB.user: "INSERT INTO USER VALUES (NULL,?,?,?,?,?,?,?,?,?)"
            }
     sql_update = {DB.html: ("UPDATE HTML SET "
                             "updated_at = ?, "
@@ -341,7 +343,9 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
                             "user_pass = ?, "
                             "note_books = ?, "
                             "rich_books = ?, "
-                            "user_language = ? "
+                            "user_language = ?, "
+                            "http_proxy = ?, "
+                            "https_proxy = ? "
                             "WHERE user_name = ?;")
                   }
 
@@ -423,11 +427,15 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
                      item["note_books"],
                      item["rich_books"],
                      item["user_language"],
-                     item["register_time"])
+                     item["register_time"],
+                     item["http_proxy"],
+                     item["https_proxy"])
         sql_update_param = (item["user_pass"],
                             item["note_books"],
                             item["rich_books"],
                             item["user_language"],
+                            item["http_proxy"],
+                            item["https_proxy"],
                             item["user_name"])
 
     for i in xrange(retries):
@@ -1338,6 +1346,8 @@ def get_user_from_db(user_name, conn = None):
                 user.rich_books = i[5]
                 user.user_language = i[6]
                 user.register_time = i[7]
+                user.http_proxy = i[8]
+                user.https_proxy = i[9]
                 result = user
             LOG.debug("Get user[%s] data from db success.", user_name)
     except Exception, e:

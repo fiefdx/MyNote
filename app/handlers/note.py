@@ -89,6 +89,7 @@ class NoteHandler(BaseHandler):
         multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         option = (self.get_argument("option", "")).strip()
@@ -109,7 +110,9 @@ class NoteHandler(BaseHandler):
                         current_nav = "Note",
                         scheme = CONFIG["SERVER_SCHEME"],
                         functions = CONFIG["FUNCTIONS"],
-                        locale = locale)
+                        locale = locale,
+                        http_proxy = user_info.http_proxy,
+                        https_proxy = user_info.https_proxy)
         elif option == "download" and note_id != "":
             note = Servers.DB_SERVER["NOTE"].get_note_by_id(note_id, user)
             # note's file_content and file_title are unicode
@@ -132,7 +135,9 @@ class NoteHandler(BaseHandler):
                     current_nav = "Note",
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
-                    locale = locale)
+                    locale = locale,
+                    http_proxy = user_info.http_proxy,
+                    https_proxy = user_info.https_proxy)
 
 @gen.coroutine
 def update_categories(user_locale, user):

@@ -196,6 +196,7 @@ tinymce.addI18n('zh_CN',{
 "Format": "\u683c\u5f0f",
 "New note": "\u65b0\u5efa\u7b14\u8bb0",
 "Save note": "\u4fdd\u5b58\u7b14\u8bb0",
+"Save note(proxy)": "\u4fdd\u5b58\u7b14\u8bb0\uff08\u4ee3\u7406\uff09",
 "Upload": "\u4e0a\u4f20",
 "Select": "\u9009\u62e9"
 });

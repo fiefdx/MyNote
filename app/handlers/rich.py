@@ -126,6 +126,7 @@ class RichHandler(BaseHandler):
     def get(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         option = (self.get_argument("option", "")).strip()
@@ -150,14 +151,18 @@ class RichHandler(BaseHandler):
                         current_nav = "Rich",
                         scheme = CONFIG["SERVER_SCHEME"],
                         functions = CONFIG["FUNCTIONS"],
-                        locale = locale)
+                        locale = locale,
+                        http_proxy = user_info.http_proxy,
+                        https_proxy = user_info.https_proxy)
         else:
             self.render("note/rich_tinymce.html",
                     user = user,
                     current_nav = "Rich",
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
-                    locale = locale)
+                    locale = locale,
+                    http_proxy = user_info.http_proxy,
+                    https_proxy = user_info.https_proxy)
 
 @gen.coroutine
 def update_categories(user_locale, user):
@@ -388,7 +393,7 @@ def load_category(sha1_category_name, note_id, user, handler, user_locale, user_
     send_msg(json.dumps(data), user, handler)
 
 @gen.coroutine
-def create_note(note_dict, user, handler, user_locale, user_key = ""):
+def create_note(note_dict, user, handler, user_locale, user_key = "", proxy = {}):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     try:
         note = RICH()
@@ -396,7 +401,7 @@ def create_note(note_dict, user, handler, user_locale, user_key = ""):
         note.type = note_dict['type'].strip()
         note.file_title = note_dict['note_title']
         note_content = note_dict['note_content']
-        note_content, images = htmlparser.get_rich_content(note_content, Servers.DB_SERVER["PIC"])
+        note_content, images = htmlparser.get_rich_content(note_content, Servers.DB_SERVER["PIC"], proxy = proxy)
         note.sha1 = common_utils.sha1sum(note.file_title + note_content)
         note.rich_content = note_content
         note.images = images
@@ -495,7 +500,7 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         LOG.exception(e)
 
 @gen.coroutine
-def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
+def save_note(note_dict, user, handler, user_locale, page = 1, user_key = "", proxy = {}):
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     try:
         note = RICH()
@@ -503,7 +508,7 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         note.user_name = user
         note.file_title = note_dict['note_title']
         note_content = note_dict['note_content']
-        note_content, images = htmlparser.get_rich_content(note_content, Servers.DB_SERVER["PIC"])
+        note_content, images = htmlparser.get_rich_content(note_content, Servers.DB_SERVER["PIC"], proxy = proxy)
         note.sha1 = common_utils.sha1sum(note.file_title + note_content)
         note.rich_content = note_content
         note.images = images
@@ -658,11 +663,18 @@ class RichSocketHandler(BaseSocketHandler):
                     data['current_note_id'] = note_id
                     send_msg(json.dumps(data), user, self)
                 elif cmd == 'save':
+                    proxy = {}
+                    if msg['note'].has_key('proxy') and msg['note']['proxy']:
+                        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+                        if user_info.http_proxy != "":
+                            proxy["http"] = user_info.http_proxy
+                        if user_info.https_proxy != "":
+                            proxy["https"] = user_info.https_proxy
                     note_id = msg['note']['note_id']
                     if note_id == None:
-                        yield create_note(msg['note'], user, self, user_locale, user_key = user_key)
+                        yield create_note(msg['note'], user, self, user_locale, user_key = user_key, proxy = proxy)
                     elif note_id != None:
-                        yield save_note(msg['note'], user, self, user_locale, page = 1, user_key = user_key)
+                        yield save_note(msg['note'], user, self, user_locale, page = 1, user_key = user_key, proxy = proxy)
             if msg.has_key('category'):
                 cmd = msg['category']['cmd']
                 LOG.info("category operation: %s", cmd)

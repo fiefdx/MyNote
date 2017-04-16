@@ -44,7 +44,6 @@ function baseInit (current_nav, scheme, locale, msg) {
 
     function resetModal(e) {
         console.log("Reset: ", e.target.id);
-        $("#" + e.target.id).find("input:text").val("");
         $("#" + e.target.id).find("input:password").val("");
         $("#r_passwd").attr("class","glyphicon glyphicon-star col-xs-2");
         $("#r_passwd_confirm").attr("class","glyphicon glyphicon-star col-xs-2");

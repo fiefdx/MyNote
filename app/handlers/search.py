@@ -25,6 +25,7 @@ class IndexHandler(BaseHandler):
     @gen.coroutine
     def get(self):
         user = self.get_current_user_name()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         self.render("search/index.html",
@@ -32,11 +33,13 @@ class IndexHandler(BaseHandler):
                     user = user,
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
-                    locale = locale)
+                    locale = locale,
+                    http_proxy = user_info.http_proxy,
+                    https_proxy = user_info.https_proxy)
 
 class SearchHandler(BaseHandler):
     @gen.coroutine
-    def process_query(self, typed_q, query, user, locale):
+    def process_query(self, typed_q, query, user, locale, user_info):
         # get page number
         page_number = self.get_argument("page", "1")
         page_number = int(page_number)
@@ -79,28 +82,32 @@ class SearchHandler(BaseHandler):
                                           search_result_prompt = search_result_prompt,
                                           scheme = CONFIG["SERVER_SCHEME"],
                                           functions = CONFIG["FUNCTIONS"],
-                                          locale = locale)
+                                          locale = locale,
+                                          http_proxy = user_info.http_proxy,
+                                          https_proxy = user_info.https_proxy)
 
     @tornado.web.authenticated
     @gen.coroutine
     def get(self):
         user = self.get_current_user_name()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         q = (self.get_argument("q", "") ).strip()
         typed_q = q
 
         query = q
-        yield self.process_query(typed_q, query, user, locale)
+        yield self.process_query(typed_q, query, user, locale, user_info)
 
     @tornado.web.authenticated
     @gen.coroutine
     def post(self):
         user = self.get_current_user_name()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         q = (self.get_argument("q", "")).strip()
         typed_q = q
 
         query = q
-        yield self.process_query(typed_q, query, user, locale)
+        yield self.process_query(typed_q, query, user, locale, user_info)

@@ -58,6 +58,8 @@ class USER(object):
                           "note_books: %(note_books)s\n" \
                           "rich_books: %(rich_books)s\n" \
                           "user_language: %(user_language)s\n" \
+                          "http_proxy: %(http_proxy)s\n" \
+                          "https_proxy: %(https_proxy)s\n" \
                           "register_time: %(register_time)s\n" \
                           %(self.to_dict())
         return string_formated
@@ -72,7 +74,7 @@ class USER(object):
 
         self.clear()
         attrs = ["id", "sha1", "user_name", "user_pass", "note_books", 
-                 "rich_books", "user_language", "register_time"]
+                 "rich_books", "user_language", "register_time", "http_proxy", "https_proxy"]
         if hasattr(source, "__getitem__"):
             for attr in attrs:
                 try:
@@ -99,6 +101,8 @@ class USER(object):
                 "note_books" : self.note_books,
                 "rich_books" : self.rich_books,
                 "user_language" : self.user_language,
+                "http_proxy" : self.http_proxy,
+                "https_proxy" : self.https_proxy,
                 "register_time" : self.register_time
                 }
             )
@@ -115,6 +119,8 @@ class USER(object):
         self.note_books = ""
         self.rich_books = ""
         self.user_language = "" # us_EN or zh_CN
+        self.http_proxy = ""
+        self.https_proxy = ""
         self.register_time = None
 
 class HTML(object):

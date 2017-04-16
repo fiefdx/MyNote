@@ -17,6 +17,7 @@ class HelpHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self):
         user = self.get_current_user_name()
+        user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         user_locale = self.get_user_locale()
         locale = "zh_CN" if user_locale and user_locale.code == "zh_CN" else "en_US"
         self.render("help/help.html",
@@ -24,4 +25,6 @@ class HelpHandler(BaseHandler):
                     user = user,
                     scheme = CONFIG["SERVER_SCHEME"],
                     functions = CONFIG["FUNCTIONS"],
-                    locale = locale)
+                    locale = locale,
+                    http_proxy = user_info.http_proxy,
+                    https_proxy = user_info.https_proxy)

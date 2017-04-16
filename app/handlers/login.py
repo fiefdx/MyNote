@@ -137,6 +137,8 @@ class SettingsHandler(BaseHandler):
             old_passwd = self.get_argument("old_passwd", "")
             new_passwd = self.get_argument("passwd", "")
             passwd_confirm = self.get_argument("passwd_confirm", "")
+            http_proxy = self.get_argument("http_proxy", "")
+            https_proxy = self.get_argument("https_proxy", "")
             redirect_to = self.get_argument("redirect_to", "")
             old_user_pass = common_utils.sha256sum(old_passwd)
             user = self.get_current_user_name()
@@ -148,6 +150,8 @@ class SettingsHandler(BaseHandler):
                     user_info.user_pass = common_utils.sha256sum(new_passwd)
                     change_passwd_flag = True
                 user_info.user_language = user_language
+                user_info.http_proxy = http_proxy
+                user_info.https_proxy = https_proxy
                 flag = Servers.DB_SERVER["USER"].save_data_to_db(user_info.to_dict(), mode = "UPDATE")
                 if flag:
                     self.set_secure_cookie("user_locale", user_language, COOKIE_TIME)

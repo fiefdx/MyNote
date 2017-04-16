@@ -88,7 +88,7 @@ function noteInit (scheme, locale) {
             "fontsizeselect | forecolor | bold italic underline | numlist bullist | outdent indent" // insertfile backcolor | alignleft aligncenter alignright alignjustify
         ],
         menu: {
-            file   : {title : 'File'  , items : 'create_note save_note'}, //newdocument 
+            file   : {title : 'File'  , items : 'create_note save_note save_note_with_proxy'}, //newdocument 
             edit   : {title : 'Edit'  , items : 'undo redo | cut copy paste pastetext | selectall | searchreplace'},
             insert : {title : 'Insert', items : 'link insert_image | charmap hr anchor pagebreak insertdatetime nonbreaking template'},
             view   : {title : 'View'  , items : 'visualchars visualblocks visualaid | preview fullscreen'},
@@ -114,6 +114,13 @@ function noteInit (scheme, locale) {
                 context: "file",
                 // shortcut: 'Ctrl+S',
                 onclick: saveNote,
+            });
+            editor.addMenuItem("save_note_with_proxy", {
+                icon: "save",
+                text: "Save note(proxy)",
+                context: "file",
+                // shortcut: 'Ctrl+S',
+                onclick: saveNoteWithProxy,
             });
             // tinymceEditor = editor;
             // initNoteOperation(editor);
@@ -517,6 +524,32 @@ function noteInit (scheme, locale) {
                             'note_content':tinymceEditor.getContent({format: 'raw'}),
                             'type':current_category,
                             'q':$('#search_input').val()};
+            console.log(data);
+            socket.send(JSON.stringify(data));
+        }
+    }
+
+    function saveNoteWithProxy() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            if (!$body.hasClass("mce-fullscreen")) {
+                $div_note_text.addClass("loading");
+            } else {
+                $body.addClass("saving");
+            }
+            note_scroll = $('#note_text_ifr').contents().find('html,body').scrollTop();
+            console.log("save scrollTop: " + note_scroll);
+            console.log("save note: " + current_note_id);
+            var data = {};
+            data['note'] = {'cmd':'save',
+                            'note_id':current_note_id,
+                            'note_title':$note_title.val(),
+                            // 'note_content':$note_content.val(),
+                            'note_content':tinymceEditor.getContent({format: 'raw'}),
+                            'type':current_category,
+                            'q':$('#search_input').val(),
+                            'proxy':true};
             console.log(data);
             socket.send(JSON.stringify(data));
         }
