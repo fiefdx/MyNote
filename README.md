@@ -113,12 +113,16 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
 
 1. from source
    ```bash
+   # install pip
+   sudo apt-get install python-pip
+
    # run app/dev.sh
    cd MyNote/app
    ./dev.sh
 
    # install tea package
-   git clone git@github.com:fiefdx/tea.git
+   # download it from github https://github.com/fiefdx/tea
+   tar xzvf ./tea.tar.gz or unzip ./tea.zip
    cd tea
    sudo python ./setup.py install
 
@@ -300,12 +304,16 @@ FUNCTIONS:
 
 1. 从源码运行
    ```bash
-   # 运行 app/dev.sh
+   # 安装pip
+   sudo apt-get install python-pip
+
+   # 运行app/dev.sh
    cd MyNote/app
    ./dev.sh
 
    # 安装tea包，用来加密笔记内容
-   git clone git@github.com:fiefdx/tea.git
+   # 从github下载tea https://github.com/fiefdx/tea
+   tar xzvf ./tea.tar.gz 或 unzip ./tea.zip
    cd tea
    sudo python ./setup.py install
 
