@@ -181,10 +181,12 @@ def init_sqlite(db_path, db_type):
                       DB.rich: "CREATE INDEX user_name_RICH ON RICH (user_name);" \
                                "CREATE INDEX created_at_RICH ON RICH (created_at);" \
                                "CREATE INDEX updated_at_RICH ON RICH (updated_at);" \
+                               "CREATE INDEX type_RICH ON RICH (type);" \
                                "CREATE UNIQUE INDEX user_name_sha1_RICH ON RICH (user_name, sha1);",
                       DB.note: "CREATE INDEX user_name_NOTE ON NOTE (user_name);" \
                                "CREATE INDEX created_at_NOTE ON NOTE (created_at);" \
                                "CREATE INDEX updated_at_NOTE ON NOTE (updated_at);" \
+                               "CREATE INDEX type_NOTE ON NOTE (type);" \
                                "CREATE UNIQUE INDEX user_name_sha1_NOTE ON NOTE (user_name, sha1);",
                       DB.pic: "CREATE INDEX sha1_PIC ON PIC (sha1);", 
                       DB.user: "CREATE INDEX user_name_USER ON USER (user_name);", 

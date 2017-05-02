@@ -879,6 +879,8 @@ class ImportAjaxHandler(BaseHandler):
         result = {"flag": False, "total": 0, "tasks": 0}
         try:
             fname = self.get_argument("file_name", "")
+            fname = os.path.split(fname.replace("\\", "/"))[-1]
+            LOG.debug("ImportAjaxHandler fname: %s", fname)
             password = self.get_argument("passwd", "")
             password = common_utils.md5twice(password) if password != "" else ""
             LOG.info("import notes encrypted: %s", True if password != "" else False)
