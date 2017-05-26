@@ -13,6 +13,7 @@ import logging
 import datetime
 import hashlib
 import dateutil
+import platform
 
 from db.db_rich import DB as RICH_DB
 from db.db_note import DB as NOTE_DB
@@ -24,6 +25,8 @@ from utils import htmlparser
 from models.item import NOTE, RICH, PICTURE
 from models.task import TaskProcesser, StopSignal
 from config import CONFIG
+
+PLATFORM = [platform.system(), platform.architecture()[0]]
 
 LOG = logging.getLogger(__name__)
 
@@ -39,6 +42,8 @@ class NoteImportProcesser(TaskProcesser):
         self.task_key = ""
 
     def iter(self, file_name, user, user_key, password):
+        if PLATFORM[0].lower() == "windows":
+            self.db_user = USER_DB()
         self.task_key = get_key(file_name, user)
         arch = Archive(user)
         archive_name = file_name.split(".")[0]
@@ -113,6 +118,8 @@ class NoteImportProcesser(TaskProcesser):
         yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
+        if PLATFORM[0].lower() == "windows":
+            self.db_note = NOTE_DB()
         _, self.task_key, fname, fpath, storage_path, user_name, key, password = x
         result = (self.name, self.task_key, False)
         try:
@@ -173,6 +180,8 @@ class RichImportProcesser(TaskProcesser):
         self.task_key = ""
 
     def iter(self, file_name, user, user_key, password):
+        if PLATFORM[0].lower() == "windows":
+            self.db_user = USER_DB()
         self.task_key = get_key(file_name, user)
         arch = Archive(user)
         archive_name = file_name.split(".")[0]
@@ -262,6 +271,9 @@ class RichImportProcesser(TaskProcesser):
         yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
+        if PLATFORM[0].lower() == "windows":
+            self.db_rich = RICH_DB()
+            self.db_pic = PIC_DB()
         _, self.task_key, fname, fpath, storage_path, user_name, key, password = x
         result = (self.name, self.task_key, False)
         try:
