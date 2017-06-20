@@ -812,20 +812,28 @@ function noteInit (scheme, locale) {
         })
     }
 
-    function importNotesAjax(file_name, password, xsrf) {
+    async function importNotesAjax(file_name, password, xsrf) {
         var result = {"flag": false, "total": 0, "tasks": 0};
+        var requestFlag = false;
         $.ajax({
             type: "post",
-            async: false,
+            async: true,
             url: location.protocol + "//" + local + "/importrichnotesajax",
             data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
             success: function(data, textStatus) {
                 result = data;
+                requestFlag = true;
             },
             error: function() {
                 alert("import notes failed!");
+                requestFlag = true;
             }
         });
+
+        while (!requestFlag) {
+            await sleep(1000);
+        }
+
         var option = "";
         if (result.flag == true && result.total == result.tasks) {
             option = "import_notes_success";
@@ -905,6 +913,10 @@ function noteInit (scheme, locale) {
         } else {
             $('div#body_container').css("margin-top", "80px");
         }
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
