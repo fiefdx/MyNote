@@ -253,21 +253,27 @@ class RichImportProcesser(TaskProcesser):
 
         key = user_key if CONFIG["ENCRYPT"] else ""
 
+        task_num = 0
         try:
             for root, dirs, files in os.walk(images_path):
                 for fname in files:
                     fpath = os.path.join(root, fname)
                     LOG.debug("processing [%s]", fpath)
                     yield [self.name, self.task_key, fname, fpath, "image", user.user_name, "", ""]
+                    task_num += 1
             for root, dirs, files in os.walk(import_path):
                 for fname in files:
                     if ".json" not in fname:
                         fpath = os.path.join(root, fname)
                         LOG.debug("Processing [%s]", fpath)
                         yield [self.name, self.task_key, fname, fpath, storage_path, user.user_name, key, password]
+                        task_num += 1
         except Exception, e:
             LOG.exception(e)
-        time.sleep(10)
+        if task_num < 1000:
+            time.sleep(10)
+        else:
+            time.sleep(30)
         yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
