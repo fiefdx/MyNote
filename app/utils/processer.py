@@ -94,6 +94,8 @@ class Worker(Process):
         self.task_queue = task_queue
         self.result_queue = result_queue
         self.mapping = mapping
+        for _, processer in self.mapping.iter():
+            processer.init()
 
     def sig_handler(self, sig, frame):
         LOG.warning("Worker(%03d) Caught signal: %s", self.wid, sig)
@@ -145,6 +147,8 @@ class Dispatcher(StoppableThread):
         self.queue = queue
         self.task_queue = task_queue
         self.mapping = mapping
+        for _, processer in self.mapping.iter():
+            processer.init()
 
     def run(self):
         LOG = logging.getLogger("manager")
@@ -184,6 +188,8 @@ class Collector(StoppableThread):
         self.result_queue = result_queue
         self.mapping = mapping
         self.tasks = tasks
+        for _, processer in self.mapping.iter():
+            processer.init()
 
     def run(self):
         LOG = logging.getLogger("manager")

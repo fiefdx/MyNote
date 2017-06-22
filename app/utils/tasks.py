@@ -41,6 +41,11 @@ class NoteImportProcesser(TaskProcesser):
         self.db_note = NOTE_DB()
         self.task_key = ""
 
+    def init(self):
+        self.db_user = USER_DB()
+        self.db_note = NOTE_DB()
+        self.task_key = ""
+
     def iter(self, file_name, user, user_key, password):
         if PLATFORM[0].lower() == "windows":
             self.db_user = USER_DB()
@@ -179,6 +184,12 @@ class RichImportProcesser(TaskProcesser):
         self.db_pic = PIC_DB()
         self.task_key = ""
 
+    def init(self):
+        self.db_user = USER_DB()
+        self.db_rich = RICH_DB()
+        self.db_pic = PIC_DB()
+        self.task_key = ""
+
     def iter(self, file_name, user, user_key, password):
         if PLATFORM[0].lower() == "windows":
             self.db_user = USER_DB()
@@ -270,10 +281,7 @@ class RichImportProcesser(TaskProcesser):
                         task_num += 1
         except Exception, e:
             LOG.exception(e)
-        if task_num < 1000:
-            time.sleep(10)
-        else:
-            time.sleep(30)
+        time.sleep(10)
         yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
@@ -347,4 +355,5 @@ class RichImportProcesser(TaskProcesser):
             result = (y, True)
         elif isinstance(y, str) and y == StopSignal:
             result = (x, True)
+        LOG.debug("reduce: x, y = %s, %s", x, y)
         return result
