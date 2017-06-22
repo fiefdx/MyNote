@@ -7,7 +7,6 @@ Created on 2016-01-09
 
 import time
 import logging
-import platform
 import threading
 from threading import Thread
 from multiprocessing import Process, Queue, Pipe
@@ -22,8 +21,6 @@ from config import CONFIG
 import logger
 
 LOG = logging.getLogger(__name__)
-
-PLATFORM = [platform.system(), platform.architecture()[0]]
 
 TaskQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
@@ -56,6 +53,8 @@ class Processer(StoppableThread):
         self.task_queue = task_queue
         self.result_queue = result_queue
         self.mapping = mapping
+        for _, processer in self.mapping.iter():
+            processer.init()
 
     def run(self):
         LOG = logging.getLogger("worker")
