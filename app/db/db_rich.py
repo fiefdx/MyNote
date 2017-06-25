@@ -46,6 +46,17 @@ class DB(object):
                       "images = ?, "
                       "type = ? "
                       "WHERE id = ?;")
+        sql_update_unique = ("UPDATE RICH SET "
+                             "updated_at = ?, "
+                             "sha1 = ?, "
+                             "file_title = ?, "
+                             "file_content = ?, "
+                             "rich_content = ?, "
+                             "file_path = ?, "
+                             "description = ?, "
+                             "images = ?, "
+                             "type = ? "
+                             "WHERE user_name = ? AND sha1 = ?;")
         sql_param = (item["user_name"],
                      item["sha1"],
                      item["created_at"],
@@ -67,6 +78,17 @@ class DB(object):
                             item["images"],
                             item["type"],
                             item["id"])
+        sql_update_unique_param = (item["updated_at"],
+                                   item["sha1"],
+                                   item["file_title"],
+                                   item["file_content"],
+                                   item["rich_content"],
+                                   item["file_path"],
+                                   item["description"],
+                                   item["images"],
+                                   item["type"],
+                                   item["user_name"],
+                                   item["sha1"])
 
         for i in xrange(retries):
             try:
@@ -82,12 +104,12 @@ class DB(object):
             except sqlite3.IntegrityError:
                 try:
                     if mode == "INSERT OR UPDATE":
-                        LOG.info("The item[%s] have been in rich service, so update it!", item["id"])
+                        LOG.info("The item[user_name: %s, sha1: %s] have been in rich service, so update it!", item["user_name"], item["sha1"])
                         c = self.conn.cursor()
-                        c.execute(sql_update, sql_update_param)
+                        c.execute(sql_update_unique, sql_update_unique_param)
                         self.conn.commit()
                         result = True
-                        LOG.debug("Update data item[%s] to rich success.", item["id"])
+                        LOG.debug("Update data item[user_name: %s, sha1: %s] to rich success.", item["user_name"], item["sha1"])
                         break
                     else:
                         result = None

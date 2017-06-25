@@ -60,12 +60,12 @@ class DB(object):
             except sqlite3.IntegrityError:
                 try:
                     if mode == "INSERT OR UPDATE":
-                        LOG.info("The item[%s] have been in pic, so update it!", item["id"])
+                        LOG.info("The item[sha1: %s] have been in pic, so update it!", item["sha1"])
                         c = self.conn.cursor()
                         c.execute(sql_update, sql_update_param)
                         self.conn.commit()
                         result = True
-                        LOG.debug("Update data item[%s] to pic success.", item["id"])
+                        LOG.debug("Update data item[sha1: %s] to pic success.", item["sha1"])
                         break
                     else:
                         result = None
