@@ -14,7 +14,7 @@ from multiprocessing import Process, Queue, Pipe
 import toro
 from tornado import gen
 
-from utils.tasks import get_key, NoteImportProcesser, RichImportProcesser
+from utils.tasks import get_key, get_index_key, NoteImportProcesser, RichImportProcesser, NoteIndexProcesser, RichIndexProcesser
 from models.mapping import Mapping
 from models.task import StopSignal
 from config import CONFIG
@@ -23,11 +23,15 @@ import logger
 LOG = logging.getLogger(__name__)
 
 TaskQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
+TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in xrange(CONFIG["PROCESS_NUM"])]
 ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ImportRich = "IMPORT_RICH"
 ImportNote = "IMPORT_NOTE"
+IndexNote = "INDEX_NOTE"
+IndexRich = "INDEX_RICH"
 Exit = "EXIT"
 GetRate = "GET_RATE"
+GetIndexRate = "GET_INDEX_RATE"
 
 class StoppableThread(Thread):
     """
@@ -66,7 +70,7 @@ class Processer(StoppableThread):
                         task = self.task_queue.get()
                         if task != StopSignal:
                             job = task
-                            LOG.debug("processing task: %s", task)
+                            LOG.debug("processing task: %s", task[:-1])
                             processer = self.mapping.get(job[0])
                             if processer:
                                 r = processer.map(job)
@@ -138,13 +142,13 @@ class Worker(Process):
         LOG.info("Worker(%03d) exit", self.wid)
 
 class Dispatcher(StoppableThread):
-    def __init__(self, pid, tasks, queue, task_queue, mapping):
+    def __init__(self, pid, tasks, queue, task_queues, mapping):
         StoppableThread.__init__(self)
         Thread.__init__(self)
         self.pid = pid
         self.tasks = tasks
         self.queue = queue
-        self.task_queue = task_queue
+        self.task_queues = task_queues
         self.mapping = mapping
         for _, processer in self.mapping.iter():
             processer.init()
@@ -161,22 +165,39 @@ class Dispatcher(StoppableThread):
                 if command == ImportNote:
                     processer = self.mapping.get("note")
                     task_key = get_key(file_name, user)
-                    for job in processer.iter(file_name, user, user_key, password):
-                        self.task_queue.put(job)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
                         self.tasks[task_key]["total"] += 1
-                    self.tasks[task_key]["total"] -= 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch notes over: %s, %s, %s", command, file_name, user.sha1)
                 elif command == ImportRich:
                     processer = self.mapping.get("rich")
                     task_key = get_key(file_name, user)
-                    for job in processer.iter(file_name, user, user_key, password):
-                        self.task_queue.put(job)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
                         self.tasks[task_key]["total"] += 1
-                    self.tasks[task_key]["total"] -= 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch rich notes over: %s, %s, %s", command, file_name, user.sha1)
+                elif command == IndexNote:
+                    processer = self.mapping.get("index_note")
+                    task_key = get_index_key(file_name, user)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                        self.tasks[task_key]["total"] += 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
+                    LOG.info("dispatch index notes over: %s, %s, %s", command, file_name, user.sha1)
+                elif command == IndexRich:
+                    processer = self.mapping.get("index_rich")
+                    task_key = get_index_key(file_name, user)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                        self.tasks[task_key]["total"] += 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
+                    LOG.info("dispatch index rich notes over: %s, %s, %s", command, file_name, user.sha1)
         except Exception, e:
             LOG.exception(e)
-        self.task_queue.put(StopSignal)
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            self.task_queues[i].put(StopSignal)
         LOG.info("Dispatcher exit")
 
 class Collector(StoppableThread):
@@ -201,10 +222,10 @@ class Collector(StoppableThread):
                     if task != StopSignal:
                         flag = False
                         if self.tasks.has_key(task[1]):
-                            self.tasks[task[1]]["tasks"], flag = self.mapping.get(task[0]).reduce(self.tasks[task[1]]["tasks"], task[2])
+                            self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(self.tasks[task[1]]["tasks"], task[2], self.tasks[task[1]]["finish"])
                         else:
-                            self.tasks[task[1]]["tasks"], flag = self.mapping.get(task[0]).reduce(0, task[2])
-                        if flag and self.tasks[task[1]]["flag"] is False:
+                            self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(0, task[2], 0)
+                        if flag and self.tasks[task[1]]["finish"] == CONFIG["PROCESS_NUM"] and self.tasks[task[1]]["flag"] is False:
                             self.tasks[task[1]]["flag"] = True
                     else:
                         break
@@ -216,12 +237,12 @@ class Collector(StoppableThread):
         LOG.info("Collector(%03d) exit", self.pid)
 
 class Manager(Process):
-    def __init__(self, pipe_client, task_queue, result_queue, mapping):
+    def __init__(self, pipe_client, task_queues, result_queue, mapping):
         Process.__init__(self)
         self.pipe_client = pipe_client
         self.queue = Queue(100)
         self.tasks = {}
-        self.task_queue = task_queue
+        self.task_queues = task_queues
         self.result_queue = result_queue
         self.mapping = mapping
         self.stop = False
@@ -255,7 +276,7 @@ class Manager(Process):
         LOG.info("Manager start")
         try:
             threads = []
-            dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queue, self.mapping)
+            dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queues, self.mapping)
             dispatcher.daemon = True
             threads.append(dispatcher)
             collector = Collector(0, self.tasks, self.result_queue, self.mapping)
@@ -271,19 +292,42 @@ class Manager(Process):
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import note %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == ImportRich:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import rich %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetRate:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager get rate %s[%s]", user.sha1, user.user_name)
+                    if self.tasks.has_key(task_key):
+                        self.pipe_client.send((command, self.tasks[task_key]))
+                        if self.tasks[task_key]["flag"] == True:
+                            del self.tasks[task_key]
+                    else:
+                        self.pipe_client.send((command, None))
+                elif command == IndexNote:
+                    task_key = get_index_key(file_name, user)
+                    LOG.debug("Manager index note %s[%s]", user.sha1, user.user_name)
+                    if not self.tasks.has_key(task_key):
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                    self.queue.put((command, file_name, user, user_key, password))
+                    self.pipe_client.send((command, self.tasks[task_key]))
+                elif command == IndexRich:
+                    task_key = get_index_key(file_name, user)
+                    LOG.debug("Manager index rich %s[%s]", user.sha1, user.user_name)
+                    if not self.tasks.has_key(task_key):
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                    self.queue.put((command, file_name, user, user_key, password))
+                    self.pipe_client.send((command, self.tasks[task_key]))
+                elif command == GetIndexRate:
+                    task_key = get_index_key(file_name, user)
+                    LOG.debug("Manager get index rate %s[%s]", user.sha1, user.user_name)
                     if self.tasks.has_key(task_key):
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
@@ -315,13 +359,15 @@ class ManagerClient(object):
             mapping = Mapping()
             mapping.add(NoteImportProcesser())
             mapping.add(RichImportProcesser())
-            p = Manager(pipe_client, TaskQueue, ResultQueue, mapping)
+            mapping.add(NoteIndexProcesser())
+            mapping.add(RichIndexProcesser())
+            p = Manager(pipe_client, TaskQueues, ResultQueue, mapping)
             p.daemon = True
             ManagerClient.PROCESS_LIST.append(p)
             ManagerClient.PROCESS_DICT["manager"] = [p, pipe_master]
             p.start()
             for i in xrange(process_num):
-                p = Worker(i, TaskQueue, ResultQueue, mapping)
+                p = Worker(i, TaskQueues[i], ResultQueue, mapping)
                 p.daemon = True
                 ManagerClient.PROCESS_LIST.append(p)
                 p.start()
@@ -394,6 +440,75 @@ class ManagerClient(object):
             r = ManagerClient.PROCESS_DICT["manager"][1].recv()
             LOG.debug("End get rate %s[%s]", file_name, user.user_name)
         LOG.info("get rate result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def index_notes(self, file_name, user, user_key, password):
+        """
+        file_name: is uploaded file's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start index notes %s[%s]", file_name, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get index notes Lock %s[%s]", file_name, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((IndexNote, file_name, user, user_key, password))
+            LOG.debug("Send index notes %s[%s] end", file_name, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV index notes %s[%s]", file_name, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End index notes %s[%s]", file_name, user.user_name)
+        LOG.info("index notes result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def index_rich_notes(self, file_name, user, user_key, password):
+        """
+        file_name: is uploaded file's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start index rich notes %s[%s]", file_name, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get index rich notes Lock %s[%s]", file_name, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((IndexRich, file_name, user, user_key, password))
+            LOG.debug("Send index rich notes %s[%s] end", file_name, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV index rich notes %s[%s]", file_name, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End index rich notes %s[%s]", file_name, user.user_name)
+        LOG.info("index rich notes result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def get_index_rate_of_progress(self, file_name, user):
+        """
+        file_name: is uploaded file's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start get index rate %s[%s]", file_name, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get index rate Lock %s[%s]", file_name, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((GetIndexRate, file_name, user, "", ""))
+            LOG.debug("Send get index rate %s[%s] end", file_name, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV get index rate %s[%s]", file_name, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End get index rate %s[%s]", file_name, user.user_name)
+        LOG.info("get index rate result: %s", r[1])
         if r[1]:
             result = r[1]
         raise gen.Return(result)

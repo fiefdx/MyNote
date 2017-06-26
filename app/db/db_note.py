@@ -372,7 +372,6 @@ class DB(object):
             LOG.exception(e)
         return result
 
-
     def delete_note_by_user(self, user_name):
         result = False
         try:

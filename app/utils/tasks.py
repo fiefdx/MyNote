@@ -14,10 +14,15 @@ import datetime
 import hashlib
 import dateutil
 
+import whoosh
+from whoosh.writing import AsyncWriter
+
 from db.db_rich import DB as RICH_DB
 from db.db_note import DB as NOTE_DB
 from db.db_pic import DB as PIC_DB
 from db.db_user import DB as USER_DB
+from ix.ix_rich import IX as RICH_IX
+from ix.ix_note import IX as NOTE_IX
 from utils.archive import Archive
 from utils import common_utils
 from utils import htmlparser
@@ -29,6 +34,9 @@ LOG = logging.getLogger(__name__)
 
 def get_key(file_name, user):
     return "%s_%s" % (file_name, user.sha1)
+
+def get_index_key(file_name, user):
+    return "index_%s_%s" % (file_name, user.sha1)
 
 class NoteImportProcesser(TaskProcesser):
     name = "note"
@@ -115,7 +123,8 @@ class NoteImportProcesser(TaskProcesser):
         except Exception, e:
             LOG.exception(e)
         time.sleep(5)
-        yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
         _, self.task_key, fname, fpath, storage_path, user_name, key, password = x
@@ -146,16 +155,16 @@ class NoteImportProcesser(TaskProcesser):
             LOG.exception(e)
         return result
 
-    def reduce(self, x, y):
-        result = (-1, False)
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
         if isinstance(x, int) and isinstance(y, bool):
-            result = (x + 1 if y else x, False)
+            result = (x + 1 if y else x, False, z)
         elif isinstance(x, bool) and isinstance(y, int):
-            result = (y + 1 if x else y, False)
+            result = (y + 1 if x else y, False, z)
         elif isinstance(x, str) and x == StopSignal:
-            result = (y, True)
+            result = (y, True, z + 1)
         elif isinstance(y, str) and y == StopSignal:
-            result = (x, True)
+            result = (x, True, z + 1)
         return result
 
 def construct_file_path(file_sha1_name, file_name):
@@ -273,7 +282,8 @@ class RichImportProcesser(TaskProcesser):
         except Exception, e:
             LOG.exception(e)
         time.sleep(10)
-        yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
         _, self.task_key, fname, fpath, storage_path, user_name, key, password = x
@@ -333,15 +343,174 @@ class RichImportProcesser(TaskProcesser):
             LOG.exception(e)
         return result
 
-    def reduce(self, x, y):
-        result = (-1, False)
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
         if isinstance(x, int) and isinstance(y, bool):
-            result = (x + 1 if y else x, False)
+            result = (x + 1 if y else x, False, z)
         elif isinstance(x, bool) and isinstance(y, int):
-            result = (y + 1 if x else y, False)
+            result = (y + 1 if x else y, False, z)
         elif isinstance(x, str) and x == StopSignal:
-            result = (y, True)
+            result = (y, True, z + 1)
         elif isinstance(y, str) and y == StopSignal:
-            result = (x, True)
-        LOG.debug("reduce: x, y = %s, %s", x, y)
+            result = (x, True, z + 1)
+        return result
+
+class NoteIndexProcesser(TaskProcesser):
+    name = "index_note"
+
+    def __init__(self):
+        self.db_note = NOTE_DB()
+        self.task_key = ""
+        self.ix = NOTE_IX()
+        self.writer = AsyncWriter(self.ix.ix)
+        self.current_size = 0
+        self.batch_size = 1000
+
+    def init(self):
+        self.db_note = NOTE_DB()
+        self.task_key = ""
+        self.ix = NOTE_IX()
+        self.writer = AsyncWriter(self.ix.ix)
+        self.current_size = 0
+        self.batch_size = 1000
+
+    def iter(self, file_name, user, user_key, password):
+        self.task_key = get_index_key(file_name, user)
+        key = user_key if CONFIG["ENCRYPT"] else ""
+        try:
+            for note in self.db_note.get_note_from_db_by_user_iter(user.user_name):
+                if key != "":
+                    note.decrypt(key, decrypt_description = False)
+                LOG.debug("Indexing note[id: %s]", note.id)
+                yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
+        except Exception, e:
+            LOG.exception(e)
+        time.sleep(5)
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", ""]
+
+    def map(self, x):
+        _, self.task_key, file_title, doc_id, user_name, file_content = x
+        result = (self.name, self.task_key, False)
+        try:
+            if file_title != StopSignal:
+                self.writer.update_document(doc_id = unicode(str(doc_id)),
+                                            user_name = user_name,
+                                            file_title = file_title,
+                                            file_content = file_content)
+                if self.current_size == self.batch_size:
+                    s = time.time()
+                    self.writer.commit(merge = True)
+                    ss = time.time()
+                    LOG.debug("Commit use %ss", ss - s)
+                    LOG.info("Commit index[%s] success.", self.ix.name)
+                    self.writer = AsyncWriter(self.ix.ix)
+                    self.current_size = 0
+                self.current_size += 1
+                result = [self.name, self.task_key, True]
+            else:
+                if self.current_size > 0:
+                    s = time.time()
+                    self.writer.commit(merge = True)
+                    ss = time.time()
+                    LOG.debug("Commit use %ss", ss - s)
+                    LOG.info("Commit index[%s] success.", self.ix.name)
+                    self.writer = AsyncWriter(self.ix.ix)
+                    self.current_size = 0
+                self.current_size += 1
+                result = [self.name, self.task_key, StopSignal]
+        except Exception, e:
+            LOG.exception(e)
+        return result
+
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
+        if isinstance(x, int) and isinstance(y, bool):
+            result = (x + 1 if y else x, False, z)
+        elif isinstance(x, bool) and isinstance(y, int):
+            result = (y + 1 if x else y, False, z)
+        elif isinstance(x, str) and x == StopSignal:
+            result = (y, True, z + 1)
+        elif isinstance(y, str) and y == StopSignal:
+            result = (x, True, z + 1)
+        return result
+
+class RichIndexProcesser(TaskProcesser):
+    name = "index_rich"
+
+    def __init__(self):
+        self.db_rich = RICH_DB()
+        self.task_key = ""
+        self.ix = RICH_IX()
+        self.writer = AsyncWriter(self.ix.ix)
+        self.current_size = 0
+        self.batch_size = 1000
+
+    def init(self):
+        self.db_rich = RICH_DB()
+        self.task_key = ""
+        self.ix = RICH_IX()
+        self.writer = AsyncWriter(self.ix.ix)
+        self.current_size = 0
+        self.batch_size = 1000
+
+    def iter(self, file_name, user, user_key, password):
+        self.task_key = get_index_key(file_name, user)
+        key = user_key if CONFIG["ENCRYPT"] else ""
+        try:
+            for note in self.db_rich.get_rich_from_db_by_user_iter(user.user_name):
+                if key != "":
+                    note.decrypt(key, decrypt_description = False)
+                LOG.debug("Indexing rich[id: %s]", note.id)
+                yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
+        except Exception, e:
+            LOG.exception(e)
+        time.sleep(5)
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", ""]
+
+    def map(self, x):
+        _, self.task_key, file_title, doc_id, user_name, file_content = x
+        result = (self.name, self.task_key, False)
+        try:
+            if file_title != StopSignal:
+                self.writer.update_document(doc_id = unicode(str(doc_id)),
+                                            user_name = user_name,
+                                            file_title = file_title,
+                                            file_content = file_content)
+                if self.current_size == self.batch_size:
+                    s = time.time()
+                    self.writer.commit(merge = True)
+                    ss = time.time()
+                    LOG.debug("Commit use %ss", ss - s)
+                    LOG.info("Commit index[%s] success.", self.ix.name)
+                    self.writer = AsyncWriter(self.ix.ix)
+                    self.current_size = 0
+                self.current_size += 1
+                result = [self.name, self.task_key, True]
+            else:
+                if self.current_size > 0:
+                    s = time.time()
+                    self.writer.commit(merge = True)
+                    ss = time.time()
+                    LOG.debug("Commit use %ss", ss - s)
+                    LOG.info("Commit index[%s] success.", self.ix.name)
+                    self.writer = AsyncWriter(self.ix.ix)
+                    self.current_size = 0
+                self.current_size += 1
+                result = [self.name, self.task_key, StopSignal]
+        except Exception, e:
+            LOG.exception(e)
+        return result
+
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
+        if isinstance(x, int) and isinstance(y, bool):
+            result = (x + 1 if y else x, False, z)
+        elif isinstance(x, bool) and isinstance(y, int):
+            result = (y + 1 if x else y, False, z)
+        elif isinstance(x, str) and x == StopSignal:
+            result = (y, True, z + 1)
+        elif isinstance(y, str) and y == StopSignal:
+            result = (x, True, z + 1)
         return result

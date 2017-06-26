@@ -921,3 +921,57 @@ class ImportAjaxHandler(BaseHandler):
         except Exception, e:
             LOG.exception(e)
         self.write(result)
+
+class ImportRateAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def get(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0}
+        try:
+            fname = self.get_argument("file_name", "")
+            fname = os.path.split(fname.replace("\\", "/"))[-1]
+            LOG.debug("ImportRateAjaxHandler fname: %s", fname)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.get_rate_of_progress(fname, user_info)
+            while flag is not False and flag["flag"] == False:
+                LOG.debug("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
+                yield gen.sleep(1)
+                flag = yield manager_client.get_rate_of_progress(fname, user_info)
+            LOG.info("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)
+
+class IndexAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def get(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0}
+        try:
+            fname = self.get_argument("file_name", "")
+            fname = os.path.split(fname.replace("\\", "/"))[-1]
+            LOG.debug("IndexAjaxHandler fname: %s", fname)
+            password = self.get_argument("passwd", "")
+            password = common_utils.md5twice(password) if password != "" else ""
+            LOG.info("index notes encrypted: %s", True if password != "" else False)
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            _ = yield manager_client.index_rich_notes(fname, user_info, user_key, password)
+            flag = yield manager_client.get_index_rate_of_progress(fname, user_info)
+            while flag  is not False and flag["flag"] == False:
+                LOG.debug("index rich notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"])
+                yield gen.sleep(1)
+                flag = yield manager_client.get_index_rate_of_progress(fname, user_info)
+            LOG.info("index rich notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"])
+            if flag is not False and flag["flag"] == True:
+                result = flag
+            else:
+                LOG.error("Index rich notes user[%s] failed!", user)
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)

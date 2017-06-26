@@ -22,5 +22,5 @@ class TaskProcesser(object):
     def map(self, x):
         return (self.name, x)
 
-    def reduce(self, x, y):
+    def reduce(self, x, y, z):
         return x
