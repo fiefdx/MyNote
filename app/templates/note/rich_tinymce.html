@@ -670,12 +670,20 @@ window.onload=window.onresize=function(){
 }
 
 
-$(document).on('change', '.btn-file :file', function() {
+function SelectFile() {
     var input = $(this),
     numFiles = input.get(0).files ? input.get(0).files.length : 1,
     label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
-    input.trigger('fileselect', [numFiles, label]);
-});
+    var input_text = $(this).parents('.input-group').find(':text'),
+        log = numFiles > 1 ? numFiles + ' files selected' : label;
+    if( input_text.length ) {
+        input_text.val(log);
+    } else {
+        if(log) alert(log);
+    }
+}
+
+$("input#up_file").change(SelectFile);
 
 $(document).ready(function(){
     var window_height = $(window).height();
@@ -693,16 +701,6 @@ $(document).ready(function(){
         tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
     }
 
-    // $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
-    //     var input = $(this).parents('.input-group').find(':text'),
-    //         log = numFiles > 1 ? numFiles + ' files selected' : label;
-    //     if( input.length ) {
-    //         input.val(log);
-    //     } else {
-    //         if( log ) alert(log);
-    //     }
-    // });
-
     $("#import_modal").on("hidden.bs.modal", resetModal);
     $("#create_note_modal").on("hidden.bs.modal", resetModal);
     $("#export_modal").on("hidden.bs.modal", resetModal);
@@ -716,6 +714,8 @@ function resetModal(e) {
     console.log("Reset: ", e.target.id);
     $("#" + e.target.id).find("input:text").val("");
     $("#" + e.target.id).find("input:password").val("");
+    $('input#up_file').remove();
+    $('<input id="up_file" type="file" name="up_file" multiple>').change(SelectFile).appendTo($('span.btn-file'));
 }
 </script>
 {% end %}
