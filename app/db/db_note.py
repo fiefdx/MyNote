@@ -344,6 +344,18 @@ class DB(object):
             LOG.exception(e)
         return result
 
+    def get_note_num_by_user(self, user_name):
+        result = False
+        try:
+            c = self.conn.cursor()
+            c.execute("SELECT count(*) FROM NOTE WHERE user_name = '%s'" % (user_name, ))
+            i = c.fetchone()
+            result = i[0]
+            LOG.debug("Get user[%s]'s notes num[%s] from db success", user_name, i)
+        except Exception, e:
+            LOG.exception(e)
+        return result
+
     def delete_note_by_id(self, user_name, doc_id):
         result = False
         try:

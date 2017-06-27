@@ -655,20 +655,20 @@ function noteInit (scheme, locale) {
     }
 
     function updateNotesProgress(progress_id, tasks, total) {
-        var text = tasks + "/" + total;
         var percentage = "0%";
         if (total > 0) {
             percentage = Math.floor(tasks/total*100) + "%";
         }
+        var text = percentage; // + " - " + tasks;
         $("#" + progress_id).text(text);
         document.getElementById(progress_id).style.width = percentage;
     }
 
     async function importNotesAjax(file_name, password, xsrf) {
         var import_flag = {"flag": false};
-        var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
+        var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
         var index_flag = {"flag": false};
-        var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
+        var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
         $.ajax({
             type: "post",
             async: false,
@@ -696,7 +696,7 @@ function noteInit (scheme, locale) {
                         alert("import notes failed!");
                     }
                 });
-                updateNotesProgress("import_notes_progress", result_import.tasks, result_import.total);
+                updateNotesProgress("import_notes_progress", result_import.tasks, result_import.predict_total);
                 await sleep(500);
             }
         }
@@ -729,7 +729,7 @@ function noteInit (scheme, locale) {
                             alert("import notes failed!");
                         }
                     });
-                    updateNotesProgress("index_notes_progress", result_index.tasks, result_index.total);
+                    updateNotesProgress("index_notes_progress", result_index.tasks, result_index.predict_total);
                     await sleep(500);
                 }
             }

@@ -16,7 +16,7 @@ from tornado import gen
 
 from utils.tasks import get_key, get_index_key, NoteImportProcesser, RichImportProcesser, NoteIndexProcesser, RichIndexProcesser
 from models.mapping import Mapping
-from models.task import StopSignal
+from models.task import StopSignal, StartSignal
 from config import CONFIG
 import logger
 
@@ -166,32 +166,44 @@ class Dispatcher(StoppableThread):
                     processer = self.mapping.get("note")
                     task_key = get_key(file_name, user)
                     for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
-                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
-                        self.tasks[task_key]["total"] += 1
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch notes over: %s, %s, %s", command, file_name, user.sha1)
                 elif command == ImportRich:
                     processer = self.mapping.get("rich")
                     task_key = get_key(file_name, user)
                     for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
-                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
-                        self.tasks[task_key]["total"] += 1
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch rich notes over: %s, %s, %s", command, file_name, user.sha1)
                 elif command == IndexNote:
                     processer = self.mapping.get("index_note")
                     task_key = get_index_key(file_name, user)
                     for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
-                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
-                        self.tasks[task_key]["total"] += 1
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch index notes over: %s, %s, %s", command, file_name, user.sha1)
                 elif command == IndexRich:
                     processer = self.mapping.get("index_rich")
                     task_key = get_index_key(file_name, user)
                     for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
-                        self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
-                        self.tasks[task_key]["total"] += 1
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch index rich notes over: %s, %s, %s", command, file_name, user.sha1)
         except Exception, e:
@@ -227,6 +239,7 @@ class Collector(StoppableThread):
                             self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(0, task[2], 0)
                         if flag and self.tasks[task[1]]["finish"] == CONFIG["PROCESS_NUM"] and self.tasks[task[1]]["flag"] is False:
                             self.tasks[task[1]]["flag"] = True
+                            self.tasks[task[1]]["predict_total"] = self.tasks[task[1]]["total"]
                     else:
                         break
                 else:
@@ -292,14 +305,14 @@ class Manager(Process):
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import note %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == ImportRich:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import rich %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetRate:
@@ -315,14 +328,14 @@ class Manager(Process):
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager index note %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == IndexRich:
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager index rich %s[%s]", user.sha1, user.user_name)
                     if not self.tasks.has_key(task_key):
-                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0}
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetIndexRate:

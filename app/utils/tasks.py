@@ -27,7 +27,7 @@ from utils.archive import Archive
 from utils import common_utils
 from utils import htmlparser
 from models.item import NOTE, RICH, PICTURE
-from models.task import TaskProcesser, StopSignal
+from models.task import TaskProcesser, StopSignal, StartSignal
 from config import CONFIG
 
 LOG = logging.getLogger(__name__)
@@ -114,6 +114,10 @@ class NoteImportProcesser(TaskProcesser):
         key = user_key if CONFIG["ENCRYPT"] else ""
 
         try:
+            total_tasks = 0
+            for root, dirs, files in os.walk(import_path):
+                total_tasks += len(files)
+            yield [self.name, self.task_key, StartSignal, total_tasks, "", "", "", ""]
             for root, dirs, files in os.walk(import_path):
                 for fname in files:
                     if ".json" not in fname:
@@ -265,6 +269,12 @@ class RichImportProcesser(TaskProcesser):
 
         task_num = 0
         try:
+            total_tasks = 0
+            for root, dirs, files in os.walk(images_path):
+                total_tasks += len(files)
+            for root, dirs, files in os.walk(import_path):
+                total_tasks += len(files)
+            yield [self.name, self.task_key, StartSignal, total_tasks, "", "", "", ""]
             for root, dirs, files in os.walk(images_path):
                 for fname in files:
                     fpath = os.path.join(root, fname)
@@ -376,6 +386,9 @@ class NoteIndexProcesser(TaskProcesser):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
+            total_tasks = self.db_note.get_note_num_by_user(user.user_name)
+            if total_tasks is not False:
+                yield [self.name, self.task_key, StartSignal, total_tasks, "", ""]
             for note in self.db_note.get_note_from_db_by_user_iter(user.user_name):
                 if key != "":
                     note.decrypt(key, decrypt_description = False)
@@ -455,6 +468,9 @@ class RichIndexProcesser(TaskProcesser):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
+            total_tasks = self.db_rich.get_rich_num_by_user(user.user_name)
+            if total_tasks is not False:
+                yield [self.name, self.task_key, StartSignal, total_tasks, "", ""]
             for note in self.db_rich.get_rich_from_db_by_user_iter(user.user_name):
                 if key != "":
                     note.decrypt(key, decrypt_description = False)

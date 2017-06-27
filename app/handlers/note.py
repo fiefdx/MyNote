@@ -863,7 +863,7 @@ class ImportRateAjaxHandler(BaseHandler):
     def get(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
-        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0}
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0}
         try:
             fname = self.get_argument("file_name", "")
             fname = os.path.split(fname.replace("\\", "/"))[-1]
@@ -871,7 +871,7 @@ class ImportRateAjaxHandler(BaseHandler):
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
             flag = yield manager_client.get_rate_of_progress(fname, user_info)
-            LOG.debug("import notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"])
+            LOG.debug("import notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"])
             result = flag
             if flag is not False and flag["flag"] == True:
                 import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
@@ -917,7 +917,7 @@ class IndexRateAjaxHandler(BaseHandler):
     def get(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
-        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0}
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0}
         try:
             fname = self.get_argument("file_name", "")
             fname = os.path.split(fname.replace("\\", "/"))[-1]
@@ -925,7 +925,7 @@ class IndexRateAjaxHandler(BaseHandler):
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
             flag = yield manager_client.get_index_rate_of_progress(fname, user_info)
-            LOG.debug("index notes rate %s by user[%s] flag: %s, rate: %s/%s, finish: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"])
+            LOG.debug("index notes rate %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"])
             result = flag
         except Exception, e:
             LOG.exception(e)

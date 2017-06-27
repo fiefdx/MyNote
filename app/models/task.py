@@ -5,6 +5,7 @@ Created on 2016-01-09
 @author: YangHaitao
 '''
 
+StartSignal = "mission_start"
 StopSignal = "mission_complete"
 
 class TaskProcesser(object):
