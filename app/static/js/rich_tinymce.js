@@ -770,12 +770,19 @@ function noteInit (scheme, locale) {
     }
 
     function importNotes() {
-        $body.addClass("loading");
+        // $body.addClass("loading");
+        updateNotesProgress("import_notes_progress", 0, 0);
+        updateNotesProgress("index_notes_progress", 0, 0);
+        changeDialogMarginTop();
+        $("#import_progress_modal").modal('show');
         action = "import_notes";
-        uploadNotesAjax();
+        var file_name = $('form#form_import input#up_file').val();
+        var password = $('form#form_import input#notes_passwd').val();
+        var xsrf = $('form#form_import input[name=_xsrf]').val();
+        uploadNotesAjax(file_name, password, xsrf);
     }
 
-    function uploadNotesAjax() {
+    function uploadNotesAjax(file_name, password, xsrf) {
         /*
             prepareing ajax file upload
             url: the url of script file handling the uploaded files
@@ -787,9 +794,6 @@ function noteInit (scheme, locale) {
 
             <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
          */
-        var file_name = $('form#form_import input#up_file').val();
-        var password = $('form#form_import input#notes_passwd').val();
-        var xsrf = $('form#form_import input[name=_xsrf]').val();
         $.ajaxFileUpload({
             url:'/uploadrichnotesajax',
             secureuri:false,
@@ -812,30 +816,89 @@ function noteInit (scheme, locale) {
         })
     }
 
+    function updateNotesProgress(progress_id, tasks, total) {
+        var text = tasks + "/" + total;
+        var percentage = "0%";
+        if (total > 0) {
+            percentage = Math.floor(tasks/total*100) + "%";
+        }
+        $("#" + progress_id).text(text);
+        document.getElementById(progress_id).style.width = percentage;
+    }
+
     async function importNotesAjax(file_name, password, xsrf) {
-        var result = {"flag": false, "total": 0, "tasks": 0};
-        var requestFlag = false;
+        var import_flag = {"flag": false};
+        var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
+        var index_flag = {"flag": false};
+        var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
         $.ajax({
             type: "post",
-            async: true,
+            async: false,
             url: location.protocol + "//" + local + "/importrichnotesajax",
             data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
             success: function(data, textStatus) {
-                result = data;
-                requestFlag = true;
+                import_flag = data;
             },
             error: function() {
                 alert("import notes failed!");
-                requestFlag = true;
             }
         });
 
-        while (!requestFlag) {
-            await sleep(1000);
+        if (import_flag.flag == true) {
+            while (!result_import.flag) {
+                $.ajax({
+                    type: "get",
+                    async: false,
+                    url: location.protocol + "//" + local + "/importraterichnotesajax",
+                    data: {"file_name": file_name},
+                    success: function(data, textStatus) {
+                        result_import = data;
+                    },
+                    error: function() {
+                        alert("import notes failed!");
+                    }
+                });
+                updateNotesProgress("import_notes_progress", result_import.tasks, result_import.total);
+                await sleep(500);
+            }
+        }
+
+        if (result_import.flag == true) {
+            $.ajax({
+                type: "post",
+                async: false,
+                url: location.protocol + "//" + local + "/indexrichnotesajax",
+                data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
+                success: function(data, textStatus) {
+                    index_flag = data;
+                },
+                error: function() {
+                    alert("import notes failed!");
+                }
+            });
+
+            if (index_flag.flag == true) {
+                while (!result_index.flag) {
+                    $.ajax({
+                        type: "get",
+                        async: false,
+                        url: location.protocol + "//" + local + "/indexraterichnotesajax",
+                        data: {"file_name": file_name},
+                        success: function(data, textStatus) {
+                            result_index = data;
+                        },
+                        error: function() {
+                            alert("import notes failed!");
+                        }
+                    });
+                    updateNotesProgress("index_notes_progress", result_index.tasks, result_index.total);
+                    await sleep(500);
+                }
+            }
         }
 
         var option = "";
-        if (result.flag == true && result.total == result.tasks) {
+        if (result_import.flag == true && result_import.total == result_import.tasks && result_index.flag == true && result_index.total == result_index.tasks) {
             option = "import_notes_success";
         } else {
             option = "import_notes_fail";
@@ -860,7 +923,8 @@ function noteInit (scheme, locale) {
             }
         });
 
-        return result;
+        $("#import_progress_modal").modal('hide');
+        $body.addClass("loading");
     }
 
     function onChange() {

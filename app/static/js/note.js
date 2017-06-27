@@ -620,7 +620,7 @@ function noteInit (scheme, locale) {
         });
     }
 
-    function uploadNotesAjax() {
+    function uploadNotesAjax(file_name, password, xsrf) {
         /*
             prepareing ajax file upload
             url: the url of script file handling the uploaded files
@@ -645,7 +645,7 @@ function noteInit (scheme, locale) {
                         alert(data.msg);
                     }
                 } else {
-                    importNotesAjax();
+                    importNotesAjax(file_name, password, xsrf);
                 }
             },
             error: function (data, status, e) {
@@ -656,21 +656,19 @@ function noteInit (scheme, locale) {
 
     function updateNotesProgress(progress_id, tasks, total) {
         var text = tasks + "/" + total;
-        var percentage = Math.floor(tasks/total*100) + "%";
+        var percentage = "0%";
+        if (total > 0) {
+            percentage = Math.floor(tasks/total*100) + "%";
+        }
         $("#" + progress_id).text(text);
         document.getElementById(progress_id).style.width = percentage;
     }
 
-    async function importNotesAjax() {
+    async function importNotesAjax(file_name, password, xsrf) {
         var import_flag = {"flag": false};
         var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
         var index_flag = {"flag": false};
         var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
-        var file_name = $('form#form_import input#up_file').val();
-        var password = $('form#form_import input#notes_passwd').val();
-        var xsrf = $('form#form_import input[name=_xsrf]').val();
-        updateNotesProgress("import_notes_progress", 0, 0);
-        updateNotesProgress("index_notes_progress", 0, 0);
         $.ajax({
             type: "post",
             async: false,
@@ -763,13 +761,19 @@ function noteInit (scheme, locale) {
         });
 
         $("#import_progress_modal").modal('hide');
+        $body.addClass("loading");
     }
 
     function importNotes() {
         // $body.addClass("loading");
+        updateNotesProgress("import_notes_progress", 0, 0);
+        updateNotesProgress("index_notes_progress", 0, 0);
         $("#import_progress_modal").modal('show');
         action = "import_notes";
-        uploadNotesAjax();
+        var file_name = $('form#form_import input#up_file').val();
+        var password = $('form#form_import input#notes_passwd').val();
+        var xsrf = $('form#form_import input[name=_xsrf]').val();
+        uploadNotesAjax(file_name, password, xsrf);
     }
 
     $('#form_search').submit(function () {
