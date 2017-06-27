@@ -122,7 +122,6 @@ class NoteImportProcesser(TaskProcesser):
                         yield [self.name, self.task_key, fname, fpath, storage_path, user.user_name, key, password]
         except Exception, e:
             LOG.exception(e)
-        time.sleep(5)
         for i in xrange(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
@@ -281,7 +280,6 @@ class RichImportProcesser(TaskProcesser):
                         task_num += 1
         except Exception, e:
             LOG.exception(e)
-        time.sleep(10)
         for i in xrange(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
@@ -385,7 +383,6 @@ class NoteIndexProcesser(TaskProcesser):
                 yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
         except Exception, e:
             LOG.exception(e)
-        time.sleep(5)
         for i in xrange(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 
@@ -465,7 +462,6 @@ class RichIndexProcesser(TaskProcesser):
                 yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
         except Exception, e:
             LOG.exception(e)
-        time.sleep(5)
         for i in xrange(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 

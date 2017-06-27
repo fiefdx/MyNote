@@ -936,11 +936,19 @@ class ImportRateAjaxHandler(BaseHandler):
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
             flag = yield manager_client.get_rate_of_progress(fname, user_info)
-            while flag is not False and flag["flag"] == False:
-                LOG.debug("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
-                yield gen.sleep(1)
-                flag = yield manager_client.get_rate_of_progress(fname, user_info)
-            LOG.info("import rich notes %s by user[%s] flag: %s, rate: %s/%s", fname, user, flag["flag"], flag["tasks"], flag["total"])
+            LOG.debug("import rich notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"])
+            result = flag
+            if flag is not False and flag["flag"] == True:
+                import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                           user_info.sha1,
+                                           "tmp",
+                                           "import",
+                                           "rich_notes",
+                                           "rich_notes")
+                import_root_path = os.path.split(import_path)[0]
+                if os.path.exists(import_root_path) and os.path.isdir(import_root_path):
+                    shutil.rmtree(import_root_path)
+                    LOG.info("delete import_path[%s] success.", import_root_path)
         except Exception, e:
             LOG.exception(e)
         self.write(result)

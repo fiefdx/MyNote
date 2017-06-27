@@ -282,475 +282,533 @@ function noteInit (scheme, locale) {
                 $('#offline_modal').modal('show');
             }
         };
+    }
 
-        var entityMap = {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': '&quot;',
-            "'": '&#39;',
-            "/": '&#x2F;'
-        };
+    var entityMap = {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': '&quot;',
+        "'": '&#39;',
+        "/": '&#x2F;'
+    };
 
-        function escapeHtml(string) {
-            return String(string).replace(/[&<>"'\/]/g, function (s) {
-                return entityMap[s];
-            });
-        }
+    function escapeHtml(string) {
+        return String(string).replace(/[&<>"'\/]/g, function (s) {
+            return entityMap[s];
+        });
+    }
 
-        function initCategoryClick(category) {
-            $('a#' + category + '_query').bind("click", function () {
+    function initCategoryClick(category) {
+        $('a#' + category + '_query').bind("click", function () {
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                $body.addClass("loading");
+                $('a#' + current_category + '_query').attr("class","list-group-item");
+                current_category = category;
+                $('a#' + current_category + '_query').attr("class","list-group-item active");
+                // clear search input
+                $('#search_input').val('');
+                var data = {};
+                data['category'] = {'cmd':'select', 'category_name': current_category};
                 if (socket.readyState === socket.CLOSED) {
                     $('#offline_modal').modal('show');
-                } else {
-                    $body.addClass("loading");
-                    $('a#' + current_category + '_query').attr("class","list-group-item");
-                    current_category = category;
-                    $('a#' + current_category + '_query').attr("class","list-group-item active");
-                    // clear search input
-                    $('#search_input').val('');
-                    var data = {};
-                    data['category'] = {'cmd':'select', 'category_name': current_category};
-                    if (socket.readyState === socket.CLOSED) {
-                        $('#offline_modal').modal('show');
-                    }
-                    socket.send(JSON.stringify(data));
-                    $notes_list.scrollTop(0);
                 }
-            });
-        }
+                socket.send(JSON.stringify(data));
+                $notes_list.scrollTop(0);
+            }
+        });
+    }
 
-        function loadMoreNotes() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                var offset = $note_list_ul.children().length;
-                console.log("note list scroll: ", $(this).scrollTop(), " ", $(this).height(), " ", $note_list_ul.height(), " ", loading_notes_list);
-                if (loading_notes_list == false && offset < book_numbers[current_category] && ($(this).scrollTop() + $(this).height() >= $note_list_ul.height())) {
-                    console.log("loadMoreNotes");
-                    var data = {};
-                    data['category'] = {'cmd':'load',
-                                        'category_name': current_category,
-                                        'note_id':current_note_id,
-                                        'offset':offset,
-                                        'q':$('#search_input').val()};
-                    console.log(data);
-                    socket.send(JSON.stringify(data));
-                    loading_notes_list = true;
-                }
+    function loadMoreNotes() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            var offset = $note_list_ul.children().length;
+            console.log("note list scroll: ", $(this).scrollTop(), " ", $(this).height(), " ", $note_list_ul.height(), " ", loading_notes_list);
+            if (loading_notes_list == false && offset < book_numbers[current_category] && ($(this).scrollTop() + $(this).height() >= $note_list_ul.height())) {
+                console.log("loadMoreNotes");
+                var data = {};
+                data['category'] = {'cmd':'load',
+                                    'category_name': current_category,
+                                    'note_id':current_note_id,
+                                    'offset':offset,
+                                    'q':$('#search_input').val()};
+                console.log(data);
+                socket.send(JSON.stringify(data));
+                loading_notes_list = true;
             }
         }
+    }
 
-        function initNoteClick(note_id) {
-            $('a#a_' + note_id).bind("click", function () {
-                if (socket.readyState === socket.CLOSED) {
-                    $('#offline_modal').modal('show');
-                } else {
-                    $div_note_text.addClass("loading");
-                    var data = {};
-                    data['note'] = {'cmd':'select', 'note_id':note_id};
-                    console.log("click old_id: " + current_note_id);
-                    if (current_note_id != null)
-                        $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
-                    current_note_id = note_id;
-                    console.log("click new_id: " + current_note_id);
-                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item active");
-                    socket.send(JSON.stringify(data));
-                    $note_content.scrollTop(0);
-                }
-            });
-        }
-
-        function showSettings() {
+    function initNoteClick(note_id) {
+        $('a#a_' + note_id).bind("click", function () {
             if (socket.readyState === socket.CLOSED) {
                 $('#offline_modal').modal('show');
             } else {
-                if(locale == 'zh' || locale == 'zh_CN') {
-                    $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
-                } else {
-                    $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
-                }
-                $('#settings_modal').modal('show');
+                $div_note_text.addClass("loading");
+                var data = {};
+                data['note'] = {'cmd':'select', 'note_id':note_id};
+                console.log("click old_id: " + current_note_id);
+                if (current_note_id != null)
+                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
+                current_note_id = note_id;
+                console.log("click new_id: " + current_note_id);
+                $('a#a_' + current_note_id).attr("class","note_list_item list-group-item active");
+                socket.send(JSON.stringify(data));
+                $note_content.scrollTop(0);
+            }
+        });
+    }
+
+    function showSettings() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            if(locale == 'zh' || locale == 'zh_CN') {
+                $('input:radio[name="optionsRadios"]').filter('[value="zh_CN"]').prop('checked', true);
+            } else {
+                $('input:radio[name="optionsRadios"]').filter('[value="en_US"]').prop('checked', true);
+            }
+            $('#settings_modal').modal('show');
+        }
+    }
+
+    function saveSettings() {
+        $body.addClass("loading");
+        action = "change_settings";
+        $('#form_settings').submit();
+    }
+
+    function saveNote() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            console.log("save note: " + current_note_id);
+            $div_note_text.addClass("loading");
+            var data = {};
+            data['note'] = {'cmd':'save',
+                            'note_id':current_note_id,
+                            'note_title':$note_title.val(),
+                            'note_content':$note_content.val(),
+                            'type':current_category,
+                            'q':$('#search_input').val()};
+            socket.send(JSON.stringify(data));
+        }
+    }
+
+    function showCreateNote() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            if (current_category != 'Search' && current_category != 'All') {
+                $('#create_note_modal').modal('show');
+            } else if (current_category == 'All') {
+                $('#create_note_all_modal').modal('show');
+            } else if (current_category == 'Search') {
+                $('#create_note_search_modal').modal('show');
             }
         }
+    }
 
-        function saveSettings() {
-            $body.addClass("loading");
-            action = "change_settings";
-            $('#form_settings').submit();
+    function showCreateCategory() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $('#category_modal').modal('show');
         }
+    }
 
-        function saveNote() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                console.log("save note: " + current_note_id);
+    function showImportNotes() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $('#import_modal').modal('show');
+        }
+    }
+
+    function showExportNotes() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $('#export_modal').modal('show');
+        }
+    }
+
+    function showDeleteNotes() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $('#delete_notes_modal').modal('show');
+        }
+    }
+
+    function showRebuildIndex() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $('div#reindex_modal').modal('show');
+        }
+    }
+
+    function createNote() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            if (current_category != 'Search' && current_category != 'All') {
+                $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
+                current_note_id = null;
+                console.log("create note: " + current_note_id);
                 $div_note_text.addClass("loading");
                 var data = {};
                 data['note'] = {'cmd':'save',
                                 'note_id':current_note_id,
-                                'note_title':$note_title.val(),
-                                'note_content':$note_content.val(),
+                                'note_title':$new_note_title.val(),
+                                'note_content':'',
                                 'type':current_category,
                                 'q':$('#search_input').val()};
+                $new_note_title.val('');
                 socket.send(JSON.stringify(data));
+                setTimeout(function() {
+                    $note_content.focus();
+                }, 0);
             }
         }
+    }
 
-        function showCreateNote() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                if (current_category != 'Search' && current_category != 'All') {
-                    $('#create_note_modal').modal('show');
-                } else if (current_category == 'All') {
-                    $('#create_note_all_modal').modal('show');
-                } else if (current_category == 'Search') {
-                    $('#create_note_search_modal').modal('show');
-                }
-            }
+    function downloadNote() {
+        if (current_note_id != null) {
+            var url = location.protocol + "//" + local + "/note/?option=download&id=" + current_note_id;
+            var win = window.open(url, '_blank');
+            win.focus();
         }
+    }
 
-        function showCreateCategory() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $('#category_modal').modal('show');
-            }
-        }
+    function deleteAll() {
+        $body.addClass("loading");
+        action = "change_settings";
+        window.location.href = location.protocol + "//" + local + "/deletenotes";
+    }
 
-        function showImportNotes() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $('#import_modal').modal('show');
-            }
-        }
-
-        function showExportNotes() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $('#export_modal').modal('show');
-            }
-        }
-
-        function showDeleteNotes() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $('#delete_notes_modal').modal('show');
-            }
-        }
-
-        function showRebuildIndex() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $('div#reindex_modal').modal('show');
-            }
-        }
-
-        function createNote() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                if (current_category != 'Search' && current_category != 'All') {
-                    $('a#a_' + current_note_id).attr("class","note_list_item list-group-item");
-                    current_note_id = null;
-                    console.log("create note: " + current_note_id);
-                    $div_note_text.addClass("loading");
-                    var data = {};
-                    data['note'] = {'cmd':'save',
-                                    'note_id':current_note_id,
-                                    'note_title':$new_note_title.val(),
-                                    'note_content':'',
-                                    'type':current_category,
-                                    'q':$('#search_input').val()};
-                    $new_note_title.val('');
-                    socket.send(JSON.stringify(data));
-                    setTimeout(function() {
-                        $note_content.focus();
-                    }, 0);
-                }
-            }
-        }
-
-        function downloadNote() {
-            if (current_note_id != null) {
-                var url = location.protocol + "//" + local + "/note/?option=download&id=" + current_note_id;
-                var win = window.open(url, '_blank');
-                win.focus();
-            }
-        }
-
-        function deleteAll() {
+    function createCategory() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            console.log("create category");
             $body.addClass("loading");
-            action = "change_settings";
-            window.location.href = location.protocol + "//" + local + "/deletenotes";
+            var data = {};
+            data['category'] = {'cmd':'create',
+                                'category_name': escapeHtml($('#category_name').val())};
+            socket.send(JSON.stringify(data));
+            $('#category_name').val('');
         }
+    }
 
-        function createCategory() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                console.log("create category");
-                $body.addClass("loading");
-                var data = {};
-                data['category'] = {'cmd':'create',
-                                    'category_name': escapeHtml($('#category_name').val())};
-                socket.send(JSON.stringify(data));
-                $('#category_name').val('');
-            }
+    function deleteCategoryModal() {
+        if (current_category != 'Search' && current_category != 'All') {
+            $('#delete_category_modal').modal('show');
+        } else if (current_category == 'All') {
+            $('#delete_all_category_modal').modal('show');
+        } else if (current_category == 'Search') {
+            $('#delete_search_category_modal').modal('show');
         }
+    }
 
-        function deleteCategoryModal() {
+    function deleteCategory() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $body.addClass("loading");
             if (current_category != 'Search' && current_category != 'All') {
-                $('#delete_category_modal').modal('show');
-            } else if (current_category == 'All') {
-                $('#delete_all_category_modal').modal('show');
-            } else if (current_category == 'Search') {
-                $('#delete_search_category_modal').modal('show');
-            }
-        }
-
-        function deleteCategory() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $body.addClass("loading");
-                if (current_category != 'Search' && current_category != 'All') {
-                    console.log("delete category");
-                    var data = {};
-                    data['category'] = {'cmd':'delete',
-                                        'category_name': current_category};
-                    socket.send(JSON.stringify(data));
-                    current_category = 'All';
-                }
-            }
-        }
-
-        function reindexNotes() {
-            $body.addClass("loading");
-            action = "reindex_notes";
-            window.location.href = location.protocol + "//" + local + "/note/?option=rebuild_index";
-        }
-
-        function search() {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                console.log("search note");
-                $body.addClass("loading");
-                $('a#' + current_category + '_query').attr("class","list-group-item");
+                console.log("delete category");
                 var data = {};
-                data['category'] = {'cmd':'search',
-                                    'category_name':current_category,
-                                    'q':$('#search_input').val()};
+                data['category'] = {'cmd':'delete',
+                                    'category_name': current_category};
                 socket.send(JSON.stringify(data));
-                current_category = 'Search';
-                $('a#' + current_category + '_query').attr("class","list-group-item active");
-                $('#search_input').blur();
-                $notes_list.scrollTop(0);
-                $note_content.scrollTop(0);
+                current_category = 'All';
             }
         }
+    }
 
-        function displayPassword() {
-            var dispass = $display_passwd.val();
-            if (dispass == "unable") {
-                $display_passwd.val("enable");
-                document.getElementById("notes_passwd").type = "text";
-            }
-            else {
-                $display_passwd.val("unable");
-                document.getElementById("notes_passwd").type = "password";
-            }
+    function reindexNotes() {
+        $body.addClass("loading");
+        action = "reindex_notes";
+        window.location.href = location.protocol + "//" + local + "/note/?option=rebuild_index";
+    }
+
+    function search() {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            console.log("search note");
+            $body.addClass("loading");
+            $('a#' + current_category + '_query').attr("class","list-group-item");
+            var data = {};
+            data['category'] = {'cmd':'search',
+                                'category_name':current_category,
+                                'q':$('#search_input').val()};
+            socket.send(JSON.stringify(data));
+            current_category = 'Search';
+            $('a#' + current_category + '_query').attr("class","list-group-item active");
+            $('#search_input').blur();
+            $notes_list.scrollTop(0);
+            $note_content.scrollTop(0);
         }
+    }
 
-        function encryptNotes() {
-            var encrypt = $encrypt_notes.val();
-            if (encrypt == "unable") {
-                $encrypt_notes.val("enable");
-            }
-            else {
-                $encrypt_notes.val("unable");
-            }
+    function displayPassword() {
+        var dispass = $display_passwd.val();
+        if (dispass == "unable") {
+            $display_passwd.val("enable");
+            document.getElementById("notes_passwd").type = "text";
         }
+        else {
+            $display_passwd.val("unable");
+            document.getElementById("notes_passwd").type = "password";
+        }
+    }
 
-        function showExportModal(e) {
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                $("select#notes_category").empty();
-                books.books.forEach(function (value, index, array_books) {
-                    if (value != "Search") {
-                        console.log(index + ' ' + value);
-                        $("select#notes_category").append(
-                            '<option value="' + value + '">' + books.trans[index] + '</option>'
-                        );
+    function encryptNotes() {
+        var encrypt = $encrypt_notes.val();
+        if (encrypt == "unable") {
+            $encrypt_notes.val("enable");
+        }
+        else {
+            $encrypt_notes.val("unable");
+        }
+    }
+
+    function showExportModal(e) {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $("select#notes_category").empty();
+            books.books.forEach(function (value, index, array_books) {
+                if (value != "Search") {
+                    console.log(index + ' ' + value);
+                    $("select#notes_category").append(
+                        '<option value="' + value + '">' + books.trans[index] + '</option>'
+                    );
+                }
+            });
+        }
+    }
+
+    function exportNotes() {
+        $('#form_export').submit();
+        $('#export_modal').modal('hide');
+    }
+
+    function exportNotesAjax() {
+        var formdata = $('form#form_export').serializeArray();
+        $('#export_modal').modal('hide');
+        $.ajax({
+            type: "post",
+            async: false,
+            url: location.protocol + "//" + local + "/exportnotes",
+            data: formdata,
+            success: function(data, textStatus) {
+                console.log(data);
+                console.log("post ajax success.");
+                window.open($(this).prop('action'))
+            },
+            error: function() {
+                console.log("post ajax failed!");
+            }
+
+        });
+    }
+
+    function uploadNotesAjax() {
+        /*
+            prepareing ajax file upload
+            url: the url of script file handling the uploaded files
+                        fileElementId: the file type of input element id and it will be the index of  $_FILES Array()
+            dataType: it support json, xml
+            secureuri:use secure protocol
+            success: call back function when the ajax complete
+            error: callback function when the ajax failed
+
+            <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
+        */
+        $.ajaxFileUpload({
+            url:'/uploadnotesajax',
+            secureuri:false,
+            fileElementId:'up_file',
+            dataType: 'xml',
+            success: function (data, status) {
+                if(typeof(data.error) != 'undefined') {
+                    if(data.error != '') {
+                        alert(data.error);
+                    } else {
+                        alert(data.msg);
+                    }
+                } else {
+                    importNotesAjax();
+                }
+            },
+            error: function (data, status, e) {
+                alert(e);
+            }
+        })
+    }
+
+    function updateNotesProgress(progress_id, tasks, total) {
+        var text = tasks + "/" + total;
+        var percentage = Math.floor(tasks/total*100) + "%";
+        $("#" + progress_id).text(text);
+        document.getElementById(progress_id).style.width = percentage;
+    }
+
+    async function importNotesAjax() {
+        var import_flag = {"flag": false};
+        var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
+        var index_flag = {"flag": false};
+        var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0};
+        var file_name = $('form#form_import input#up_file').val();
+        var password = $('form#form_import input#notes_passwd').val();
+        var xsrf = $('form#form_import input[name=_xsrf]').val();
+        updateNotesProgress("import_notes_progress", 0, 0);
+        updateNotesProgress("index_notes_progress", 0, 0);
+        $.ajax({
+            type: "post",
+            async: false,
+            url: location.protocol + "//" + local + "/importnotesajax",
+            data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
+            success: function(data, textStatus) {
+                import_flag = data;
+            },
+            error: function() {
+                alert("import notes failed!");
+            }
+        });
+
+        if (import_flag.flag == true) {
+            while (!result_import.flag) {
+                $.ajax({
+                    type: "get",
+                    async: false,
+                    url: location.protocol + "//" + local + "/importratenotesajax",
+                    data: {"file_name": file_name},
+                    success: function(data, textStatus) {
+                        result_import = data;
+                    },
+                    error: function() {
+                        alert("import notes failed!");
                     }
                 });
+                updateNotesProgress("import_notes_progress", result_import.tasks, result_import.total);
+                await sleep(500);
             }
         }
 
-        function exportNotes() {
-            $('#form_export').submit();
-            $('#export_modal').modal('hide');
-        }
-
-        function exportNotesAjax() {
-            var formdata = $('form#form_export').serializeArray();
-            $('#export_modal').modal('hide');
+        if (result_import.flag == true) {
             $.ajax({
                 type: "post",
                 async: false,
-                url: location.protocol + "//" + local + "/exportnotes",
-                data: formdata,
-                success: function(data, textStatus) {
-                    console.log(data);
-                    console.log("post ajax success.");
-                    window.open($(this).prop('action'))
-                },
-                error: function() {
-                    console.log("post ajax failed!");
-                }
-
-            });
-        }
-
-        function uploadNotesAjax() {
-            /*
-                prepareing ajax file upload
-                url: the url of script file handling the uploaded files
-                            fileElementId: the file type of input element id and it will be the index of  $_FILES Array()
-                dataType: it support json, xml
-                secureuri:use secure protocol
-                success: call back function when the ajax complete
-                error: callback function when the ajax failed
-
-                <input type="hidden" name="_xsrf" value="c15e081397ac43538ae3972b27a3dbf1">
-            */
-            $.ajaxFileUpload({
-                url:'/uploadnotesajax',
-                secureuri:false,
-                fileElementId:'up_file',
-                dataType: 'xml',
-                success: function (data, status) {
-                    if(typeof(data.error) != 'undefined') {
-                        if(data.error != '') {
-                            alert(data.error);
-                        } else {
-                            alert(data.msg);
-                        }
-                    } else {
-                        importNotesAjax();
-                    }
-                },
-                error: function (data, status, e) {
-                    alert(e);
-                }
-            })
-        }
-
-        async function importNotesAjax() {
-            var result = {"flag": false, "total": 0, "tasks": 0};
-            var requestFlag = false;
-            var file_name = $('form#form_import input#up_file').val();
-            var password = $('form#form_import input#notes_passwd').val();
-            var xsrf = $('form#form_import input[name=_xsrf]').val();
-            // $('#export_modal').modal('hide');
-            $.ajax({
-                type: "post",
-                async: true,
-                url: location.protocol + "//" + local + "/importnotesajax",
+                url: location.protocol + "//" + local + "/indexnotesajax",
                 data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
                 success: function(data, textStatus) {
-                    result = data;
-                    requestFlag = true;
+                    index_flag = data;
                 },
                 error: function() {
                     alert("import notes failed!");
-                    requestFlag = true;
                 }
             });
 
-            while (!requestFlag) {
-                await sleep(1000);
-            }
-
-            var option = "";
-            if (result.flag == true && result.total == result.tasks) {
-                option = "import_notes_success";
-            } else {
-                option = "import_notes_fail";
-            }
-
-            if (socket.readyState === socket.CLOSED) {
-                $('#offline_modal').modal('show');
-            } else {
-                var data = {};
-                data['reinit'] = {'cmd':'reinit', 'option':option};
-                socket.send(JSON.stringify(data));
-            }
-
-            $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
-                var input = $(this).parents('.input-group').find(':text'),
-                    log = numFiles > 1 ? numFiles + ' files selected' : label;
-                if( input.length ) {
-                    input.val(log);
-                } else {
-                    if( log ) alert(log);
+            if (index_flag.flag == true) {
+                while (!result_index.flag) {
+                    $.ajax({
+                        type: "get",
+                        async: false,
+                        url: location.protocol + "//" + local + "/indexratenotesajax",
+                        data: {"file_name": file_name},
+                        success: function(data, textStatus) {
+                            result_index = data;
+                        },
+                        error: function() {
+                            alert("import notes failed!");
+                        }
+                    });
+                    updateNotesProgress("index_notes_progress", result_index.tasks, result_index.total);
+                    await sleep(500);
                 }
-            });
-
-            return result;
+            }
         }
 
-        function importNotes() {
-            $body.addClass("loading");
-            action = "import_notes";
-            uploadNotesAjax();
+        var option = "";
+        if (result_import.flag == true && result_import.total == result_import.tasks && result_index.flag == true && result_index.total == result_index.tasks) {
+            option = "import_notes_success";
+        } else {
+            option = "import_notes_fail";
         }
 
-        $('#form_search').submit(function () {
-            search();
-            return false;
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            var data = {};
+            data['reinit'] = {'cmd':'reinit', 'option':option};
+            socket.send(JSON.stringify(data));
+        }
+
+        $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+            var input = $(this).parents('.input-group').find(':text'),
+                log = numFiles > 1 ? numFiles + ' files selected' : label;
+            if( input.length ) {
+                input.val(log);
+            } else {
+                if( log ) alert(log);
+            }
         });
 
-        function gotoHome() {
-            $body.addClass("loading");
-            action = "goto_home";
-            window.location.href = location.protocol + "//" + local + "/";
-        }
+        $("#import_progress_modal").modal('hide');
+    }
 
-        function gotoSearch() {
-            $body.addClass("loading");
-            action = "goto_search";
-            window.location.href = location.protocol + "//" + local + "/search";
-        }
+    function importNotes() {
+        // $body.addClass("loading");
+        $("#import_progress_modal").modal('show');
+        action = "import_notes";
+        uploadNotesAjax();
+    }
 
-        function gotoRich() {
-            $body.addClass("loading");
-            action = "goto_rich";
-            window.location.href = location.protocol + "//" + local + "/rich";
-        }
+    $('#form_search').submit(function () {
+        search();
+        return false;
+    });
 
-        function gotoNote() {
-            $body.addClass("loading");
-            action = "goto_note";
-            window.location.href = location.protocol + "//" + local + "/note";
-        }
+    function gotoHome() {
+        $body.addClass("loading");
+        action = "goto_home";
+        window.location.href = location.protocol + "//" + local + "/";
+    }
 
-        function gotoHelp() {
-            $body.addClass("loading");
-            action = "goto_help";
-            window.location.href = location.protocol + "//" + local + "/help";
-        }
+    function gotoSearch() {
+        $body.addClass("loading");
+        action = "goto_search";
+        window.location.href = location.protocol + "//" + local + "/search";
+    }
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+    function gotoRich() {
+        $body.addClass("loading");
+        action = "goto_rich";
+        window.location.href = location.protocol + "//" + local + "/rich";
+    }
+
+    function gotoNote() {
+        $body.addClass("loading");
+        action = "goto_note";
+        window.location.href = location.protocol + "//" + local + "/note";
+    }
+
+    function gotoHelp() {
+        $body.addClass("loading");
+        action = "goto_help";
+        window.location.href = location.protocol + "//" + local + "/help";
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 
