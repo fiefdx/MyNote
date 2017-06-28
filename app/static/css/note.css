@@ -259,13 +259,10 @@ hr {
     padding: 0px
 }
 
-#form_import_progress #first_form_group {
-    margin-bottom: 0px;
-}
-
 #form_import_progress .progress {
     margin-top: 7px;
-    margin-right: 15px;
+    margin-right: 20px;
+    margin-bottom: 7px;
 }
 
 #form_import_progress .progress-bar {
@@ -276,7 +273,8 @@ hr {
 
 #form_reindex_progress .progress {
     margin-top: 7px;
-    margin-right: 15px;
+    margin-right: 20px;
+    margin-bottom: 7px;
 }
 
 #form_reindex_progress .progress-bar {
