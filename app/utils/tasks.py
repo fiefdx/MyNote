@@ -386,6 +386,13 @@ class NoteIndexProcesser(TaskProcesser):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
+            try:
+                self.writer.delete_by_term("user_name", unicode(str(user.user_name)))
+                self.writer.commit(merge = False)
+                LOG.debug("Delete all rich notes index user[%s] success", user.user_name)
+            except Exception, e:
+                LOG.exception(e)
+                LOG.error("Delete all rich notes index user[%s] failed!", user.user_name)
             total_tasks = self.db_note.get_note_num_by_user(user.user_name)
             if total_tasks is not False:
                 yield [self.name, self.task_key, StartSignal, total_tasks, "", ""]
@@ -468,6 +475,13 @@ class RichIndexProcesser(TaskProcesser):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
+            try:
+                self.writer.delete_by_term("user_name", unicode(str(user.user_name)))
+                self.writer.commit(merge = False)
+                LOG.debug("Delete all rich notes index user[%s] success", user.user_name)
+            except Exception, e:
+                LOG.exception(e)
+                LOG.error("Delete all rich notes index user[%s] failed!", user.user_name)
             total_tasks = self.db_rich.get_rich_num_by_user(user.user_name)
             if total_tasks is not False:
                 yield [self.name, self.task_key, StartSignal, total_tasks, "", ""]
