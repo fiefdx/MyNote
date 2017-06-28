@@ -79,6 +79,16 @@ try:
         CONFIG["EXPIRES_DAYS"] = 1 # cookie expiration time for browser
     if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
         CONFIG["NOTE_NUM_PER_FETCH"] = 20
+    if not CONFIG.has_key("PROCESS_NUM"):
+        CONFIG["PROCESS_NUM"] = 4
+    if not CONFIG.has_key("THREAD_NUM"):
+        CONFIG["THREAD_NUM"] = 1
+    if not CONFIG.has_key("WITH_NGINX"):
+        CONFIG["WITH_NGINX"] = False
+    if not CONFIG.has_key("ITEMS_PER_PAGE"):
+        CONFIG["ITEMS_PER_PAGE"] = 10
+    if not CONFIG.has_key("DELETE_ORIGINAL_FILE"):
+        CONFIG["DELETE_ORIGINAL_FILE"] = False
 except Exception, e:
     print e
 
