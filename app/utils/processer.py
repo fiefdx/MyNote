@@ -50,15 +50,17 @@ class StoppableThread(Thread):
         return self._stop.isSet()
 
 class Processer(StoppableThread):
-    def __init__(self, pid, task_queue, result_queue, mapping):
+    def __init__(self, pid, task_queue, result_queue):
         StoppableThread.__init__(self)
         Thread.__init__(self)
         self.pid = pid
         self.task_queue = task_queue
         self.result_queue = result_queue
-        self.mapping = mapping
-        for _, processer in self.mapping.iter():
-            processer.init()
+        self.mapping = Mapping()
+        self.mapping.add(NoteImportProcesser())
+        self.mapping.add(RichImportProcesser())
+        self.mapping.add(NoteIndexProcesser())
+        self.mapping.add(RichIndexProcesser())
 
     def run(self):
         LOG = logging.getLogger("worker")
@@ -91,14 +93,11 @@ class Processer(StoppableThread):
         LOG.info("Processer(%03d) exit", self.pid)
 
 class Worker(Process):
-    def __init__(self, wid, task_queue, result_queue, mapping):
+    def __init__(self, wid, task_queue, result_queue):
         Process.__init__(self)
         self.wid = wid
         self.task_queue = task_queue
         self.result_queue = result_queue
-        self.mapping = mapping
-        for _, processer in self.mapping.iter():
-            processer.init()
 
     def sig_handler(self, sig, frame):
         LOG.warning("Worker(%03d) Caught signal: %s", self.wid, sig)
@@ -129,7 +128,7 @@ class Worker(Process):
         try:
             threads = []
             for i in xrange(CONFIG["THREAD_NUM"]):
-                t = Processer(i, self.task_queue, self.result_queue, self.mapping)
+                t = Processer(i, self.task_queue, self.result_queue)
                 threads.append(t)
 
             for t in threads:
@@ -142,16 +141,18 @@ class Worker(Process):
         LOG.info("Worker(%03d) exit", self.wid)
 
 class Dispatcher(StoppableThread):
-    def __init__(self, pid, tasks, queue, task_queues, mapping):
+    def __init__(self, pid, tasks, queue, task_queues):
         StoppableThread.__init__(self)
         Thread.__init__(self)
         self.pid = pid
         self.tasks = tasks
         self.queue = queue
         self.task_queues = task_queues
-        self.mapping = mapping
-        for _, processer in self.mapping.iter():
-            processer.init()
+        self.mapping = Mapping()
+        self.mapping.add(NoteImportProcesser())
+        self.mapping.add(RichImportProcesser())
+        self.mapping.add(NoteIndexProcesser())
+        self.mapping.add(RichIndexProcesser())
 
     def run(self):
         LOG = logging.getLogger("manager")
@@ -213,15 +214,17 @@ class Dispatcher(StoppableThread):
         LOG.info("Dispatcher exit")
 
 class Collector(StoppableThread):
-    def __init__(self, pid, tasks, result_queue, mapping):
+    def __init__(self, pid, tasks, result_queue):
         StoppableThread.__init__(self)
         Thread.__init__(self)
         self.pid = pid
         self.result_queue = result_queue
-        self.mapping = mapping
+        self.mapping = Mapping()
+        self.mapping.add(NoteImportProcesser())
+        self.mapping.add(RichImportProcesser())
+        self.mapping.add(NoteIndexProcesser())
+        self.mapping.add(RichIndexProcesser())
         self.tasks = tasks
-        for _, processer in self.mapping.iter():
-            processer.init()
 
     def run(self):
         LOG = logging.getLogger("manager")
@@ -250,14 +253,13 @@ class Collector(StoppableThread):
         LOG.info("Collector(%03d) exit", self.pid)
 
 class Manager(Process):
-    def __init__(self, pipe_client, task_queues, result_queue, mapping):
+    def __init__(self, pipe_client, task_queues, result_queue):
         Process.__init__(self)
         self.pipe_client = pipe_client
         self.queue = Queue(100)
         self.tasks = {}
         self.task_queues = task_queues
         self.result_queue = result_queue
-        self.mapping = mapping
         self.stop = False
 
     def sig_handler(self, sig, frame):
@@ -289,10 +291,10 @@ class Manager(Process):
         LOG.info("Manager start")
         try:
             threads = []
-            dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queues, self.mapping)
+            dispatcher = Dispatcher(0, self.tasks, self.queue, self.task_queues)
             dispatcher.daemon = True
             threads.append(dispatcher)
-            collector = Collector(0, self.tasks, self.result_queue, self.mapping)
+            collector = Collector(0, self.tasks, self.result_queue)
             collector.daemon = True
             threads.append(collector)
 
@@ -369,18 +371,13 @@ class ManagerClient(object):
             self.process_num = process_num
             pipe_master, pipe_client = Pipe()
             ManagerClient.WRITE_LOCK = toro.Lock()
-            mapping = Mapping()
-            mapping.add(NoteImportProcesser())
-            mapping.add(RichImportProcesser())
-            mapping.add(NoteIndexProcesser())
-            mapping.add(RichIndexProcesser())
-            p = Manager(pipe_client, TaskQueues, ResultQueue, mapping)
+            p = Manager(pipe_client, TaskQueues, ResultQueue)
             p.daemon = True
             ManagerClient.PROCESS_LIST.append(p)
             ManagerClient.PROCESS_DICT["manager"] = [p, pipe_master]
             p.start()
             for i in xrange(process_num):
-                p = Worker(i, TaskQueues[i], ResultQueue, mapping)
+                p = Worker(i, TaskQueues[i], ResultQueue)
                 p.daemon = True
                 ManagerClient.PROCESS_LIST.append(p)
                 p.start()
