@@ -550,55 +550,64 @@ function noteInit (scheme, locale) {
         var index_flag = {"flag": false};
         var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
         
-        $.ajax({
-            type: "post",
-            async: false,
-            url: location.protocol + "//" + local + "/indexnotesajax",
-            data: {"file_name": file_name, "_xsrf": xsrf},
-            success: function(data, textStatus) {
-                index_flag = data;
-            },
-            error: function() {
-                alert("import notes failed!");
-            }
-        });
-
-        if (index_flag.flag == true) {
-            while (!result_index.flag) {
-                $.ajax({
-                    type: "get",
-                    async: false,
-                    url: location.protocol + "//" + local + "/indexnotesajax",
-                    data: {"file_name": file_name},
-                    success: function(data, textStatus) {
-                        result_index = data;
-                    },
-                    error: function() {
-                        alert("import notes failed!");
-                    }
-                });
-                updateNotesProgress("reindex_notes_progress", result_index.tasks, result_index.predict_total);
-                await sleep(500);
-            }
-        }
-
-        var option = "";
-        if (result_index.flag == true && result_index.total == result_index.tasks) {
-            option = "reindex_notes_success";
-        } else {
-            option = "reindex_notes_fail";
-        }
-
         if (socket.readyState === socket.CLOSED) {
             $('#offline_modal').modal('show');
         } else {
-            var data = {};
-            data['reinit'] = {'cmd':'reinit', 'option':option};
-            socket.send(JSON.stringify(data));
-        }
+            $.ajax({
+                type: "post",
+                async: false,
+                url: location.protocol + "//" + local + "/indexnotesajax",
+                data: {"file_name": file_name, "_xsrf": xsrf},
+                success: function(data, textStatus) {
+                    index_flag = data;
+                },
+                error: function() {
+                    alert("import notes failed!");
+                }
+            });
 
-        $("#reindex_progress_modal").modal('hide');
-        $body.addClass("loading");
+            if (index_flag.flag == true) {
+                while (!result_index.flag) {
+                    if (socket.readyState === socket.CLOSED) {
+                        $('#offline_modal').modal('show');
+                        return;
+                    } else {
+                        $.ajax({
+                            type: "get",
+                            async: false,
+                            url: location.protocol + "//" + local + "/indexnotesajax",
+                            data: {"file_name": file_name},
+                            success: function(data, textStatus) {
+                                result_index = data;
+                            },
+                            error: function() {
+                                alert("import notes failed!");
+                            }
+                        });
+                        updateNotesProgress("reindex_notes_progress", result_index.tasks, result_index.predict_total);
+                        await sleep(500);
+                    }
+                }
+            }
+
+            var option = "";
+            if (result_index.flag == true && result_index.total == result_index.tasks) {
+                option = "reindex_notes_success";
+            } else {
+                option = "reindex_notes_fail";
+            }
+
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+            } else {
+                var data = {};
+                data['reinit'] = {'cmd':'reinit', 'option':option};
+                socket.send(JSON.stringify(data));
+            }
+
+            $("#reindex_progress_modal").modal('hide');
+            $body.addClass("loading");
+        }
     }
 
     function search() {
@@ -733,105 +742,128 @@ function noteInit (scheme, locale) {
         var result_import = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
         var index_flag = {"flag": false};
         var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
-        $.ajax({
-            type: "post",
-            async: false,
-            url: location.protocol + "//" + local + "/importnotesajax",
-            data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
-            success: function(data, textStatus) {
-                import_flag = data;
-            },
-            error: function() {
-                alert("import notes failed!");
-            }
-        });
-
-        if (import_flag.flag == true) {
-            while (!result_import.flag) {
-                $.ajax({
-                    type: "get",
-                    async: false,
-                    url: location.protocol + "//" + local + "/importnotesajax",
-                    data: {"file_name": file_name},
-                    success: function(data, textStatus) {
-                        result_import = data;
-                    },
-                    error: function() {
-                        alert("import notes failed!");
-                    }
-                });
-                updateNotesProgress("import_notes_progress", result_import.tasks, result_import.predict_total);
-                await sleep(500);
-            }
-        }
-
-        if (result_import.flag == true) {
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
             $.ajax({
                 type: "post",
                 async: false,
-                url: location.protocol + "//" + local + "/indexnotesajax",
-                data: {"file_name": file_name, "_xsrf": xsrf},
+                url: location.protocol + "//" + local + "/importnotesajax",
+                data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
                 success: function(data, textStatus) {
-                    index_flag = data;
+                    import_flag = data;
                 },
                 error: function() {
                     alert("import notes failed!");
                 }
             });
 
-            if (index_flag.flag == true) {
-                while (!result_index.flag) {
+            if (import_flag.flag == true) {
+                while (!result_import.flag) {
+                    if (socket.readyState === socket.CLOSED) {
+                        $('#offline_modal').modal('show');
+                        return;
+                    } else {
+                        $.ajax({
+                            type: "get",
+                            async: false,
+                            url: location.protocol + "//" + local + "/importnotesajax",
+                            data: {"file_name": file_name},
+                            success: function(data, textStatus) {
+                                result_import = data;
+                            },
+                            error: function() {
+                                alert("import notes failed!");
+                            }
+                        });
+                        updateNotesProgress("import_notes_progress", result_import.tasks, result_import.predict_total);
+                        await sleep(500);
+                    }
+                }
+            }
+
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+                return;
+            } else {
+                if (result_import.flag == true) {
                     $.ajax({
-                        type: "get",
+                        type: "post",
                         async: false,
                         url: location.protocol + "//" + local + "/indexnotesajax",
-                        data: {"file_name": file_name},
+                        data: {"file_name": file_name, "_xsrf": xsrf},
                         success: function(data, textStatus) {
-                            result_index = data;
+                            index_flag = data;
                         },
                         error: function() {
                             alert("import notes failed!");
                         }
                     });
-                    updateNotesProgress("index_notes_progress", result_index.tasks, result_index.predict_total);
-                    await sleep(500);
+
+                    if (index_flag.flag == true) {
+                        while (!result_index.flag) {
+                            if (socket.readyState === socket.CLOSED) {
+                                $('#offline_modal').modal('show');
+                                return;
+                            } else {
+                                $.ajax({
+                                    type: "get",
+                                    async: false,
+                                    url: location.protocol + "//" + local + "/indexnotesajax",
+                                    data: {"file_name": file_name},
+                                    success: function(data, textStatus) {
+                                        result_index = data;
+                                    },
+                                    error: function() {
+                                        alert("import notes failed!");
+                                    }
+                                });
+                                updateNotesProgress("index_notes_progress", result_index.tasks, result_index.predict_total);
+                                await sleep(500);
+                            }
+                        }
+                    }
                 }
+
+                var option = "";
+                if (result_import.flag == true && result_import.total == result_import.tasks && result_index.flag == true && result_index.total == result_index.tasks) {
+                    option = "import_notes_success";
+                } else {
+                    option = "import_notes_fail";
+                }
+
+                if (socket.readyState === socket.CLOSED) {
+                    $('#offline_modal').modal('show');
+                } else {
+                    var data = {};
+                    data['reinit'] = {'cmd':'reinit', 'option':option};
+                    socket.send(JSON.stringify(data));
+                }
+
+                $("#import_progress_modal").modal('hide');
+                $body.addClass("loading");
             }
         }
-
-        var option = "";
-        if (result_import.flag == true && result_import.total == result_import.tasks && result_index.flag == true && result_index.total == result_index.tasks) {
-            option = "import_notes_success";
-        } else {
-            option = "import_notes_fail";
-        }
-
-        if (socket.readyState === socket.CLOSED) {
-            $('#offline_modal').modal('show');
-        } else {
-            var data = {};
-            data['reinit'] = {'cmd':'reinit', 'option':option};
-            socket.send(JSON.stringify(data));
-        }
-
-        $("#import_progress_modal").modal('hide');
-        $body.addClass("loading");
     }
 
     function importNotes() {
         // $body.addClass("loading");
         updateNotesProgress("import_notes_progress", 0, 0);
         updateNotesProgress("index_notes_progress", 0, 0);
-        var isChrome = !!window.chrome;
-        if (isChrome) { // fix chrome css
-            $("#form_import_progress .progress-bar").css("padding-top", "3px");
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            var isChrome = !!window.chrome;
+            if (isChrome) { // fix chrome css
+                $("#form_import_progress .progress-bar").css("padding-top", "3px");
+            }
+            $("#import_progress_modal").modal('show');
+            action = "import_notes";
+            var file_name = $('form#form_import input#up_file').val();
+            var password = $('form#form_import input#notes_passwd').val();
+            var xsrf = $('form#form_import input[name=_xsrf]').val();
+            uploadNotesAjax(file_name, password, xsrf);
         }
-        $("#import_progress_modal").modal('show');
-        action = "import_notes";
-        var file_name = $('form#form_import input#up_file').val();
-        var password = $('form#form_import input#notes_passwd').val();
-        var xsrf = $('form#form_import input[name=_xsrf]').val();
-        uploadNotesAjax(file_name, password, xsrf);
     }
 
     $('#form_search').submit(function () {
