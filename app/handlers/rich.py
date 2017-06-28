@@ -896,7 +896,6 @@ class ImportAjaxHandler(BaseHandler):
             LOG.exception(e)
         self.write(result)
 
-class ImportRateAjaxHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
     def get(self):
@@ -952,7 +951,6 @@ class IndexAjaxHandler(BaseHandler):
             LOG.exception(e)
         self.write(result)
 
-class IndexRateAjaxHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
     def get(self):

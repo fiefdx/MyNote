@@ -839,7 +839,7 @@ function noteInit (scheme, locale) {
                 $.ajax({
                     type: "get",
                     async: false,
-                    url: location.protocol + "//" + local + "/importraterichnotesajax",
+                    url: location.protocol + "//" + local + "/importrichnotesajax",
                     data: {"file_name": file_name},
                     success: function(data, textStatus) {
                         result_import = data;
@@ -872,7 +872,7 @@ function noteInit (scheme, locale) {
                     $.ajax({
                         type: "get",
                         async: false,
-                        url: location.protocol + "//" + local + "/indexraterichnotesajax",
+                        url: location.protocol + "//" + local + "/indexrichnotesajax",
                         data: {"file_name": file_name},
                         success: function(data, textStatus) {
                             result_index = data;
