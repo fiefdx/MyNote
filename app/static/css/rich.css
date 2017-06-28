@@ -253,12 +253,15 @@ hr {
 #form_category,
 #form_delete_category,
 #form_delete_notes,
+#form_reindex,
+#form_reindex_progress,
 #form_create_note,
 #form_save_note,
 #form_create_note_all,
 #form_create_note_search,
 #form_wait,
 #form_import_note,
+#form_reindex_note,
 #form_offline {
     margin-top: 0px;
     margin-bottom: 0px; 
@@ -275,6 +278,17 @@ hr {
 }
 
 #form_import_progress .progress-bar {
+    min-width: 3em;
+    width: 2%;
+    padding-top: 0px;
+}
+
+#form_reindex_progress .progress {
+    margin-top: 7px;
+    margin-right: 15px;
+}
+
+#form_reindex_progress .progress-bar {
     min-width: 3em;
     width: 2%;
     padding-top: 0px;

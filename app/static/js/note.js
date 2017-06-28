@@ -536,6 +536,7 @@ function noteInit (scheme, locale) {
     }
 
     async function reindexNotes() {
+        await sleep(500);
         updateNotesProgress("reindex_notes_progress", 0, 0);
         var isChrome = !!window.chrome;
         if (isChrome) { // fix chrome css

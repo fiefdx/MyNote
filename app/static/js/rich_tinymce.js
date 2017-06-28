@@ -365,6 +365,10 @@ function noteInit (scheme, locale) {
                         $("#import_note_success_modal").modal('show');
                     } else if (data.option == "import_notes_fail") {
                         $("#import_note_fail_modal").modal('show');
+                    } else if (data.option == "reindex_notes_success") {
+                        $("#reindex_note_success_modal").modal('show');
+                    } else if (data.option == "reindex_notes_fail") {
+                        $("#reindex_note_fail_modal").modal('show');
                     }
                 }
 
@@ -692,10 +696,70 @@ function noteInit (scheme, locale) {
         }
     }
 
-    function reindexNotes() {
-        $body.addClass("loading");
+    async function reindexNotes() {
+        await sleep(500);
+        updateNotesProgress("reindex_notes_progress", 0, 0);
+        var isChrome = !!window.chrome;
+        if (isChrome) { // fix chrome css
+            $("#form_reindex_progress .progress-bar").css("padding-top", "3px");
+        }
+        $("#reindex_progress_modal").modal('show');
+
         action = "reindex_notes";
-        window.location.href = location.protocol + "//" + local + "/rich/?option=rebuild_index";
+        var file_name = "reindex_notes";
+        var xsrf = $('form#form_import input[name=_xsrf]').val();
+        var index_flag = {"flag": false};
+        var result_index = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
+        
+        $.ajax({
+            type: "post",
+            async: false,
+            url: location.protocol + "//" + local + "/indexrichnotesajax",
+            data: {"file_name": file_name, "_xsrf": xsrf},
+            success: function(data, textStatus) {
+                index_flag = data;
+            },
+            error: function() {
+                alert("import notes failed!");
+            }
+        });
+
+        if (index_flag.flag == true) {
+            while (!result_index.flag) {
+                $.ajax({
+                    type: "get",
+                    async: false,
+                    url: location.protocol + "//" + local + "/indexrichnotesajax",
+                    data: {"file_name": file_name},
+                    success: function(data, textStatus) {
+                        result_index = data;
+                    },
+                    error: function() {
+                        alert("import notes failed!");
+                    }
+                });
+                updateNotesProgress("reindex_notes_progress", result_index.tasks, result_index.predict_total);
+                await sleep(500);
+            }
+        }
+
+        var option = "";
+        if (result_index.flag == true && result_index.total == result_index.tasks) {
+            option = "reindex_notes_success";
+        } else {
+            option = "reindex_notes_fail";
+        }
+
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            var data = {};
+            data['reinit'] = {'cmd':'reinit', 'option':option};
+            socket.send(JSON.stringify(data));
+        }
+
+        $("#reindex_progress_modal").modal('hide');
+        $body.addClass("loading");
     }
 
     function search() {
