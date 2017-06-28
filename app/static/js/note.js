@@ -758,6 +758,10 @@ function noteInit (scheme, locale) {
         // $body.addClass("loading");
         updateNotesProgress("import_notes_progress", 0, 0);
         updateNotesProgress("index_notes_progress", 0, 0);
+        var isChrome = !!window.chrome;
+        if (isChrome) { // fix chrome css
+            $("#form_import_progress .progress-bar").css("padding-top", "3px");
+        }
         $("#import_progress_modal").modal('show');
         action = "import_notes";
         var file_name = $('form#form_import input#up_file').val();

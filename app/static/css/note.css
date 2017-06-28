@@ -268,7 +268,7 @@ hr {
 #form_import_progress .progress-bar {
     min-width: 3em;
     width: 2%;
-    padding-top: 3px;
+    padding-top: 0px;
 }
 
 .btn-file {
