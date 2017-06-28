@@ -187,7 +187,7 @@ class Dispatcher(StoppableThread):
                 elif command == IndexNote:
                     processer = self.mapping.get("index_note")
                     task_key = get_index_key(file_name, user)
-                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                    for n, job in enumerate(processer.iter(file_name, user, user_key)):
                         if job[2] == StartSignal:
                             self.tasks[task_key]["predict_total"] = job[3]
                         else:
@@ -198,7 +198,7 @@ class Dispatcher(StoppableThread):
                 elif command == IndexRich:
                     processer = self.mapping.get("index_rich")
                     task_key = get_index_key(file_name, user)
-                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                    for n, job in enumerate(processer.iter(file_name, user, user_key)):
                         if job[2] == StartSignal:
                             self.tasks[task_key]["predict_total"] = job[3]
                         else:
@@ -458,7 +458,7 @@ class ManagerClient(object):
         raise gen.Return(result)
 
     @gen.coroutine
-    def index_notes(self, file_name, user, user_key, password):
+    def index_notes(self, file_name, user, user_key):
         """
         file_name: is uploaded file's name
         user: is user object from models.item.USER
@@ -468,7 +468,7 @@ class ManagerClient(object):
         LOG.debug("Start index notes %s[%s]", file_name, user.user_name)
         with (yield ManagerClient.WRITE_LOCK.acquire()):
             LOG.debug("Get index notes Lock %s[%s]", file_name, user.user_name)
-            ManagerClient.PROCESS_DICT["manager"][1].send((IndexNote, file_name, user, user_key, password))
+            ManagerClient.PROCESS_DICT["manager"][1].send((IndexNote, file_name, user, user_key, ""))
             LOG.debug("Send index notes %s[%s] end", file_name, user.user_name)
             while not ManagerClient.PROCESS_DICT["manager"][1].poll():
                 yield gen.moment
@@ -481,7 +481,7 @@ class ManagerClient(object):
         raise gen.Return(result)
 
     @gen.coroutine
-    def index_rich_notes(self, file_name, user, user_key, password):
+    def index_rich_notes(self, file_name, user, user_key):
         """
         file_name: is uploaded file's name
         user: is user object from models.item.USER
@@ -491,7 +491,7 @@ class ManagerClient(object):
         LOG.debug("Start index rich notes %s[%s]", file_name, user.user_name)
         with (yield ManagerClient.WRITE_LOCK.acquire()):
             LOG.debug("Get index rich notes Lock %s[%s]", file_name, user.user_name)
-            ManagerClient.PROCESS_DICT["manager"][1].send((IndexRich, file_name, user, user_key, password))
+            ManagerClient.PROCESS_DICT["manager"][1].send((IndexRich, file_name, user, user_key, ""))
             LOG.debug("Send index rich notes %s[%s] end", file_name, user.user_name)
             while not ManagerClient.PROCESS_DICT["manager"][1].poll():
                 yield gen.moment

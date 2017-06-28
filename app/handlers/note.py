@@ -896,12 +896,9 @@ class IndexAjaxHandler(BaseHandler):
             fname = self.get_argument("file_name", "")
             fname = os.path.split(fname.replace("\\", "/"))[-1]
             LOG.debug("IndexAjaxHandler fname: %s", fname)
-            password = self.get_argument("passwd", "")
-            password = common_utils.md5twice(password) if password != "" else ""
-            LOG.info("index notes encrypted: %s", True if password != "" else False)
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
-            flag = yield manager_client.index_notes(fname, user_info, user_key, password)
+            flag = yield manager_client.index_notes(fname, user_info, user_key)
             if flag is not False:
                 result["flag"] = True
             else:

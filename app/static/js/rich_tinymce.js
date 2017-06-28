@@ -862,7 +862,7 @@ function noteInit (scheme, locale) {
                 type: "post",
                 async: false,
                 url: location.protocol + "//" + local + "/indexrichnotesajax",
-                data: {"file_name": file_name, "passwd": password, "_xsrf": xsrf},
+                data: {"file_name": file_name, "_xsrf": xsrf},
                 success: function(data, textStatus) {
                     index_flag = data;
                 },

@@ -336,7 +336,7 @@
     </form>
 </div>
 <div id="reindex_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexModalLabel" aria-hidden="true" onfocus="this.blur();">
-    <form id="form_delete_category" class="form-horizontal">
+    <form id="form_reindex" class="form-horizontal">
         {% raw xsrf_form_html() %}
         <div id="dialog_import" class="modal-dialog">
             <div class="modal-content">
@@ -350,6 +350,29 @@
                 <div class="modal-footer">
                     <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
                     <button id="reindex_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Update")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="reindex_progress_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_reindex_progress" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_index" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="importModalLabel" class="modal-title">{{_("Index Notes")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="control-label col-xs-4" for="reindex_notes_progress">{{_("Index Notes")}}</label>
+                        <div class="progress">
+                            <div id="reindex_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
                 </div>
             </div>
         </div>
@@ -517,6 +540,42 @@
                 </div>
                 <div class="modal-body">
                     <span class="col-xs-12">{{_("Import notes failed!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="reindex_note_success_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexNoteSuccessModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_reindex_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_reindex_success" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="reindexNoteSuccessModalLabel" class="modal-title">{{_("Message")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Reindex notes success!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="reindex_note_fail_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="reindexNoteFailModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_reindex_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_reindex_fail" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="reindexNoteFailModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Reindex notes failed!")}}</span>
                 </div>
                 <div class="modal-footer">
                 </div>

@@ -382,7 +382,7 @@ class NoteIndexProcesser(TaskProcesser):
         self.current_size = 0
         self.batch_size = 1000
 
-    def iter(self, file_name, user, user_key, password):
+    def iter(self, file_name, user, user_key):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
@@ -464,7 +464,7 @@ class RichIndexProcesser(TaskProcesser):
         self.current_size = 0
         self.batch_size = 1000
 
-    def iter(self, file_name, user, user_key, password):
+    def iter(self, file_name, user, user_key):
         self.task_key = get_index_key(file_name, user)
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
