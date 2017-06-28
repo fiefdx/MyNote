@@ -245,9 +245,11 @@ class Archive(object):
         self.package_path = ""
         self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "notes")
 
-    def archive(self, archive_type, category = ""):
+    def archive(self, archive_type, category = "", encrypt = False):
         date_time = strftime("%Y%m%d_%H%M", localtime())
         archive_name = "%s_notes_%s"%(self.user, date_time) if category == "" else "%s_notes_%s_%s"%(self.user, category, date_time)
+        if encrypt:
+            archive_name += "_encrypted"
         package_name = ""
         try:
             if archive_type == "tar.gz":
@@ -311,9 +313,11 @@ class Archive_Rich_Notes(object):
         self.package_path = ""
         self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_notes")
 
-    def archive(self, archive_type, category = ""):
+    def archive(self, archive_type, category = "", encrypt = False):
         date_time = strftime("%Y%m%d_%H%M", localtime())
         archive_name = "%s_rich_notes_%s"%(self.user, date_time) if category == "" else "%s_rich_notes_%s_%s"%(self.user, category, date_time)
+        if encrypt:
+            archive_name += "_encrypted"
         package_name = ""
         try:
             if archive_type == "tar.gz":

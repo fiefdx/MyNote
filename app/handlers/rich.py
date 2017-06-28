@@ -721,7 +721,7 @@ class ExportHandler(BaseHandler):
         user_key = self.get_current_user_key()
         password = self.get_argument("passwd", "")
         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
-        encrypt = self.get_argument("encrypt","")
+        encrypt = self.get_argument("encrypt", "")
         encrypt = True if encrypt == "enable" else False
         export_category = self.get_argument("notes_category", "All")
         LOG.debug("Export rich notes category: %s", export_category)
@@ -760,7 +760,7 @@ class ExportHandler(BaseHandler):
                         category = c
             create_category_info(CONFIG["STORAGE_USERS_PATH"], user_info, category)
             arch = Archive(user_info)
-            arch.archive("tar.gz", category["name"])
+            arch.archive("tar.gz", category["name"], encrypt)
             LOG.debug("arch.package_path: %s", arch.package_path)
             if os.path.exists(arch.package_path) and os.path.isfile(arch.package_path):
                 fp = open(arch.package_path, 'rb')
