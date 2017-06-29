@@ -470,6 +470,9 @@ class RICH(object):
                 }
             )
 
+    def load_images(self):
+        self.images = json.loads(self.images)
+
     def to_json(self, attr):
         """
         @summary: convert attr to json string

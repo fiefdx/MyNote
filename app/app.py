@@ -59,6 +59,8 @@ class Application(tornado.web.Application):
                     (r"/uploadrichnotesajax", rich.UploadAjaxHandler),
                     (r"/importrichnotesajax", rich.ImportAjaxHandler),
                     (r"/indexrichnotesajax", rich.IndexAjaxHandler),
+                    (r"/exportrichnotesajax", rich.ExportAjaxHandler),
+                    (r"/archiverichnotesajax", rich.ArchiveAjaxHandler),
                     (r"/picture", picture.PictureHandler),
                     (r"/picture/", picture.PictureHandler),
                     (r"/picture/(?P<sha1>[a-fA-F\d]{40})", picture.PictureHandler),

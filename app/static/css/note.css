@@ -241,6 +241,7 @@ hr {
 #form_import,
 #form_import_progress,
 #form_export,
+#form_export_progress,
 #form_category,
 #form_delete_category,
 #form_delete_notes,
@@ -252,6 +253,7 @@ hr {
 #form_create_note_search,
 #form_wait,
 #form_import_note,
+#form_export_note,
 #form_reindex_note,
 #form_offline {
     margin-top: 0px;

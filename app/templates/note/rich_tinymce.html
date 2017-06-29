@@ -142,14 +142,14 @@
                 </div>
                 <div class="modal-body">
                     <div id="first_form_group" class="form-group">
-                        <label class="control-label col-xs-2" for="import_notes_progress">{{_("Import Notes")}}</label>
+                        <label class="control-label col-xs-3" for="import_notes_progress">{{_("Import Notes")}}</label>
                         <div class="progress">
                             <div id="import_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-xs-2" for="index_notes_progress">{{_("Index Notes")}}</label>
+                        <label class="control-label col-xs-3" for="index_notes_progress">{{_("Index Notes")}}</label>
                         <div class="progress">
                             <div id="index_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
                             </div>
@@ -242,7 +242,7 @@
     </form>
 </div>
 <div id="export_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportModalLabel" aria-hidden="true" onfocus="this.blur();">
-    <form id="form_export" class="form-horizontal" enctype="multipart/form-data" target="_blank" action="/exportrichnotes" method="post">
+    <form id="form_export" class="form-horizontal" enctype="multipart/form-data">
         {% raw xsrf_form_html() %}
         <div id="dialog_export" class="modal-dialog">
             <div class="modal-content">
@@ -275,6 +275,36 @@
                 <div class="modal-footer">
                     <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true">{{_("Cancel")}}</button>
                     <button id="export_notes" class="btn btn-primary" type="button" data-dismiss="modal" aria-hidden="true">{{_("Export")}}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="export_progress_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_export_progress" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_import" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="exportModalLabel" class="modal-title">{{_("Export Notes")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <div id="first_form_group" class="form-group">
+                        <label class="control-label col-xs-3" for="export_notes_progress">{{_("Export Notes")}}</label>
+                        <div class="progress">
+                            <div id="export_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-xs-3" for="archive_notes_progress">{{_("Archive Notes")}}</label>
+                        <div class="progress">
+                            <div id="archive_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
                 </div>
             </div>
         </div>
@@ -350,7 +380,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label class="control-label col-xs-2" for="reindex_notes_progress">{{_("Index Notes")}}</label>
+                        <label class="control-label col-xs-3" for="reindex_notes_progress">{{_("Index Notes")}}</label>
                         <div class="progress">
                             <div id="reindex_notes_progress" class="progress-bar" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
                             </div>
@@ -525,6 +555,42 @@
                 </div>
                 <div class="modal-body">
                     <span class="col-xs-12">{{_("Import notes failed!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="export_note_success_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportNoteSuccessModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_export_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_export_success" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="exportNoteSuccessModalLabel" class="modal-title">{{_("Message")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Export notes success!")}}</span>
+                </div>
+                <div class="modal-footer">
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div id="export_note_fail_modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" aria-labelledby="exportNoteFailModalLabel" aria-hidden="true" onfocus="this.blur();">
+    <form id="form_export_note" class="form-horizontal">
+        {% raw xsrf_form_html() %}
+        <div id="dialog_export_fail" class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h3 id="exportNoteFailModalLabel" class="modal-title">{{_("Warning")}}</h3>
+                </div>
+                <div class="modal-body">
+                    <span class="col-xs-12">{{_("Export notes failed!")}}</span>
                 </div>
                 <div class="modal-footer">
                 </div>

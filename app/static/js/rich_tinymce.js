@@ -369,6 +369,10 @@ function noteInit (scheme, locale) {
                         $("#reindex_note_success_modal").modal('show');
                     } else if (data.option == "reindex_notes_fail") {
                         $("#reindex_note_fail_modal").modal('show');
+                    } else if (data.option == "export_notes_success") {
+                        $("#export_note_success_modal").modal('show');
+                    } else if (data.option == "export_notes_fail") {
+                        $("#export_note_fail_modal").modal('show');
                     }
                 }
 
@@ -827,9 +831,150 @@ function noteInit (scheme, locale) {
         });
     }
 
+    // function exportNotes() {
+    //     $('#form_export').submit();
+    //     $('#export_modal').modal('hide');
+    // }
+
     function exportNotes() {
-        $('#form_export').submit();
-        $('#export_modal').modal('hide');
+        updateNotesProgress("export_notes_progress", 0, 0);
+        updateNotesProgress("archive_notes_progress", 0, 0);
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            var isChrome = !!window.chrome;
+            if (isChrome) { // fix chrome css
+                $("#form_export_progress .progress-bar").css("padding-top", "3px");
+            }
+            $("#export_progress_modal").modal('show');
+            action = "export_notes";
+            var note_category = $('form#form_export select#notes_category').val();
+            var encrypt = $('form#form_export input#encrypt_notes').val();
+            var password = $('form#form_export input#notes_passwd').val();
+            var xsrf = $('form#form_export input[name=_xsrf]').val();
+            console.log(note_category + ", " + encrypt + ", " + password + ", " + xsrf);
+            exportNotesAjax(note_category, encrypt, password, xsrf);
+        }
+    }
+
+    async function exportNotesAjax(category, encrypt, password, xsrf) {
+        var export_flag = {"flag": false};
+        var result_export = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0};
+        var archive_flag = {"flag": false};
+        var result_archive = {"flag": false, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0, "package_name": ""};
+        if (socket.readyState === socket.CLOSED) {
+            $('#offline_modal').modal('show');
+        } else {
+            $.ajax({
+                type: "post",
+                async: false,
+                url: location.protocol + "//" + local + "/exportrichnotesajax",
+                data: {"notes_category": category, "encrypt": encrypt, "passwd": password, "_xsrf": xsrf},
+                success: function(data, textStatus) {
+                    export_flag = data;
+                },
+                error: function() {
+                    alert("export notes failed!");
+                }
+            });
+
+            if (export_flag.flag == true) {
+                while (!result_export.flag) {
+                    if (socket.readyState === socket.CLOSED) {
+                        $('#offline_modal').modal('show');
+                        return;
+                    } else {
+                        $.ajax({
+                            type: "get",
+                            async: false,
+                            url: location.protocol + "//" + local + "/exportrichnotesajax",
+                            data: {"notes_category": category},
+                            success: function(data, textStatus) {
+                                result_export = data;
+                            },
+                            error: function() {
+                                alert("export notes failed!");
+                            }
+                        });
+                        updateNotesProgress("export_notes_progress", result_export.tasks, result_export.predict_total);
+                        await sleep(500);
+                    }
+                }
+            }
+
+            if (socket.readyState === socket.CLOSED) {
+                $('#offline_modal').modal('show');
+                return;
+            } else {
+                if (result_export.flag == true) {
+                    $.ajax({
+                        type: "post",
+                        async: false,
+                        url: location.protocol + "//" + local + "/archiverichnotesajax",
+                        data: {"notes_category": category, "encrypt": encrypt, "passwd": password, "_xsrf": xsrf},
+                        success: function(data, textStatus) {
+                            archive_flag = data;
+                        },
+                        error: function() {
+                            alert("export notes failed!");
+                        }
+                    });
+
+                    if (archive_flag.flag == true) {
+                        while (!result_archive.flag) {
+                            if (socket.readyState === socket.CLOSED) {
+                                $('#offline_modal').modal('show');
+                                return;
+                            } else {
+                                $.ajax({
+                                    type: "get",
+                                    async: false,
+                                    url: location.protocol + "//" + local + "/archiverichnotesajax",
+                                    data: {"notes_category": category},
+                                    success: function(data, textStatus) {
+                                        result_archive = data;
+                                    },
+                                    error: function() {
+                                        alert("export notes failed!");
+                                    }
+                                });
+                                updateNotesProgress("archive_notes_progress", result_archive.tasks, result_archive.predict_total);
+                                await sleep(500);
+                            }
+                        }
+                    }
+                }
+
+                var option = "";
+                if (result_export.flag == true && result_export.total == result_export.tasks && result_archive.flag == true && result_archive.total == result_archive.tasks) {
+                    option = "export_notes_success";
+                    downloadNotesPackage(result_archive.package_name);
+                } else {
+                    option = "export_notes_fail";
+                }
+
+                if (socket.readyState === socket.CLOSED) {
+                    $('#offline_modal').modal('show');
+                } else {
+                    var data = {};
+                    data['reinit'] = {'cmd':'reinit', 'option':option};
+                    socket.send(JSON.stringify(data));
+                }
+
+                $("#export_progress_modal").modal('hide');
+                $body.addClass("loading");
+            }
+        }
+    }
+
+    function downloadNotesPackage(package_name) {
+        var url = location.protocol + "//" + local + "/exportrichnotes?package_name=" + package_name;
+        var a = document.createElement('A');
+        a.href = url;
+        a.download = package_name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
 
     function importNotes() {
