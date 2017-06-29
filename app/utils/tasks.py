@@ -23,10 +23,10 @@ from db.db_pic import DB as PIC_DB
 from db.db_user import DB as USER_DB
 from ix.ix_rich import IX as RICH_IX
 from ix.ix_note import IX as NOTE_IX
-from utils.archive import Archive
+from utils.archive import Archive, Archive_Rich_Notes
 from utils import common_utils
 from utils import htmlparser
-from models.item import NOTE, RICH, PICTURE
+from models.item import USER, NOTE, RICH, PICTURE
 from models.task import TaskProcesser, StopSignal, StartSignal
 from config import CONFIG
 
@@ -37,6 +37,12 @@ def get_key(file_name, user):
 
 def get_index_key(file_name, user):
     return "index_%s_%s" % (file_name, user.sha1)
+
+def get_export_key(note_category, user):
+    return "export_%s_%s" % (note_category, user.sha1)
+
+def get_archive_key(note_category, user):
+    return "archive_%s_%s" % (note_category, user.sha1)
 
 class NoteImportProcesser(TaskProcesser):
     name = "note"
@@ -197,7 +203,7 @@ class RichImportProcesser(TaskProcesser):
 
     def iter(self, file_name, user, user_key, password):
         self.task_key = get_key(file_name, user)
-        arch = Archive(user)
+        arch = Archive_Rich_Notes(user)
         archive_name = file_name.split(".")[0]
         archive_type = os.path.splitext(file_name)[1]
         if archive_type == ".gz":
@@ -524,6 +530,171 @@ class RichIndexProcesser(TaskProcesser):
                     self.writer = AsyncWriter(self.ix.ix)
                     self.current_size = 0
                 self.current_size += 1
+                result = [self.name, self.task_key, StopSignal]
+        except Exception, e:
+            LOG.exception(e)
+        return result
+
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
+        if isinstance(x, int) and isinstance(y, bool):
+            result = (x + 1 if y else x, False, z)
+        elif isinstance(x, bool) and isinstance(y, int):
+            result = (y + 1 if x else y, False, z)
+        elif isinstance(x, str) and x == StopSignal:
+            result = (y, True, z + 1)
+        elif isinstance(y, str) and y == StopSignal:
+            result = (x, True, z + 1)
+        return result
+
+def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 = ""):
+    result = False
+    try:
+        note_path = os.path.join(storage_users_path, user_sha1, "notes", note.type)
+        note_file_path = os.path.join(storage_users_path, user_sha1, "notes", note.type, note.sha1)
+        if not os.path.exists(note_path):
+            os.makedirs(note_path)
+            LOG.info("create user[%s] path[%s]", user, note_path)
+        if key != "":
+            note.decrypt(key)
+        if key1 != "":
+            note.encrypt(key1)
+        fp = open(note_file_path, 'wb')
+        doc = note.to_xml()
+        doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
+        fp.close()
+        result = True
+    except Exception, e:
+        LOG.exception(e)
+    return result
+
+def create_category_info(storage_users_path, user_name, user_sha1, user_note_books, category):
+    result = False
+    try:
+        file_path = os.path.join(storage_users_path, user_sha1, "notes", "category.json")
+        fp = open(file_path, 'wb')
+        if category["name"] == "All":
+            fp.write(user_note_books)
+        else:
+            fp.write(json.dumps([category]))
+        fp.close()
+        LOG.info("create user[%s] category.json[%s]", user_name, file_path)
+        result = True
+    except Exception, e:
+        LOG.exception(e)
+    return result
+
+class NoteExportProcesser(TaskProcesser):
+    name = "export_note"
+
+    def __init__(self):
+        self.db_note = NOTE_DB()
+        self.task_key = ""
+
+    def init(self):
+        self.db_note = NOTE_DB()
+        self.task_key = ""
+
+    def iter(self, note_category, user, user_key, password):
+        self.task_key = get_export_key(note_category, user)
+        key = user_key if CONFIG["ENCRYPT"] else ""
+        try:
+            total_tasks = self.db_note.get_note_num_by_user(user.user_name)
+            if total_tasks is not False:
+                yield [self.name, self.task_key, StartSignal, total_tasks, "", "", ""]
+            user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user.sha1, "notes")
+            shutil.rmtree(user_notes_path)
+            LOG.info("remove user[%s] path[%s]", user.user_name, user_notes_path)
+            os.makedirs(user_notes_path)
+            LOG.info("create user[%s] path[%s]", user.user_name, user_notes_path)
+            for note in self.db_note.get_note_from_db_by_user_type_iter(user.user_name, note_category):
+                yield [self.name, self.task_key, note.to_dict(), user.user_name, user.sha1, key, password]
+            category = ""
+            if note_category == "All":
+                category = {"sha1": "", "name": "All"}
+            else:
+                for c in json.loads(user.note_books):
+                    if c["sha1"] == note_category:
+                        category = c
+                yield [self.name, self.task_key, "category_info", user.user_name, user.sha1, category, user.note_books]
+        except Exception, e:
+            LOG.exception(e)
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", "", ""]
+
+    def map(self, x):
+        _, self.task_key, note_dict, user_name, user_sha1, key, password = x
+        result = (self.name, self.task_key, False)
+        try:
+            if note_dict != StopSignal:
+                if note_dict != "category_info":
+                    note = NOTE()
+                    flag = note.parse_dict(note_dict)
+                    if flag == True:
+                        flag = create_note_file(CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, note, key = key, key1 = password)
+                        if flag is True:
+                            LOG.debug("write note to file success")
+                            result = [self.name, self.task_key, True]
+                        else:
+                            LOG.error("write note to file failed")
+                    else:
+                        LOG.error("parse note from dict failed")
+                else:
+                    category = key
+                    user_notes_books = password
+                    flag = create_category_info(CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, user_note_books, category)
+                    if flag is True:
+                        LOG.debug("write category info to file success")
+                        result = [self.name, self.task_key, True]
+                    else:
+                        LOG.error("write category info to file failed")
+            else:
+                result = [self.name, self.task_key, StopSignal]
+        except Exception, e:
+            LOG.exception(e)
+        return result
+
+    def reduce(self, x, y, z):
+        result = (-1, False, z)
+        if isinstance(x, int) and isinstance(y, bool):
+            result = (x + 1 if y else x, False, z)
+        elif isinstance(x, bool) and isinstance(y, int):
+            result = (y + 1 if x else y, False, z)
+        elif isinstance(x, str) and x == StopSignal:
+            result = (y, True, z + 1)
+        elif isinstance(y, str) and y == StopSignal:
+            result = (x, True, z + 1)
+        return result
+
+class NoteArchiveProcesser(TaskProcesser):
+    name = "archive_note"
+
+    def __init__(self):
+        self.task_key = ""
+
+    def init(self):
+        self.task_key = ""
+
+    def iter(self, note_category, user, user_key, password):
+        self.task_key = get_archive_key(note_category, user)
+        key = user_key if CONFIG["ENCRYPT"] else ""
+        yield [self.name, self.task_key, StartSignal, 1, "", ""]
+        yield [self.name, self.task_key, note_category, user.to_dict(), key, password]
+        for i in xrange(CONFIG["PROCESS_NUM"]):
+            yield [self.name, self.task_key, StopSignal, "", "", ""]
+
+    def map(self, x):
+        _, self.task_key, note_category, user_dict, key, password = x
+        result = (self.name, self.task_key, False)
+        try:
+            if note_category != StopSignal:
+                user = USER()
+                user.parse_dict(user_dict)
+                arch = Archive(user)
+                arch.archive("tar.gz", note_category, True if password != "" else False)
+                LOG.debug("arch.package: %s", arch.package)
+                result = [self.name, self.task_key, True, arch.package]
+            else:
                 result = [self.name, self.task_key, StopSignal]
         except Exception, e:
             LOG.exception(e)

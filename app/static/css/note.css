@@ -283,6 +283,30 @@ hr {
     padding-top: 0px;
 }
 
+#form_export_progress .progress {
+    margin-top: 7px;
+    margin-right: 20px;
+    margin-bottom: 7px;
+}
+
+#form_export_progress .progress-bar {
+    min-width: 3em;
+    width: 2%;
+    padding-top: 0px;
+}
+
+#form_archive_progress .progress {
+    margin-top: 7px;
+    margin-right: 20px;
+    margin-bottom: 7px;
+}
+
+#form_archive_progress .progress-bar {
+    min-width: 3em;
+    width: 2%;
+    padding-top: 0px;
+}
+
 .btn-file {
     position: relative;
     overflow: hidden;

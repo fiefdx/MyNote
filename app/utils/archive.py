@@ -371,4 +371,3 @@ class Archive_Rich_Notes(object):
                 LOG.debug("Clear [%s]"%file_path)
         except Exception, e:
             LOG.exception(e)
-        

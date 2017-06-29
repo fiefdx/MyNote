@@ -14,7 +14,8 @@ from multiprocessing import Process, Queue, Pipe
 import toro
 from tornado import gen
 
-from utils.tasks import get_key, get_index_key, NoteImportProcesser, RichImportProcesser, NoteIndexProcesser, RichIndexProcesser
+from utils.tasks import get_key, get_index_key, get_export_key, get_archive_key
+from utils.tasks import NoteImportProcesser, RichImportProcesser, NoteIndexProcesser, RichIndexProcesser, NoteExportProcesser, NoteArchiveProcesser
 from models.mapping import Mapping
 from models.task import StopSignal, StartSignal
 from config import CONFIG
@@ -29,9 +30,13 @@ ImportRich = "IMPORT_RICH"
 ImportNote = "IMPORT_NOTE"
 IndexNote = "INDEX_NOTE"
 IndexRich = "INDEX_RICH"
+ExportNote = "EXPORT_NOTE"
+ArchiveNote = "ARCHIVE_NOTE"
 Exit = "EXIT"
 GetRate = "GET_RATE"
 GetIndexRate = "GET_INDEX_RATE"
+GetExportRate = "GET_EXPORT_RATE"
+GetArchiveRate = "GET_ARCHIVE_RATE"
 
 class StoppableThread(Thread):
     """
@@ -61,6 +66,8 @@ class Processer(StoppableThread):
         self.mapping.add(RichImportProcesser())
         self.mapping.add(NoteIndexProcesser())
         self.mapping.add(RichIndexProcesser())
+        self.mapping.add(NoteExportProcesser())
+        self.mapping.add(NoteArchiveProcesser())
 
     def run(self):
         LOG = logging.getLogger("worker")
@@ -153,6 +160,8 @@ class Dispatcher(StoppableThread):
         self.mapping.add(RichImportProcesser())
         self.mapping.add(NoteIndexProcesser())
         self.mapping.add(RichIndexProcesser())
+        self.mapping.add(NoteExportProcesser())
+        self.mapping.add(NoteArchiveProcesser())
 
     def run(self):
         LOG = logging.getLogger("manager")
@@ -207,6 +216,28 @@ class Dispatcher(StoppableThread):
                             self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch index rich notes over: %s, %s, %s", command, file_name, user.sha1)
+                elif command == ExportNote:
+                    processer = self.mapping.get("export_note")
+                    task_key = get_export_key(file_name, user)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
+                    LOG.info("dispatch export notes over: %s, %s, %s", command, file_name, user.sha1)
+                elif command == ArchiveNote:
+                    processer = self.mapping.get("archive_note")
+                    task_key = get_archive_key(file_name, user)
+                    for n, job in enumerate(processer.iter(file_name, user, user_key, password)):
+                        if job[2] == StartSignal:
+                            self.tasks[task_key]["predict_total"] = job[3]
+                        else:
+                            self.task_queues[n % CONFIG["PROCESS_NUM"]].put(job)
+                            self.tasks[task_key]["total"] += 1
+                    self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
+                    LOG.info("dispatch archive notes over: %s, %s, %s", command, file_name, user.sha1)
         except Exception, e:
             LOG.exception(e)
         for i in xrange(CONFIG["PROCESS_NUM"]):
@@ -224,6 +255,8 @@ class Collector(StoppableThread):
         self.mapping.add(RichImportProcesser())
         self.mapping.add(NoteIndexProcesser())
         self.mapping.add(RichIndexProcesser())
+        self.mapping.add(NoteExportProcesser())
+        self.mapping.add(NoteArchiveProcesser())
         self.tasks = tasks
 
     def run(self):
@@ -240,6 +273,8 @@ class Collector(StoppableThread):
                             self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(self.tasks[task[1]]["tasks"], task[2], self.tasks[task[1]]["finish"])
                         else:
                             self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(0, task[2], 0)
+                        if len(task) >= 4 and self.tasks[task[1]].has_key("package_name"): # for archive notes processer
+                            self.tasks[task[1]]["package_name"] = task[3]
                         if flag and self.tasks[task[1]]["finish"] == CONFIG["PROCESS_NUM"] and self.tasks[task[1]]["flag"] is False:
                             self.tasks[task[1]]["flag"] = True
                             self.tasks[task[1]]["predict_total"] = self.tasks[task[1]]["total"]
@@ -343,6 +378,38 @@ class Manager(Process):
                 elif command == GetIndexRate:
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager get index rate %s[%s]", user.sha1, user.user_name)
+                    if self.tasks.has_key(task_key):
+                        self.pipe_client.send((command, self.tasks[task_key]))
+                        if self.tasks[task_key]["flag"] == True:
+                            del self.tasks[task_key]
+                    else:
+                        self.pipe_client.send((command, None))
+                elif command == ExportNote:
+                    task_key = get_export_key(file_name, user)
+                    LOG.debug("Manager export note %s[%s]", user.sha1, user.user_name)
+                    if not self.tasks.has_key(task_key):
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
+                    self.queue.put((command, file_name, user, user_key, password))
+                    self.pipe_client.send((command, self.tasks[task_key]))
+                elif command == GetExportRate:
+                    task_key = get_export_key(file_name, user)
+                    LOG.debug("Manager get export rate %s[%s]", user.sha1, user.user_name)
+                    if self.tasks.has_key(task_key):
+                        self.pipe_client.send((command, self.tasks[task_key]))
+                        if self.tasks[task_key]["flag"] == True:
+                            del self.tasks[task_key]
+                    else:
+                        self.pipe_client.send((command, None))
+                elif command == ArchiveNote:
+                    task_key = get_archive_key(file_name, user)
+                    LOG.debug("Manager archive note %s[%s]", user.sha1, user.user_name)
+                    if not self.tasks.has_key(task_key):
+                        self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0, "package_name": ""}
+                    self.queue.put((command, file_name, user, user_key, password))
+                    self.pipe_client.send((command, self.tasks[task_key]))
+                elif command == GetArchiveRate:
+                    task_key = get_archive_key(file_name, user)
+                    LOG.debug("Manager get archive rate %s[%s]", user.sha1, user.user_name)
                     if self.tasks.has_key(task_key):
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
@@ -519,6 +586,98 @@ class ManagerClient(object):
             r = ManagerClient.PROCESS_DICT["manager"][1].recv()
             LOG.debug("End get index rate %s[%s]", file_name, user.user_name)
         LOG.info("get index rate result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def export_notes(self, note_category, user, user_key, password):
+        """
+        note_category: is a note category's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start export notes %s[%s]", note_category, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get export notes Lock %s[%s]", note_category, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((ExportNote, note_category, user, user_key, password))
+            LOG.debug("Send export notes %s[%s] end", note_category, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV export notes %s[%s]", note_category, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End export notes %s[%s]", note_category, user.user_name)
+        LOG.info("export notes result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def get_export_rate_of_progress(self, note_category, user):
+        """
+        note_category: is a note category's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start get export rate %s[%s]", note_category, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get export rate Lock %s[%s]", note_category, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((GetExportRate, note_category, user, "", ""))
+            LOG.debug("Send get export rate %s[%s] end", note_category, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV get export rate %s[%s]", note_category, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End get export rate %s[%s]", note_category, user.user_name)
+        LOG.info("get export rate result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def archive_notes(self, note_category, user, user_key, password):
+        """
+        note_category: is a note category's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start archive notes %s[%s]", note_category, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get archive notes Lock %s[%s]", note_category, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((ArchiveNote, note_category, user, user_key, password))
+            LOG.debug("Send archive notes %s[%s] end", note_category, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV archive notes %s[%s]", note_category, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End archive notes %s[%s]", note_category, user.user_name)
+        LOG.info("archive notes result: %s", r[1])
+        if r[1]:
+            result = r[1]
+        raise gen.Return(result)
+
+    @gen.coroutine
+    def get_archive_rate_of_progress(self, note_category, user):
+        """
+        note_category: is a note category's name
+        user: is user object from models.item.USER
+        """
+        result = False
+        # acquire write lock
+        LOG.debug("Start get archive rate %s[%s]", note_category, user.user_name)
+        with (yield ManagerClient.WRITE_LOCK.acquire()):
+            LOG.debug("Get archive rate Lock %s[%s]", note_category, user.user_name)
+            ManagerClient.PROCESS_DICT["manager"][1].send((GetArchiveRate, note_category, user, "", ""))
+            LOG.debug("Send get archive rate %s[%s] end", note_category, user.user_name)
+            while not ManagerClient.PROCESS_DICT["manager"][1].poll():
+                yield gen.moment
+            LOG.debug("RECV get archive rate %s[%s]", note_category, user.user_name)
+            r = ManagerClient.PROCESS_DICT["manager"][1].recv()
+            LOG.debug("End get archive rate %s[%s]", note_category, user.user_name)
+        LOG.info("get archive rate result: %s", r[1])
         if r[1]:
             result = r[1]
         raise gen.Return(result)

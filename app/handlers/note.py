@@ -682,50 +682,18 @@ class NoteSocketHandler(BaseSocketHandler):
 class ExportHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
-    def post(self):
+    def get(self):
         user = self.get_current_user_name()
-        user_key = self.get_current_user_key()
-        password = self.get_argument("passwd", "")
         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
-        encrypt = self.get_argument("encrypt", "")
-        encrypt = True if encrypt == "enable" else False
-        export_category = self.get_argument("notes_category", "All")
-        LOG.debug("Export notes category: %s", export_category)
-        if password != "" and encrypt:
-            password = common_utils.md5twice(password)
-        elif password == "" and encrypt:
-            password = user_key
-        else:
-            password = ""
-        LOG.info("export notes encrypted: %s", encrypt)
+        package_name = self.get_argument("package_name", "")
+        LOG.debug("Export notes package_name: %s", package_name)
         try:
-            notes_iter = Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_type_iter(user, export_category)
-            user_notes_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "notes")
-            shutil.rmtree(user_notes_path)
-            LOG.info("remove user[%s] path[%s]", user, user_notes_path)
-            os.makedirs(user_notes_path)
-            LOG.info("create user[%s] path[%s]", user, user_notes_path)
-            for note in notes_iter:
-                yield create_note_file(CONFIG["STORAGE_USERS_PATH"],
-                                       user,
-                                       user_info.sha1,
-                                       note,
-                                       key = user_key if CONFIG["ENCRYPT"] else "",
-                                       key1 = password)
-            category = ""
-            if export_category == "All":
-                category = {"sha1": "", "name": "All"}
-            else:
-                for c in json.loads(user_info.note_books):
-                    if c["sha1"] == export_category:
-                        category = c
-            create_category_info(CONFIG["STORAGE_USERS_PATH"], user_info, category)
             arch = Archive(user_info)
-            arch.archive("tar.gz", category["name"], encrypt)
-            LOG.debug("arch.package_path: %s", arch.package_path)
+            arch.package_path = os.path.join(arch.export_path, package_name)
+            LOG.debug("package_path: %s", arch.package_path)
             if os.path.exists(arch.package_path) and os.path.isfile(arch.package_path):
                 fp = open(arch.package_path, 'rb')
-                self.set_header("Content-Disposition", "attachment; filename=%s" % arch.package)
+                self.set_header("Content-Disposition", "attachment; filename=%s" % package_name)
                 while True:
                     buf = fp.read(1024 * 4)
                     if not buf:
@@ -738,6 +706,100 @@ class ExportHandler(BaseHandler):
                 self.write("Download Archive Error!")
         except Exception, e:
             LOG.exception(e)
+
+class ExportAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        password = self.get_argument("passwd", "")
+        encrypt = self.get_argument("encrypt", "")
+        encrypt = True if encrypt == "enable" else False
+        export_category = self.get_argument("notes_category", "All")
+        LOG.debug("Export notes category: %s", export_category)
+        if password != "" and encrypt:
+            password = common_utils.md5twice(password)
+        elif password == "" and encrypt:
+            password = user_key
+        else:
+            password = ""
+        LOG.info("export notes encrypted: %s", encrypt)
+        result = {"flag": False}
+        try:
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.export_notes(export_category, user_info, user_key, password)
+            if flag is not False:
+                result["flag"] = True
+            else:
+                LOG.error("Export notes user[%s] failed!", user)
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)
+
+    @tornado.web.authenticated
+    @gen.coroutine
+    def get(self):
+        user = self.get_current_user_name()
+        export_category = self.get_argument("notes_category", "All")
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0}
+        try:
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.get_export_rate_of_progress(export_category, user_info)
+            LOG.debug("export notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s", export_category, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"])
+            result = flag
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)
+
+class ArchiveAjaxHandler(BaseHandler):
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        password = self.get_argument("passwd", "")
+        encrypt = self.get_argument("encrypt", "")
+        encrypt = True if encrypt == "enable" else False
+        export_category = self.get_argument("notes_category", "All")
+        LOG.debug("Archive notes category: %s", export_category)
+        if password != "" and encrypt:
+            password = common_utils.md5twice(password)
+        elif password == "" and encrypt:
+            password = user_key
+        else:
+            password = ""
+        LOG.info("archive notes encrypted: %s", encrypt)
+        result = {"flag": False}
+        try:
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.archive_notes(export_category, user_info, user_key, password)
+            if flag is not False:
+                result["flag"] = True
+            else:
+                LOG.error("Archive notes user[%s] failed!", user)
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)
+
+    @tornado.web.authenticated
+    @gen.coroutine
+    def get(self):
+        user = self.get_current_user_name()
+        export_category = self.get_argument("notes_category", "All")
+        result = {"flag": False, "total": 0, "tasks": 0, "finish": 0, "predict_total": 0, "package_name": ""}
+        try:
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
+            flag = yield manager_client.get_archive_rate_of_progress(export_category, user_info)
+            LOG.debug("archive notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s, package_name: %s", export_category, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"], flag["package_name"])
+            result = flag
+        except Exception, e:
+            LOG.exception(e)
+        self.write(result)
 
 class DeleteHandler(BaseHandler):
     @tornado.web.authenticated

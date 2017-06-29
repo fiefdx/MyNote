@@ -48,6 +48,8 @@ class Application(tornado.web.Application):
                     (r"/uploadnotesajax", note.UploadAjaxHandler),
                     (r"/importnotesajax", note.ImportAjaxHandler),
                     (r"/indexnotesajax", note.IndexAjaxHandler),
+                    (r"/exportnotesajax", note.ExportAjaxHandler),
+                    (r"/archivenotesajax", note.ArchiveAjaxHandler),
                     (r"/rich", rich.RichHandler),
                     (r"/rich/", rich.RichHandler),
                     (r"/rich/websocket", rich.RichSocketHandler),
