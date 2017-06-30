@@ -793,7 +793,7 @@ function noteInit (scheme, locale) {
                     $('#offline_modal').modal('show');
                 } else {
                     var data = {};
-                    data['reinit'] = {'cmd':'reinit', 'option':option};
+                    data['reinit'] = {'cmd':'reinit', 'option':option, 'package_name':result_archive.package_name};
                     socket.send(JSON.stringify(data));
                 }
 

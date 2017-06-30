@@ -831,11 +831,6 @@ function noteInit (scheme, locale) {
         });
     }
 
-    // function exportNotes() {
-    //     $('#form_export').submit();
-    //     $('#export_modal').modal('hide');
-    // }
-
     function exportNotes() {
         updateNotesProgress("export_notes_progress", 0, 0);
         updateNotesProgress("archive_notes_progress", 0, 0);
@@ -957,7 +952,7 @@ function noteInit (scheme, locale) {
                     $('#offline_modal').modal('show');
                 } else {
                     var data = {};
-                    data['reinit'] = {'cmd':'reinit', 'option':option};
+                    data['reinit'] = {'cmd':'reinit', 'option':option, 'package_name':result_archive.package_name};
                     socket.send(JSON.stringify(data));
                 }
 

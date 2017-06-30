@@ -674,6 +674,11 @@ class NoteSocketHandler(BaseSocketHandler):
                 else:
                     data['note'] = {'file_title':'', 'file_content':''}
                     data['current_note_id'] = None
+                if msg['reinit'].has_key('package_name'):
+                    user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+                    arch = Archive(user_info)
+                    arch.package_path = os.path.join(arch.export_path, msg['reinit']['package_name'])
+                    arch.clear()
                 data['note_list_action'] = 'init'
                 data['books'] = yield update_categories(user_locale, user)
                 data['current_category'] = 'All'
