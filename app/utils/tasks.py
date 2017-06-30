@@ -431,7 +431,8 @@ class NoteIndexProcesser(TaskProcesser):
                     LOG.info("Commit index[%s] success.", self.ix.name)
                     self.writer = AsyncWriter(self.ix.ix)
                     self.current_size = 0
-                self.current_size += 1
+                else:
+                    self.current_size += 1
                 result = [self.name, self.task_key, True]
             else:
                 if self.current_size > 0:
@@ -442,7 +443,6 @@ class NoteIndexProcesser(TaskProcesser):
                     LOG.info("Commit index[%s] success.", self.ix.name)
                     self.writer = AsyncWriter(self.ix.ix)
                     self.current_size = 0
-                self.current_size += 1
                 result = [self.name, self.task_key, StopSignal]
         except Exception, e:
             LOG.exception(e)
@@ -615,7 +615,7 @@ class NoteExportProcesser(TaskProcesser):
             os.makedirs(user_notes_path)
             LOG.info("create user[%s] path[%s]", user.user_name, user_notes_path)
             for note in self.db_note.get_note_from_db_by_user_type_iter(user.user_name, note_category):
-                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note.to_dict()]
+                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
             category = ""
             if note_category == "All":
                 category = {"sha1": "", "name": "All"}
@@ -630,22 +630,17 @@ class NoteExportProcesser(TaskProcesser):
             yield [self.name, self.task_key, StopSignal, "", "", "", ""]
 
     def map(self, x):
-        _, self.task_key, user_name, user_sha1, key, password, note_dict = x
+        _, self.task_key, user_name, user_sha1, key, password, note = x
         result = (self.name, self.task_key, False)
         try:
             if user_name != StopSignal:
-                if note_dict != "category_info":
-                    note = NOTE()
-                    flag = note.parse_dict(note_dict)
-                    if flag == True:
-                        flag = create_note_file(CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, note, key = key, key1 = password)
-                        if flag is True:
-                            LOG.debug("write note to file success")
-                            result = [self.name, self.task_key, True]
-                        else:
-                            LOG.error("write note to file failed")
+                if note != "category_info":
+                    flag = create_note_file(CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, note, key = key, key1 = password)
+                    if flag is True:
+                        LOG.debug("write note to file success")
+                        result = [self.name, self.task_key, True]
                     else:
-                        LOG.error("parse note from dict failed")
+                        LOG.error("write note to file failed")
                 else:
                     category = key
                     user_note_books = password
@@ -691,7 +686,6 @@ def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = ""
         fp.close()
 
         user_images_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_sha1, "rich_notes", "images")
-        note.load_images()
         for image_sha1 in note.images:
             pic = db_pic.get_data_by_sha1(image_sha1)
             if pic != None and pic != False:
@@ -758,7 +752,7 @@ class RichExportProcesser(TaskProcesser):
             os.makedirs(user_images_path)
             LOG.info("create user[%s] path[%s]", user, user_images_path)
             for note in self.db_rich.get_rich_from_db_by_user_type_iter(user.user_name, note_category):
-                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note.to_dict()]
+                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
             category = ""
             if note_category == "All":
                 category = {"sha1": "", "name": "All"}
@@ -773,22 +767,17 @@ class RichExportProcesser(TaskProcesser):
             yield [self.name, self.task_key, StopSignal, "", "", "", ""]
 
     def map(self, x):
-        _, self.task_key, user_name, user_sha1, key, password, note_dict = x
+        _, self.task_key, user_name, user_sha1, key, password, note = x
         result = (self.name, self.task_key, False)
         try:
             if user_name != StopSignal:
-                if note_dict != "category_info":
-                    note = RICH()
-                    flag = note.parse_dict(note_dict)
-                    if flag == True:
-                        flag = create_rich_file(self.db_pic, CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, note, key = key, key1 = password)
-                        if flag is True:
-                            LOG.debug("write rich note to file success")
-                            result = [self.name, self.task_key, True]
-                        else:
-                            LOG.error("write rich note to file failed")
+                if note != "category_info":
+                    flag = create_rich_file(self.db_pic, CONFIG["STORAGE_USERS_PATH"], user_name, user_sha1, note, key = key, key1 = password)
+                    if flag is True:
+                        LOG.debug("write rich note to file success")
+                        result = [self.name, self.task_key, True]
                     else:
-                        LOG.error("parse rich note from dict failed")
+                        LOG.error("write rich note to file failed")
                 else:
                     category = key
                     user_rich_books = password

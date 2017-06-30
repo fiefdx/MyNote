@@ -36,6 +36,8 @@ import json
 
 import tornado.web
 from tornado import gen
+from tornado import ioloop
+from whoosh.writing import AsyncWriter
 
 from config import CONFIG
 from utils import search_whoosh
@@ -52,6 +54,8 @@ LOG = logging.getLogger(__name__)
 
 NOTE_NUM_PER_FETCH = CONFIG["NOTE_NUM_PER_FETCH"]
 
+def get_index_key(file_name, user):
+    return "index_%s_%s" % (file_name, user.sha1)
 
 @gen.coroutine
 def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 = ""):
@@ -947,7 +951,59 @@ class ImportAjaxHandler(BaseHandler):
             LOG.exception(e)
         self.write(result)
 
+@gen.coroutine
+def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = False):
+    LOG.debug("async_index start")
+    multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
+    flag = Servers.IX_SERVER["NOTE"].index_delete_note_by_user(1000, user_info.user_name)
+    if flag:
+        LOG.info("Delete all notes index user[%s] success", user_info.user_name)
+    else:
+        LOG.error("Delete all notes index user[%s] failed!", user_info.user_name)
+    IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["total"] += 1
+    IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["tasks"] += 1
+    notes_iter = Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_iter(user_info.user_name)
+    n = 0
+    writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix)
+    try:
+        for note in notes_iter:
+            n += 1
+            if key != "":
+                note.decrypt(key)
+                # note = yield multi_process_note_tea.decrypt(note, *(key, ))
+            writer.update_document(doc_id = unicode(str(note.id)), 
+                                   user_name = note.user_name, 
+                                   file_title = note.file_title, 
+                                   file_content = note.file_content)
+            IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["total"] += 1
+            IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["tasks"] += 1
+            LOG.debug("Update index[NOTE] doc_id[%s]", note.id)
+            if n == index_batch_size:
+                writer.commit(merge = merge)
+                LOG.info("Commit index[NOTE] success.")
+                writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix)
+                n = 0
+                yield gen.moment
+            if key != "" and n % 2 == 0:
+                yield gen.moment
+            elif n % 5 == 0:
+                yield gen.moment
+        if n % index_batch_size != 0:
+            s = time.time()
+            writer.commit(merge = merge)
+            ss = time.time()
+            LOG.debug("Commit use %ss", ss - s)
+            LOG.info("Commit index[NOTE] success.")
+            yield gen.moment
+    except Exception, e:
+        LOG.exception(e)
+        writer.cancel()
+    IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["flag"] = True
+    LOG.debug("async_index exit")
+
 class IndexAjaxHandler(BaseHandler):
+    tasks = {}
+
     @tornado.web.authenticated
     @gen.coroutine
     def post(self):
@@ -957,14 +1013,13 @@ class IndexAjaxHandler(BaseHandler):
         try:
             fname = self.get_argument("file_name", "")
             fname = os.path.split(fname.replace("\\", "/"))[-1]
+            key = user_key if CONFIG["ENCRYPT"] else ""
             LOG.debug("IndexAjaxHandler fname: %s", fname)
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
-            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
-            flag = yield manager_client.index_notes(fname, user_info, user_key)
-            if flag is not False:
-                result["flag"] = True
-            else:
-                LOG.error("Index notes user[%s] failed!", user)
+            total_tasks = Servers.DB_SERVER["NOTE"].get_note_num_by_user(user)
+            IndexAjaxHandler.tasks[get_index_key(fname, user_info)] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": total_tasks if total_tasks is not False else 0}
+            ioloop.IOLoop.current().spawn_callback(async_index, fname, user_info, key, merge = True)
+            result["flag"] = True
         except Exception, e:
             LOG.exception(e)
         self.write(result)
@@ -980,9 +1035,10 @@ class IndexAjaxHandler(BaseHandler):
             fname = os.path.split(fname.replace("\\", "/"))[-1]
             LOG.debug("IndexRateAjaxHandler fname: %s", fname)
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
-            manager_client = ManagerClient(CONFIG["PROCESS_NUM"])
-            flag = yield manager_client.get_index_rate_of_progress(fname, user_info)
+            flag = IndexAjaxHandler.tasks[get_index_key(fname, user_info)]
             LOG.debug("index notes rate %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s", fname, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"])
+            if flag["flag"] is True:
+                del IndexAjaxHandler.tasks[get_index_key(fname, user_info)]
             result = flag
         except Exception, e:
             LOG.exception(e)

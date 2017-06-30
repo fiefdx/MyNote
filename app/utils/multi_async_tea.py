@@ -10,6 +10,7 @@ import sys
 import logging
 import time
 import signal
+import random
 import binascii
 from time import localtime, strftime
 from multiprocessing import Process, Pipe
@@ -26,6 +27,7 @@ from config import CONFIG
 import logger
 
 LOG = logging.getLogger(__name__)
+
 
 def crc32sum_int(data, crc = None):
     '''
@@ -95,6 +97,7 @@ class MultiProcessNoteTea(object):
     PROCESS_DICT = {}
     WRITE_LOCKS = []
     READ_LOCKS = []
+    BUSY_FLAG = []
     _instance = None
 
     def __init__(self, process_num = 1):
@@ -108,6 +111,7 @@ class MultiProcessNoteTea(object):
                 MultiProcessNoteTea.PROCESS_LIST.append(p)
                 MultiProcessNoteTea.PROCESS_DICT[i] = [p, pipe_master]
                 p.start()
+                MultiProcessNoteTea.BUSY_FLAG.append(False)
             MultiProcessNoteTea._instance = self
         else:
             self.process_num = MultiProcessNoteTea._instance.process_num
@@ -115,10 +119,12 @@ class MultiProcessNoteTea(object):
     @gen.coroutine
     def encrypt(self, note, *args, **kwargs):
         result = False
-        process_id = crc32sum_int(note.sha1) % self.process_num
+        # process_id = crc32sum_int(note.sha1) % self.process_num
+        process_id = self.get_process_id()
         # acquire write lock
         LOG.debug("Start encrypt %s to Process(%s)", note.sha1, process_id)
         with (yield MultiProcessNoteTea.WRITE_LOCKS[process_id].acquire()):
+            MultiProcessNoteTea.BUSY_FLAG[process_id] = True
             LOG.debug("Get encrypt Lock %s to Process(%s)", note.sha1, process_id)
             MultiProcessNoteTea.PROCESS_DICT[process_id][1].send(("ENCRYPT", args, kwargs, note))
             LOG.debug("Send encrypt %s to Process(%s) end", note.sha1, process_id)
@@ -127,6 +133,7 @@ class MultiProcessNoteTea(object):
             LOG.debug("RECV encrypt %s to Process(%s)", note.sha1, process_id)
             r = MultiProcessNoteTea.PROCESS_DICT[process_id][1].recv()
             LOG.debug("End encrypt %s to Process(%s)", note.sha1, process_id)
+        MultiProcessNoteTea.BUSY_FLAG[process_id] = False
         LOG.debug("NoteTeaProcess(%s): %s", process_id, r[2])
         if r[2]:
             result = r[1]
@@ -135,10 +142,12 @@ class MultiProcessNoteTea(object):
     @gen.coroutine
     def decrypt(self, note, *args, **kwargs):
         result = False
-        process_id = crc32sum_int(note.sha1) % self.process_num
+        # process_id = crc32sum_int(note.sha1) % self.process_num
+        process_id = self.get_process_id()
         # acquire write lock
         LOG.debug("Start decrypt %s to Process(%s)", note.sha1, process_id)
         with (yield MultiProcessNoteTea.WRITE_LOCKS[process_id].acquire()):
+            MultiProcessNoteTea.BUSY_FLAG[process_id] = True
             LOG.debug("Get decrypt Lock %s to Process(%s)", note.sha1, process_id)
             MultiProcessNoteTea.PROCESS_DICT[process_id][1].send(("DECRYPT", args, kwargs, note))
             LOG.debug("Send decrypt %s to Process(%s) end", note.sha1, process_id)
@@ -147,10 +156,19 @@ class MultiProcessNoteTea(object):
             LOG.debug("RECV decrypt %s to Process(%s)", note.sha1, process_id)
             r = MultiProcessNoteTea.PROCESS_DICT[process_id][1].recv()
             LOG.debug("End decrypt %s to Process(%s)", note.sha1, process_id)
+        MultiProcessNoteTea.BUSY_FLAG[process_id] = False
         LOG.debug("NoteTeaProcess(%s): %s", process_id, r[2])
         if r[2]:
             result = r[1]
         raise gen.Return(result)
+
+    def get_process_id(self):
+        while True:
+            for process_id, busy in enumerate(MultiProcessNoteTea.BUSY_FLAG):
+                if not busy:
+                    return process_id
+            time.sleep(0.001)
+
 
     def close(self):
         try:
