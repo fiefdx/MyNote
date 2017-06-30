@@ -1006,7 +1006,7 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
     IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["tasks"] += 1
     notes_iter = Servers.DB_SERVER["RICH"].get_rich_from_db_by_user_iter(user_info.user_name)
     n = 0
-    writer = AsyncWriter(Servers.IX_SERVER["RICH"].ix)
+    writer = AsyncWriter(Servers.IX_SERVER["RICH"].ix, writerargs = {"procs": 4})
     try:
         for note in notes_iter:
             n += 1
@@ -1023,12 +1023,12 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
             if n == index_batch_size:
                 writer.commit(merge = merge)
                 LOG.info("Commit index[RICH] success.")
-                writer = AsyncWriter(Servers.IX_SERVER["RICH"].ix)
+                writer = AsyncWriter(Servers.IX_SERVER["RICH"].ix, writerargs = {"procs": 4})
                 n = 0
                 yield gen.moment
-            if key != "" and n % 2 == 0:
+            if key != "" and n % 5 == 0:
                 yield gen.moment
-            elif n % 5 == 0:
+            elif n % 10 == 0:
                 yield gen.moment
         if n % index_batch_size != 0:
             s = time.time()
