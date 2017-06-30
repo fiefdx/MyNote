@@ -118,12 +118,11 @@ class IX(object):
             LOG.exception(e)
         return result
 
-    def index_delete_note_by_user(self, item_num, user_name, merge = False):
+    def index_delete_note_by_user(self, user_name, merge = False):
         result = False
         try:
             result = delete_whoosh_index_doc_num_by_user(self.ix,
                                                          user_name,
-                                                         item_num,
                                                          self.name,
                                                          merge = merge)
         except Exception, e:

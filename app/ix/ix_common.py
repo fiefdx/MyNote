@@ -194,7 +194,7 @@ def delete_whoosh_index_doc_num(index, item_iter, item_num, index_name, merge = 
         LOG.exception(e)
     return result
 
-def delete_whoosh_index_doc_num_by_user(index, user_name, item_num, index_name, merge = False):
+def delete_whoosh_index_doc_num_by_user(index, user_name, index_name, merge = False):
     result = False
     try:
         if index != None and index != False:

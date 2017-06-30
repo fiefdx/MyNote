@@ -137,7 +137,7 @@ class RichHandler(BaseHandler):
         option = (self.get_argument("option", "")).strip()
         note_id = (self.get_argument("id", "")).strip()
         if option == "rebuild_index":
-            flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(1000, user)
+            flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(user)
             if flag:
                 LOG.info("Delete all rich notes index user[%s] success", user)
             else:
@@ -848,7 +848,7 @@ class DeleteHandler(BaseHandler):
         user_key = self.get_current_user_key()
         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
         try:
-            flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(1000, user, merge = True)
+            flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(user, merge = True)
             yield gen.moment
             if flag:
                 LOG.info("Delete user[%s] all rich notes index success", user)
@@ -992,7 +992,7 @@ class ImportAjaxHandler(BaseHandler):
 def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = False):
     LOG.debug("async_index start")
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
-    flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(1000, user_info.user_name)
+    flag = Servers.IX_SERVER["RICH"].index_delete_rich_by_user(user_info.user_name)
     if flag:
         LOG.info("Delete all rich notes index user[%s] success", user_info.user_name)
     else:

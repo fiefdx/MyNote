@@ -274,7 +274,7 @@ def delete_whoosh_index_doc_num(index, item_iter, item_num, index_name, merge = 
         LOG.exception(e)
     return result
 
-def delete_whoosh_index_doc_num_by_user(index, user_name, item_num, index_name, merge = False):
+def delete_whoosh_index_doc_num_by_user(index, user_name, index_name, merge = False):
     result = False
     try:
         if index != None and index != False:
@@ -287,9 +287,9 @@ def delete_whoosh_index_doc_num_by_user(index, user_name, item_num, index_name, 
                     writer.delete_by_term("user_name", unicode(str(user_name)))
                 else:
                     LOG.error("index_name error: in the delete_whoosh_index_doc_num_by_user!")
-                LOG.debug("Delete index[%s] user[%s]"%(index_name, user_name))
+                LOG.debug("Delete index[%s] user[%s]" % (index_name, user_name))
                 writer.commit(merge = merge)
-                LOG.info("Commit index[%s] success."%index_name)
+                LOG.info("Commit index[%s] success." % index_name)
                 result = True
             except Exception, e:
                 LOG.exception(e)
@@ -476,7 +476,7 @@ def index_delete_note_by_id(doc_id, user_name, db = None, ix = None, merge = Fal
         LOG.exception(e)
     return result
 
-def index_delete_note_by_user(item_num, user_name, db = None, ix = None, merge = False):
+def index_delete_note_by_user(user_name, db = None, ix = None, merge = False):
     result = False
     if db == None:
         db = DB
@@ -485,7 +485,6 @@ def index_delete_note_by_user(item_num, user_name, db = None, ix = None, merge =
     try:
         result = delete_whoosh_index_doc_num_by_user(ix.ix_note,
                                                      user_name,
-                                                     item_num,
                                                      db.note,
                                                      merge = merge)
     except Exception, e:
@@ -587,7 +586,7 @@ def index_delete_rich_by_id(doc_id, user_name, db = None, ix = None, merge = Fal
         LOG.exception(e)
     return result
 
-def index_delete_rich_by_user(item_num, user_name, db = None, ix = None, merge = False):
+def index_delete_rich_by_user(user_name, db = None, ix = None, merge = False):
     result = False
     if db == None:
         db = DB
@@ -596,7 +595,6 @@ def index_delete_rich_by_user(item_num, user_name, db = None, ix = None, merge =
     try:
         result = delete_whoosh_index_doc_num_by_user(ix.ix_rich,
                                                      user_name,
-                                                     item_num,
                                                      db.rich,
                                                      merge = merge)
     except Exception, e:

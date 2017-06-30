@@ -556,11 +556,7 @@ class RichIndexProcesser(TaskProcesser):
 def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 = ""):
     result = False
     try:
-        note_path = os.path.join(storage_users_path, user_sha1, "notes", note.type)
         note_file_path = os.path.join(storage_users_path, user_sha1, "notes", note.type, note.sha1)
-        if not os.path.exists(note_path):
-            os.makedirs(note_path)
-            LOG.info("create user[%s] path[%s]", user, note_path)
         if key != "":
             note.decrypt(key)
         if key1 != "":
@@ -614,16 +610,25 @@ class NoteExportProcesser(TaskProcesser):
                 LOG.info("remove user[%s] path[%s]", user.user_name, user_notes_path)
             os.makedirs(user_notes_path)
             LOG.info("create user[%s] path[%s]", user.user_name, user_notes_path)
-            for note in self.db_note.get_note_from_db_by_user_type_iter(user.user_name, note_category):
-                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
             category = ""
             if note_category == "All":
                 category = {"sha1": "", "name": "All"}
+                for c in json.loads(user.note_books):
+                    note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user.sha1, "notes", c["sha1"])
+                    if not os.path.exists(note_path):
+                        os.makedirs(note_path)
+                        LOG.info("create user[%s] path[%s]", user.user_name, note_path)
             else:
                 for c in json.loads(user.note_books):
                     if c["sha1"] == note_category:
                         category = c
+                        note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user.sha1, "notes", c["sha1"])
+                        if not os.path.exists(note_path):
+                            os.makedirs(note_path)
+                            LOG.info("create user[%s] path[%s]", user.user_name, note_path)
             yield [self.name, self.task_key, user.user_name, user.sha1, category, user.note_books, "category_info"]
+            for note in self.db_note.get_note_from_db_by_user_type_iter(user.user_name, note_category):
+                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
         except Exception, e:
             LOG.exception(e)
         for i in xrange(CONFIG["PROCESS_NUM"]):
@@ -671,11 +676,7 @@ class NoteExportProcesser(TaskProcesser):
 def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = "", key1 = ""):
     result = False
     try:
-        note_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "rich_notes", note.type)
         note_file_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "rich_notes", note.type, note.sha1)
-        if not os.path.exists(note_path):
-            os.makedirs(note_path)
-            LOG.info("create user[%s] path[%s]", user, note_path)
         if key != "":
             note.decrypt(key)
         if key1 != "":
@@ -751,16 +752,26 @@ class RichExportProcesser(TaskProcesser):
                 LOG.info("remove user[%s] path[%s]", user, user_images_path)
             os.makedirs(user_images_path)
             LOG.info("create user[%s] path[%s]", user, user_images_path)
-            for note in self.db_rich.get_rich_from_db_by_user_type_iter(user.user_name, note_category):
-                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
             category = ""
             if note_category == "All":
                 category = {"sha1": "", "name": "All"}
+                for c in json.loads(user.rich_books):
+                    if c["name"] != "All":
+                        note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user.sha1, "rich_notes", "rich_notes", c["sha1"])
+                        if not os.path.exists(note_path):
+                            os.makedirs(note_path)
+                            LOG.info("create user[%s] path[%s]", user.user_name, note_path)
             else:
                 for c in json.loads(user.rich_books):
                     if c["sha1"] == note_category:
                         category = c
+                        note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user.sha1, "rich_notes", "rich_notes", c["sha1"])
+                        if not os.path.exists(note_path):
+                            os.makedirs(note_path)
+                            LOG.info("create user[%s] path[%s]", user.user_name, note_path)
             yield [self.name, self.task_key, user.user_name, user.sha1, category, user.rich_books, "category_info"]
+            for note in self.db_rich.get_rich_from_db_by_user_type_iter(user.user_name, note_category):
+                yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
         except Exception, e:
             LOG.exception(e)
         for i in xrange(CONFIG["PROCESS_NUM"]):

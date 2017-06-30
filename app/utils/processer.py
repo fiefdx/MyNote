@@ -23,7 +23,7 @@ import logger
 
 LOG = logging.getLogger(__name__)
 
-TaskQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
+
 TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in xrange(CONFIG["PROCESS_NUM"])]
 ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ImportRich = "IMPORT_RICH"
@@ -66,8 +66,6 @@ class Processer(StoppableThread):
         self.mapping = Mapping()
         self.mapping.add(NoteImportProcesser())
         self.mapping.add(RichImportProcesser())
-        # self.mapping.add(NoteIndexProcesser())
-        # self.mapping.add(RichIndexProcesser())
         self.mapping.add(NoteExportProcesser())
         self.mapping.add(NoteArchiveProcesser())
         self.mapping.add(RichExportProcesser())
@@ -162,8 +160,6 @@ class Dispatcher(StoppableThread):
         self.mapping = Mapping()
         self.mapping.add(NoteImportProcesser())
         self.mapping.add(RichImportProcesser())
-        # self.mapping.add(NoteIndexProcesser())
-        # self.mapping.add(RichIndexProcesser())
         self.mapping.add(NoteExportProcesser())
         self.mapping.add(NoteArchiveProcesser())
         self.mapping.add(RichExportProcesser())
@@ -281,8 +277,6 @@ class Collector(StoppableThread):
         self.mapping = Mapping()
         self.mapping.add(NoteImportProcesser())
         self.mapping.add(RichImportProcesser())
-        # self.mapping.add(NoteIndexProcesser())
-        # self.mapping.add(RichIndexProcesser())
         self.mapping.add(NoteExportProcesser())
         self.mapping.add(NoteArchiveProcesser())
         self.mapping.add(RichExportProcesser())
