@@ -765,6 +765,7 @@ function upload_picture_ajax() {
 
 window.onload=window.onresize=function(){
     $(document).ready(function(){
+        var $body = $("body");
         var window_height = $(window).height();
         var window_width = $(window).width();
         $("div#notes_list").height(window_height - 115);
@@ -772,10 +773,11 @@ window.onload=window.onresize=function(){
         $("div#div_note_text").height(window_height - 116);
         $("div#note_area").width(window_width - 510);
         if (tinymce.EditorManager.get(0) != null){
-            // tinymce.EditorManager.get(0).theme.resizeTo("100%", window_height - 188);
-            var div_note_text_height = $("div#div_note_text").height();
-            console.log(div_note_text_height);
-            tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+            if (!$body.hasClass("mce-fullscreen")) {
+                var div_note_text_height = $("div#div_note_text").height();
+                // console.log(div_note_text_height);
+                tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+            }
         }
         setTimeout(function(){
             var window_height = $(window).height();
@@ -785,10 +787,11 @@ window.onload=window.onresize=function(){
             $("div#div_note_text").height(window_height - 116);
             $("div#note_area").width(window_width - 510);
             if (tinymce.EditorManager.get(0) != null){
-                // tinymce.EditorManager.get(0).theme.resizeTo("100%", window_height - 188);
-                var div_note_text_height = $("div#div_note_text").height();
-                console.log(div_note_text_height);
-                tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+                if (!$body.hasClass("mce-fullscreen")) {
+                    var div_note_text_height = $("div#div_note_text").height();
+                    // console.log(div_note_text_height);
+                    tinymce.EditorManager.get(0).theme.resizeTo("100%", div_note_text_height - 58);
+                }
             }
         }, 5);
     });

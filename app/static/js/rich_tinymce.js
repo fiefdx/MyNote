@@ -355,8 +355,8 @@ function noteInit (scheme, locale) {
                     });
                 }
 
-                var div_note_text_height = $("div#div_note_text").height();
                 if (!$body.hasClass("mce-fullscreen")) {
+                    var div_note_text_height = $("div#div_note_text").height();
                     tinymceEditor.theme.resizeTo("100%", div_note_text_height - 58);
                 }
 
