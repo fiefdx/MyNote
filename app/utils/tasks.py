@@ -695,7 +695,11 @@ def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = ""
                 target_path = os.path.join(user_images_path, file_name)
                 if not os.path.exists(target_path):
                     shutil.copyfile(image_path, target_path + '.tmp')
-                    os.rename(target_path + '.tmp', target_path)
+                    try:
+                        os.rename(target_path + '.tmp', target_path)
+                    except Exception, e:
+                        if not os.path.exists(target_path):
+                            raise e
                     LOG.debug("Copy file[%s] to file[%s]", image_path, target_path)
                 else:
                     LOG.debug("Image file[%s] has been existed!", target_path)
@@ -898,7 +902,7 @@ class RichArchiveProcesser(TaskProcesser):
                 if note_category == "All":
                     category = {"sha1": "", "name": "All"}
                 else:
-                    for c in json.loads(user.note_books):
+                    for c in json.loads(user.rich_books):
                         if c["sha1"] == note_category:
                             category = c
                 arch.archive("tar.gz", category["name"], True if password != "" else False)
