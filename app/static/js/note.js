@@ -636,23 +636,23 @@ function noteInit (scheme, locale) {
 
     function displayPassword() {
         var dispass = $display_passwd.val();
-        if (dispass == "unable") {
+        if (dispass == "disable") {
             $display_passwd.val("enable");
             document.getElementById("notes_passwd").type = "text";
         }
         else {
-            $display_passwd.val("unable");
+            $display_passwd.val("disable");
             document.getElementById("notes_passwd").type = "password";
         }
     }
 
     function encryptNotes() {
         var encrypt = $encrypt_notes.val();
-        if (encrypt == "unable") {
+        if (encrypt == "disable") {
             $encrypt_notes.val("enable");
         }
         else {
-            $encrypt_notes.val("unable");
+            $encrypt_notes.val("disable");
         }
     }
 
