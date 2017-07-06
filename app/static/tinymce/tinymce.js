@@ -38361,10 +38361,11 @@ define(
     };
 
     var displayNotification = function (editor, message) {
-      editor.notificationManager.open({
-        type: 'error',
-        text: message
-      });
+      console.error("tinymce error: " + message); // disable displayNotification, just display it in console
+      // editor.notificationManager.open({
+      //   type: 'error',
+      //   text: message
+      // });
     };
 
     var displayError = function (editor, message) {
