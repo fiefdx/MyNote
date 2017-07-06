@@ -83,6 +83,8 @@ try:
         CONFIG["PROCESS_NUM"] = 4
     if not CONFIG.has_key("THREAD_NUM"):
         CONFIG["THREAD_NUM"] = 1
+    if not CONFIG.has_key("ASYNC_WRITER_PROCESS_NUM"):
+        CONFIG["ASYNC_WRITER_PROCESS_NUM"] = 2
     if not CONFIG.has_key("WITH_NGINX"):
         CONFIG["WITH_NGINX"] = False
     if not CONFIG.has_key("ITEMS_PER_PAGE"):

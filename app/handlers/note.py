@@ -969,7 +969,7 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
     IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["tasks"] += 1
     notes_iter = Servers.DB_SERVER["NOTE"].get_note_from_db_by_user_iter(user_info.user_name)
     n = 0
-    writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix, writerargs = {"procs": 4})
+    writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix, writerargs = {"procs": CONFIG["ASYNC_WRITER_PROCESS_NUM"]})
     try:
         for note in notes_iter:
             n += 1
@@ -986,7 +986,7 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
             if n == index_batch_size:
                 writer.commit(merge = merge)
                 LOG.info("Commit index[NOTE] success.")
-                writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix, writerargs = {"procs": 4})
+                writer = AsyncWriter(Servers.IX_SERVER["NOTE"].ix, writerargs = {"procs": CONFIG["ASYNC_WRITER_PROCESS_NUM"]})
                 n = 0
                 yield gen.moment
             if key != "" and n % 5 == 0:
