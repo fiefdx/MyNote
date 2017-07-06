@@ -285,6 +285,16 @@ function noteInit (scheme, locale) {
                     });
                     loading_notes_list = false;
                 }
+
+                if ($note_list_ul.children().length == 0) {
+                    current_note_id = null;
+                    $note_title.prop('readonly', true);
+                    tinymceEditor.setMode('readonly');
+                } else {
+                    $note_title.prop('readonly', false);
+                    tinymceEditor.setMode('design');
+                }
+
                 // init current_note_id
                 if (data.current_note_id) {
                     console.log("note_id: " + current_note_id);
