@@ -455,14 +455,16 @@ class Manager(Process):
                     else:
                         self.pipe_client.send((command, None))
                 elif command == Exit:
-                    self.task_queue.put(StopSignal)
+                    for task_queue in self.task_queues:
+                        task_queue.put(StopSignal)
                     self.result_queue.put(StopSignal)
                     LOG.info("Manager exit by EXIT command!")
                     break
 
         except Exception, e:
             LOG.exception(e)
-        self.task_queue.put(StopSignal)
+        for task_queue in self.task_queues:
+            task_queue.put(StopSignal)
         LOG.info("Manager exit")
 
 class ManagerClient(object):

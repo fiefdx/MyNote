@@ -22,6 +22,7 @@ import tornado.locale
 import tornado.netutil
 from tornado.options import define, options
 import wx
+import psutil
 
 from config import CONFIG, update
 from db.db_html import DB as HTML_DB
@@ -263,6 +264,16 @@ class App(wx.App):
 
 
 if __name__ == "__main__":
+    tornado.options.parse_command_line()
+    logger.config_logging(file_name = options.log,
+                          log_level = CONFIG['LOG_LEVEL'],
+                          dir_name = "logs",
+                          day_rotate = False,
+                          when = "D",
+                          interval = 1,
+                          max_size = 20,
+                          backup_count = 5,
+                          console = True)
     if PLATFORM[0].lower() == "windows":
         multiprocessing.freeze_support()
     should_start_new = True
@@ -274,27 +285,25 @@ if __name__ == "__main__":
         fp.close()
     try:
         if PID != "":
-            os.kill(int(PID), 0)
-            should_start_new = False
+            p = psutil.Process(int(PID))
+            cmdline = p.cmdline()
+            LOG.debug("cmdline: %s", cmdline)
+            for flag in ("mynote", "mynotegui"):
+                for cmd in cmdline:
+                    if flag in cmd.lower():
+                        should_start_new = False
+                        break
+    except psutil.NoSuchProcess:
+        LOG.debug("no such process: %s", PID)
     except Exception, e:
         LOG.exception(e)
-        LOG.info("PID: %s do not exists")
+        should_start_new = False
+        LOG.error("checkout PID: %s error!", PID)
     if should_start_new:
         PID = str(os.getpid())
         fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "wb")
         fp.write(PID)
         fp.close()
-        tornado.options.parse_command_line()
-        logger.config_logging(file_name = options.log,
-                              log_level = CONFIG['LOG_LEVEL'],
-                              dir_name = "logs",
-                              day_rotate = False,
-                              when = "D",
-                              interval = 1,
-                              max_size = 20,
-                              backup_count = 5,
-                              console = True)
-
         # init database conns
         common.Servers.DB_SERVER = {"HTML": HTML_DB(),
                                     "RICH": RICH_DB(),
@@ -319,14 +328,11 @@ if __name__ == "__main__":
         webserver.daemon = True
         webserver.start()
         try:
-            # app = wx.PySimpleApp()
-            # app = wx.App()
             app = App(False)
-            # print help(app.MainLoop)
-            # TaskBarIcon()
             app.MainLoop()
         except Exception, e:
             LOG.exception(e)
         LOG.info("MyNote Exit!")
     else:
+        LOG.warning("Already have one MyNoteGUI instance, [PID: %s]!", PID)
         LOG.info("MyNote Process exists!")
