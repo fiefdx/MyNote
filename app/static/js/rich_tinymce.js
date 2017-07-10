@@ -101,6 +101,32 @@ function noteInit (scheme, locale) {
         statusbar : false,
         forced_root_block : false,
         codesample_dialog_width: 1400,
+        codesample_languages: [
+            {text: 'HTML/XML', value: 'markup'},
+            {text: 'JavaScript', value: 'javascript'},
+            {text: 'CSS', value: 'css'},
+            {text: 'PHP', value: 'php'},
+            {text: 'Ruby', value: 'ruby'},
+            {text: 'Python', value: 'python'},
+            {text: 'Java', value: 'java'},
+            {text: 'C', value: 'c'},
+            {text: 'C#', value: 'csharp'},
+            {text: 'C++', value: 'cpp'},
+            {text: 'Go', value: 'go'},
+            {text: 'Lua', value: 'lua'},
+            {text: 'Perl', value: 'perl'},
+            {text: 'PHP', value: 'php'},
+            {text: 'Bash', value: 'bash'},
+            {text: 'SQL', value: 'sql'},
+            {text: 'Markdown', value: 'markdown'},
+            {text: 'JSON', value: 'json'},
+            {text: 'YAML', value: 'yaml'},
+            {text: 'Rust', value: 'rust'},
+            {text: 'R', value: 'r'},
+            {text: 'PowerShell', value: 'powershell'},
+            {text: 'MakeFile', value: 'makefile'},
+            {text: 'Nginx', value: 'nginx'}
+        ],
         setup: function(editor) {
             editor.addMenuItem("create_note", {
                 icon: "newdocument",
@@ -125,6 +151,17 @@ function noteInit (scheme, locale) {
             });
             // tinymceEditor = editor;
             // initNoteOperation(editor);
+
+            // editor.on('init', function(args){
+            //     var iframe = $("#" + args.target.id + "_ifr");
+
+            //     // get the head element of the iframe's document and inject the javascript
+            //     $(iframe[0].contentWindow.document)
+            //         .children('html')
+            //         .children('head')
+            //         // .append('<script type="text/javascript">alert("Executing inside iFrame!");</script>');
+            //         .append('<script src="/static/tinymce/plugins/codesample/prism.js"></script>');
+            // });
         },
         init_instance_callback : function(editor) {
             var WebSocket = window.WebSocket || window.MozWebSocket;
