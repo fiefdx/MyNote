@@ -81,16 +81,16 @@ function noteInit (scheme, locale) {
         plugins: [
             "advlist autolink link insert_image lists charmap preview hr anchor pagebreak fullscreen", //image autoresize spellchecker
             "searchreplace visualblocks visualchars code insertdatetime nonbreaking", //wordcount
-            "save table contextmenu directionality emoticons template paste textcolor"
+            "save table contextmenu directionality emoticons template paste textcolor codesample"
         ],
         fontsize_formats: "8px 10px 11px 12px 13px 14px 16px 18px 20px 24px 30px 36px",
         toolbar: [
-            "fontsizeselect | forecolor | bold italic underline | numlist bullist | outdent indent" // insertfile backcolor | alignleft aligncenter alignright alignjustify
+            "fontsizeselect | forecolor | bold italic underline | numlist bullist | outdent indent | codesample" // insertfile backcolor | alignleft aligncenter alignright alignjustify
         ],
         menu: {
             file   : {title : 'File'  , items : 'create_note save_note save_note_with_proxy'}, //newdocument 
             edit   : {title : 'Edit'  , items : 'undo redo | cut copy paste pastetext | selectall | searchreplace'},
-            insert : {title : 'Insert', items : 'link insert_image | charmap hr anchor pagebreak insertdatetime nonbreaking template'},
+            insert : {title : 'Insert', items : 'link insert_image | charmap hr anchor pagebreak insertdatetime'}, // nonbreaking template
             view   : {title : 'View'  , items : 'visualchars visualblocks visualaid | preview fullscreen'},
             format : {title : 'Format', items : 'bold italic underline strikethrough superscript subscript | formats | removeformat'},
             table  : {title : 'Table' , items : 'inserttable tableprops deletetable | cell row column'},
@@ -100,6 +100,7 @@ function noteInit (scheme, locale) {
         insertdatetime_formats: ["%Y-%m-%d %H:%M:%S", "%H:%M:%S", "%Y-%m-%d", "%I:%M:%S %p", "%D"],
         statusbar : false,
         forced_root_block : false,
+        codesample_dialog_width: 1400,
         setup: function(editor) {
             editor.addMenuItem("create_note", {
                 icon: "newdocument",
