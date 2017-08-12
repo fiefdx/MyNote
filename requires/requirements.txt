@@ -12,3 +12,4 @@ numpy
 lxml
 bs4
 python-dateutil
+psutil
