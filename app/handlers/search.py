@@ -35,7 +35,8 @@ class IndexHandler(BaseHandler):
                     functions = CONFIG["FUNCTIONS"],
                     locale = locale,
                     http_proxy = user_info.http_proxy,
-                    https_proxy = user_info.https_proxy)
+                    https_proxy = user_info.https_proxy,
+                    socks_proxy = user_info.socks_proxy)
 
 class SearchHandler(BaseHandler):
     @gen.coroutine
@@ -84,7 +85,8 @@ class SearchHandler(BaseHandler):
                                           functions = CONFIG["FUNCTIONS"],
                                           locale = locale,
                                           http_proxy = user_info.http_proxy,
-                                          https_proxy = user_info.https_proxy)
+                                          https_proxy = user_info.https_proxy,
+                                          socks_proxy = user_info.socks_proxy)
 
     @tornado.web.authenticated
     @gen.coroutine

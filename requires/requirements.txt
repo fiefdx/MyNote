@@ -13,3 +13,5 @@ lxml
 bs4
 python-dateutil
 psutil
+pysocks
+requests

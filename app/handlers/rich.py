@@ -158,7 +158,8 @@ class RichHandler(BaseHandler):
                         functions = CONFIG["FUNCTIONS"],
                         locale = locale,
                         http_proxy = user_info.http_proxy,
-                        https_proxy = user_info.https_proxy)
+                        https_proxy = user_info.https_proxy,
+                        socks_proxy = user_info.socks_proxy)
         else:
             self.render("note/rich_tinymce.html",
                     user = user,
@@ -167,7 +168,8 @@ class RichHandler(BaseHandler):
                     functions = CONFIG["FUNCTIONS"],
                     locale = locale,
                     http_proxy = user_info.http_proxy,
-                    https_proxy = user_info.https_proxy)
+                    https_proxy = user_info.https_proxy,
+                    socks_proxy = user_info.socks_proxy)
 
 @gen.coroutine
 def update_categories(user_locale, user):
@@ -671,6 +673,8 @@ class RichSocketHandler(BaseSocketHandler):
                     proxy = {}
                     if msg['note'].has_key('proxy') and msg['note']['proxy']:
                         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+                        if user_info.socks_proxy != "":
+                            proxy["socks"] = user_info.socks_proxy
                         if user_info.http_proxy != "":
                             proxy["http"] = user_info.http_proxy
                         if user_info.https_proxy != "":

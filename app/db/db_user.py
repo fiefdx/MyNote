@@ -33,14 +33,15 @@ class DB(object):
 
     def save_data_to_db(self, item, mode = "INSERT OR UPDATE", retries = 3):
         result = False
-        sql = "INSERT INTO USER VALUES (NULL,?,?,?,?,?,?,?,?,?)"
+        sql = "INSERT INTO USER VALUES (NULL,?,?,?,?,?,?,?,?,?,?)"
         sql_update = ("UPDATE USER SET "
                       "user_pass = ?, "
                       "note_books = ?, "
                       "rich_books = ?, "
                       "user_language = ?, "
                       "http_proxy = ?, "
-                      "https_proxy = ? "
+                      "https_proxy = ?, "
+                      "socks_proxy = ? "
                       "WHERE user_name = ?;")
         sql_param = (item["sha1"],
                      item["user_name"],
@@ -50,13 +51,15 @@ class DB(object):
                      item["user_language"],
                      item["register_time"],
                      item["http_proxy"],
-                     item["https_proxy"])
+                     item["https_proxy"],
+                     item["socks_proxy"])
         sql_update_param = (item["user_pass"],
                             item["note_books"],
                             item["rich_books"],
                             item["user_language"],
                             item["http_proxy"],
                             item["https_proxy"],
+                            item["socks_proxy"],
                             item["user_name"])
 
         for i in xrange(retries):
@@ -116,6 +119,7 @@ class DB(object):
                 user.register_time = i[7]
                 user.http_proxy = i[8]
                 user.https_proxy = i[9]
+                user.socks_proxy = i[10]
                 result = user
             LOG.debug("Get user[%s] data from db success", user_name)
         except Exception, e:

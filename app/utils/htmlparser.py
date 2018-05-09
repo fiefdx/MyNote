@@ -14,7 +14,7 @@ Modified on 2014-06-11
 Modified on 2014-10-28
 @summary: change html_change_image_src_BS add local_images
 @author: YangHaitao
-''' 
+'''
 import os
 import sys
 import re
@@ -26,16 +26,18 @@ import chardet
 import urlparse
 import datetime
 import StringIO
+
 import imghdr
 import lxml
 from lxml import etree
 import dateutil
 from dateutil import tz
 import time
-from time import localtime,strftime
+from time import localtime, strftime
 import hashlib
 import traceback
 from bs4 import BeautifulSoup as BS
+import requests
 
 from config import CONFIG
 from models.item import PICTURE as PIC
@@ -137,9 +139,9 @@ def get_html_content(file_content):
     result: title and content is unicode
     """
     result = {"title":"", "content":""}
-    allow_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "em", "dfn", "u", "ins", "strike", "s", "del", 
-                  "tt", "plaintext", "listing", "font", "hr", "br", "nobr", "p", "center", "base", "a", "img", "table", 
-                  "td", "frameset", "address", "big", "blink", "caption", "code", "cite", "frame", "ul", "li", "ol", "pre", 
+    allow_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "em", "dfn", "u", "ins", "strike", "s", "del",
+                  "tt", "plaintext", "listing", "font", "hr", "br", "nobr", "p", "center", "base", "a", "img", "table",
+                  "td", "frameset", "address", "big", "blink", "caption", "code", "cite", "frame", "ul", "li", "ol", "pre",
                   "samp", "select", "small", "strike", "sub", "sup", "textarea", "th", "title", "var", "div", "span"]
     # allow_tags = " ".join(allow_tags)
     file_content = file_content.encode("utf-8")
@@ -167,7 +169,7 @@ def get_html_content(file_content):
                 content += (i + "\n")
         result["title"] = title_text
         result["content"] = content
-    except Exception,e:
+    except Exception, e:
         LOG.error('some exception happen in get_html_content!')
         LOG.exception(e)
     return result
@@ -183,7 +185,7 @@ def get_html_content_BS(file_content):
             if i.strip() != "":
                 result += (i.strip() + '\n')
         # LOG.debug("BS: %s"%chardet.detect(result))
-    except Exception,e:
+    except Exception, e:
         LOG.error('some exception happen in get_html_content_BS!')
         LOG.exception(e)
     return result
@@ -305,7 +307,7 @@ def html_change_multi_src(html_content, change_list):
                                 LOG.info("Change [%s] to [%s], unquote(all)!", src_str_old, src_str_new)
                             else:
                                 LOG.info("Change [%s] to [%s] failed!", src_str_old, src_str_new)
-    except Exception,e:
+    except Exception, e:
         LOG.error('some exception happen in html_change_src!')
         LOG.exception(e)
     return content.decode("utf-8")
@@ -338,7 +340,7 @@ def get_web_image_src(file_content):
                     if url_parts[0] != "" and url_parts[1] != "":
                         result.append([i.attrib["src"], ""])
                         LOG.debug("img_absolute: %s"%i.attrib["src"])
-    except Exception,e:
+    except Exception, e:
         LOG.error('some exception happen in get_web_image_src!')
         LOG.exception(e)
     return result
@@ -347,19 +349,29 @@ def get_web_images(images, db_pic = None, proxy = {}):
     result = []
     image = ""
     try:
-        proxy = urllib2.ProxyHandler(proxy)
-        opener = urllib2.build_opener(proxy)
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0 (X11;Centos;Linux x86_64;rv:42.0) Gecko/20100101 Firefox/42.0'),
-                             ('Accept-Language', 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3'),
-                             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')]
+        headers = {'User-Agent': 'Mozilla/5.0 (X11;Centos;Linux x86_64;rv:42.0) Gecko/20100101 Firefox/42.0',
+                   'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
+                   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
+        proxies = {}
+        if "socks" in proxy:
+            proxies["http"] = "socks5h://" + proxy["socks"]
+            proxies["https"] = "socks5h://" + proxy["socks"]
+        elif "http" in proxy:
+            proxies["http"] = "http://" + proxy["http"]
+            if "https" in proxy:
+                proxies["https"] = "https://" + proxy["https"]
+            else:
+                proxies["https"] = "https://" + proxy["http"]
+        LOG.debug("use proxy: %s", proxies)
         for i in images:
             try:
                 # i[0] is the web src, i[1] is the local src
                 url_parts = list(urlparse.urlparse(i[0]))
                 if url_parts[1].split(":")[0] not in ["localhost", "127.0.0.1", CONFIG["SERVER_HOST"]]:
-                    p = opener.open(i[0], timeout = 10)
-                    if p.code == 200:
-                        image = p.read()
+                    # p = opener.open(i[0], timeout = 10)
+                    p = requests.get(i[0], headers = headers, proxies = proxies)
+                    if p.status_code == 200:
+                        image = p.content
                         image_name = os.path.split(list(urlparse.urlparse(i[0]))[2])[1]
                         image_name = util.construct_safe_filename(image_name)
                         fp = StringIO.StringIO(image)
@@ -380,10 +392,10 @@ def get_web_images(images, db_pic = None, proxy = {}):
                             fp.close()
                             flag = db_pic.save_data_to_db(pic.to_dict())
                             if flag == True:
-                                image_url = "/picture/%s"%pic.sha1
+                                image_url = "/picture/%s" % pic.sha1
                                 result.append([i[0], image_url])
                         else:
-                            LOG.info("url[%s] is not a picture!"%i[0])
+                            LOG.info("url[%s] is not a picture!", i[0])
                     else:
                         LOG.info("url[%s] get code: %s!", i[0], p.code)
                 else:
@@ -406,7 +418,7 @@ def html_change_image_src_BS(html_content, images):
         # for web images
         if images != []:
             imgs = soup.find_all('img')
-            LOG.debug("original html img: %s"%imgs)
+            LOG.debug("original html img: %s", imgs)
             for i in imgs:
                 for j in images:
                     if i["src"] == j[0]:
@@ -416,11 +428,11 @@ def html_change_image_src_BS(html_content, images):
             for i in imgs:
                 if i["src"].startswith("picture/") or i["src"].startswith("/picture/"):
                     local_images.add(os.path.split(i["src"])[-1])
-            LOG.debug("final html img: %s"%imgs)
+            LOG.debug("final html img: %s", imgs)
         # for local images
         else:
             imgs = soup.find_all('img')
-            LOG.debug("original html img: %s"%imgs)
+            LOG.debug("original html img: %s", imgs)
             for i in imgs:
                 if i["src"].startswith("picture/") or i["src"].startswith("/picture/"):
                     local_images.add(os.path.split(i["src"])[-1])

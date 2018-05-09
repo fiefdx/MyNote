@@ -116,7 +116,8 @@ class NoteHandler(BaseHandler):
                         functions = CONFIG["FUNCTIONS"],
                         locale = locale,
                         http_proxy = user_info.http_proxy,
-                        https_proxy = user_info.https_proxy)
+                        https_proxy = user_info.https_proxy,
+                        socks_proxy = user_info.socks_proxy)
         elif option == "download" and note_id != "":
             note = Servers.DB_SERVER["NOTE"].get_note_by_id(note_id, user)
             # note's file_content and file_title are unicode
@@ -141,7 +142,8 @@ class NoteHandler(BaseHandler):
                     functions = CONFIG["FUNCTIONS"],
                     locale = locale,
                     http_proxy = user_info.http_proxy,
-                    https_proxy = user_info.https_proxy)
+                    https_proxy = user_info.https_proxy,
+                    socks_proxy = user_info.socks_proxy)
 
 @gen.coroutine
 def update_categories(user_locale, user):
