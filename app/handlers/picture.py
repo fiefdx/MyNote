@@ -32,16 +32,19 @@ class PictureHandler(BaseHandler):
     @tornado.web.authenticated
     def get(self, sha1 = ""):
         user = self.get_current_user_name()
-        if sha1 == "":
-            self.render("test/picture.html", user = user, 
-                                             sha1 = sha1)
-        else:
+        if sha1 != "":
             pic = Servers.DB_SERVER["PIC"].get_data_by_sha1(sha1)
             LOG.debug("pic: %s"%pic)
             if pic != False and pic != None:
                 fp = open(os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path), "rb")
-                self.set_header('Content-Type', 'image/jpeg; charset=utf-8')
+                ext = os.path.splitext(pic.file_path)[-1]
+                if ext.lower() == ".html":
+                    self.set_header('Content-Type', 'image/svg+xml; charset=utf-8')
+                else:
+                    self.set_header('Content-Type', 'image/jpeg; charset=utf-8')
                 self.write(fp.read())
+        else:
+            self.write("error: image sha1 is empty!")
 
     @tornado.web.authenticated
     def post(self):

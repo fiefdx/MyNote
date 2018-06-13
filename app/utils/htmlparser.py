@@ -79,9 +79,8 @@ def get_html_charset(file_content):
         content = fp.read()
         fp.close()
         encoding["content"] = content
-    except Exception,e:
+    except Exception, e:
         encoding = chardet.detect(file_content)
-        LOG.error('some exception happen in get_html_charset!')
         LOG.exception(e)
     return encoding
 
@@ -112,7 +111,6 @@ def html_decode_unicode(file_content):
             LOG.warning("UnicodeDecodeError!: %s", e)
             return result
     except Exception, e:
-        LOG.error('some exception happen in html_decode_unicode!')
         LOG.exception(e)
     return result
 
@@ -128,8 +126,7 @@ def get_html_content_old(file_content):
                 if text !='' and i.tag not in ['script', 'a', 'img', 'style', 'link', ''] and i.tag != lxml.etree.Comment:
                     result += (text + '\n')
         result = result.encode('utf-8')
-    except Exception,e:
-        LOG.error('some exception happen in get_html_content!')
+    except Exception, e:
         LOG.exception(e)
     return result
 
@@ -170,7 +167,6 @@ def get_html_content(file_content):
         result["title"] = title_text
         result["content"] = content
     except Exception, e:
-        LOG.error('some exception happen in get_html_content!')
         LOG.exception(e)
     return result
 
@@ -186,7 +182,6 @@ def get_html_content_BS(file_content):
                 result += (i.strip() + '\n')
         # LOG.debug("BS: %s"%chardet.detect(result))
     except Exception, e:
-        LOG.error('some exception happen in get_html_content_BS!')
         LOG.exception(e)
     return result
 
@@ -249,8 +244,7 @@ def html_change_src(html_content, html_name, external_dirname, new_external_dirn
                         LOG.info("Change [%s] to [%s], unquote(all)!", external_dirname_un, new_external_dirname)
                     else:
                         LOG.error("Change [%s] to [%s] failed!", external_dirname_un, new_external_dirname)
-    except Exception,e:
-        LOG.error('some exception happen in html_change_src!')
+    except Exception, e:
         LOG.exception(e)
     return content.decode("utf-8")
 
@@ -308,7 +302,6 @@ def html_change_multi_src(html_content, change_list):
                             else:
                                 LOG.info("Change [%s] to [%s] failed!", src_str_old, src_str_new)
     except Exception, e:
-        LOG.error('some exception happen in html_change_src!')
         LOG.exception(e)
     return content.decode("utf-8")
 
@@ -341,7 +334,36 @@ def get_web_image_src(file_content):
                         result.append([i.attrib["src"], ""])
                         LOG.debug("img_absolute: %s"%i.attrib["src"])
     except Exception, e:
-        LOG.error('some exception happen in get_web_image_src!')
+        LOG.exception(e)
+    return result
+
+def is_jpeg_image(file_content):
+    result = None
+    try:
+        if not file_content.startswith(b'\xff\xd8'):
+            pass
+        else:
+            if file_content.endswith(b'\xff\xd9'):
+                result = True
+            else:
+                result = True
+    except Exception, e:
+        LOG.exception(e)
+    return result
+
+def is_svg_image(file_content):
+    """
+    param: file_content is unicode
+    """
+    result = False
+    try:
+        utf8_parser = etree.HTMLParser(encoding="utf-8")
+        page = etree.HTML(file_content.encode("utf-8"), parser = utf8_parser)
+        body = page.getchildren()[0]
+        elements = body.getchildren()
+        if len(elements) and elements[0].tag.lower() == "svg":
+            result = True
+    except Exception, e:
         LOG.exception(e)
     return result
 
@@ -375,13 +397,32 @@ def get_web_images(images, db_pic = None, proxy = {}):
                         image_name = os.path.split(list(urlparse.urlparse(i[0]))[2])[1]
                         image_name = util.construct_safe_filename(image_name)
                         fp = StringIO.StringIO(image)
-                        if imghdr.what(fp) != None:
+                        if imghdr.what(fp) != None or is_jpeg_image(image) != None:
                             pic = PIC()
                             m = hashlib.sha1(image)
                             m.digest()
                             pic.sha1 = m.hexdigest()
                             pic.imported_at = datetime.datetime.now(dateutil.tz.tzlocal())
                             pic.file_name = image_name
+                            pic.file_path = construct_file_path(pic.sha1, pic.file_name)
+                            storage_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], os.path.split(pic.file_path)[0])
+                            storage_file_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
+                            if (not os.path.exists(storage_path)) or (not os.path.isdir(storage_path)):
+                                os.makedirs(storage_path)
+                            fp = open(storage_file_path, "wb")
+                            fp.write(image)
+                            fp.close()
+                            flag = db_pic.save_data_to_db(pic.to_dict())
+                            if flag == True:
+                                image_url = "/picture/%s" % pic.sha1
+                                result.append([i[0], image_url])
+                        elif is_svg_image(image):
+                            pic = PIC()
+                            m = hashlib.sha1(image)
+                            m.digest()
+                            pic.sha1 = m.hexdigest()
+                            pic.imported_at = datetime.datetime.now(dateutil.tz.tzlocal())
+                            pic.file_name = image_name + ".html"
                             pic.file_path = construct_file_path(pic.sha1, pic.file_name)
                             storage_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], os.path.split(pic.file_path)[0])
                             storage_file_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
