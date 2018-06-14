@@ -184,6 +184,8 @@ class TaskBarIcon(wx.TaskBarIcon):
 class PreferenceFrame(wx.Frame):
     def __init__(self, title, pos, size):
         wx. Frame.__init__(self, None, -1, title, pos, size, style = wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX)
+        self.icon = wx.Icon(os.path.join(cwd, "static", "mynote.png"), wx.BITMAP_TYPE_PNG)
+        self.SetIcon(self.icon)
         # self.panel = wx.Panel(self, -1)
         self.ch_bind_local = None
         self.ch_encrypt = None
