@@ -361,8 +361,10 @@ def is_svg_image(file_content):
         page = etree.HTML(file_content.encode("utf-8"), parser = utf8_parser)
         body = page.getchildren()[0]
         elements = body.getchildren()
-        if len(elements) and elements[0].tag.lower() == "svg":
-            result = True
+        for element in elements:
+            if elements[0].tag.lower() == "svg":
+                result = True
+                break
     except Exception, e:
         LOG.exception(e)
     return result

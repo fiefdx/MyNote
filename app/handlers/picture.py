@@ -24,6 +24,7 @@ from base import BaseHandler
 from models.item import PICTURE as PIC
 from utils import common_utils
 from utils.common import Servers
+from utils.htmlparser import is_svg_image
 
 LOG = logging.getLogger(__name__)
 
@@ -37,12 +38,14 @@ class PictureHandler(BaseHandler):
             LOG.debug("pic: %s"%pic)
             if pic != False and pic != None:
                 fp = open(os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path), "rb")
-                ext = os.path.splitext(pic.file_path)[-1]
-                if ext.lower() == ".html":
+                content = fp.read()
+                content_strip = content.strip()
+                if len(content_strip) and content_strip[0] == "<" and is_svg_image(content):
+                    LOG.debug("this image is svg")
                     self.set_header('Content-Type', 'image/svg+xml; charset=utf-8')
                 else:
                     self.set_header('Content-Type', 'image/jpeg; charset=utf-8')
-                self.write(fp.read())
+                self.write(content)
         else:
             self.write("error: image sha1 is empty!")
 
