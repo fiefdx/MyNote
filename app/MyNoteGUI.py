@@ -266,6 +266,8 @@ class App(wx.App):
 
 
 if __name__ == "__main__":
+    if PLATFORM[0].lower() == "windows":
+        multiprocessing.freeze_support()
     tornado.options.parse_command_line()
     logger.config_logging(file_name = options.log,
                           log_level = CONFIG['LOG_LEVEL'],
@@ -276,8 +278,6 @@ if __name__ == "__main__":
                           max_size = 20,
                           backup_count = 5,
                           console = True)
-    if PLATFORM[0].lower() == "windows":
-        multiprocessing.freeze_support()
     should_start_new = True
     PID = ""
     pid_file_path = os.path.join(CONFIG["PID_PATH"], "application.pid")
