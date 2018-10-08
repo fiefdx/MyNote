@@ -293,7 +293,8 @@ class NOTE(object):
         result = False
         try:
             fp = open(xml_path, "rb")
-            doc = etree.parse(fp)
+            huge_parser = etree.XMLParser(huge_tree = True)
+            doc = etree.parse(fp, parser = huge_parser)
             tmp = doc.xpath('//version/text()')
             version = tmp[0] if tmp != [] else ""
             tmp = doc.xpath('//notesha1/text()')
@@ -321,7 +322,7 @@ class NOTE(object):
             self.file_path = file_path
             result = True
             fp.close()
-        except Exception , e:
+        except Exception, e:
             LOG.exception(e)
         return result
 
@@ -349,7 +350,7 @@ class NOTE(object):
             file_path.text = self.file_path
             file_content = etree.SubElement(root, 'file_content')
             file_content.text = self.file_content
-        except Exception , e:
+        except Exception, e:
             LOG.exception(e)
             result = False
         return result
@@ -498,7 +499,8 @@ class RICH(object):
         result = False
         try:
             fp = open(xml_path, "rb")
-            doc = etree.parse(fp)
+            huge_parser = etree.XMLParser(huge_tree = True)
+            doc = etree.parse(fp, parser = huge_parser)
             tmp = doc.xpath('//version/text()')
             version = tmp[0] if tmp != [] else ""
             tmp = doc.xpath('//notesha1/text()')
@@ -538,7 +540,7 @@ class RICH(object):
             self.from_json("images", images)
             result = True
             fp.close()
-        except Exception , e:
+        except Exception, e:
             LOG.exception(e)
         return result
 
@@ -567,7 +569,7 @@ class RICH(object):
             rich_content.text = self.rich_content
             images = etree.SubElement(root, 'images')
             images.text = self.to_json("images")
-        except Exception , e:
+        except Exception, e:
             LOG.exception(e)
             result = False
         return result
