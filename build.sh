@@ -5,8 +5,8 @@ if [ -e "./dist" ]
 then
     rm -rf ./dist
 fi
-pyinstaller ./MyNote.spec
-pyinstaller ./MyNoteGUI.spec
+python -m PyInstaller ./MyNote.spec
+python -m PyInstaller ./MyNoteGUI.spec
 cp -rf ./dist/MyNoteGUI/* ./dist/MyNote/
 rm -rf ./dist/MyNoteGUI
 rm -rf ./build
