@@ -487,6 +487,30 @@ def html_change_image_src_BS(html_content, images):
         LOG.exception(e)
     return result
 
+def html_head_add_content_type(html_content, content_type = "text/html; charset=utf-8"):
+    """
+    param: html_content is unicode
+    """
+    result = html_content
+    try:
+        soup = BS(html_content, "lxml")
+        meta_tag = soup.new_tag("meta", content = content_type)
+        meta_tag.attrs["http-equiv"] = "Content-Type"
+        head_tag = soup.new_tag("head")
+        html_tag = soup.new_tag("html")
+        html = soup.find("html")
+        if not html:
+            html_tag.append(soup)
+            soup = html_tag
+        head = soup.find("head")
+        if not head:
+            soup.html.insert(0, head_tag)
+        soup.html.head.append(meta_tag)
+        result = soup.prettify(encoding = "utf-8", formatter = "html").decode("utf-8")
+    except Exception, e:
+        LOG.exception(e)
+    return result
+
 def get_rich_content(note_content, db_pic = None, proxy = {}):
     local_images = []
     if note_content.strip() != "":

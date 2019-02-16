@@ -371,3 +371,42 @@ class Archive_Rich_Notes(object):
                 LOG.debug("Clear [%s]"%file_path)
         except Exception, e:
             LOG.exception(e)
+
+class Archive_Rich_Note(object):
+    def __init__(self, user_info):
+        self.export_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "tmp", "export")
+        self.import_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "tmp", "import")
+        self.user = user_info.user_name
+        self.package = ""
+        self.package_path = ""
+        self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_note")
+
+    def archive(self, archive_type, note_name):
+        date_time = strftime("%Y%m%d_%H%M", localtime())
+        archive_name = "%s_%s" % (note_name, date_time)
+        package_name = ""
+        try:
+            if archive_type == "tar.gz":
+                if PLATFORM[0].lower() == "windows":
+                    package_name = archive_py_tar(self.file_path, self.export_path, archive_name, "tar.gz")
+                    LOG.info("Use python tarfile to archive.")
+                else:
+                    package_name = archive_tar(self.file_path, self.export_path, archive_name, "tar.gz")
+                    LOG.info("Use tar to archive.")
+            else:
+                package_name = archive_7z(self.file_path, self.export_path, archive_name, archive_type)
+            self.package = package_name
+            self.package_path = os.path.join(self.export_path, self.package)
+            LOG.debug("Created package[%s] success"%self.package)
+        except Exception, e:
+            LOG.exception(e)
+
+    def clear(self):
+        try:
+            # file_path = os.path.join(self.export_path, self.package)
+            file_path = self.package_path
+            if os.path.isfile(file_path) and os.path.exists(file_path):
+                os.remove(file_path)
+                LOG.debug("Clear [%s]"%file_path)
+        except Exception, e:
+            LOG.exception(e)

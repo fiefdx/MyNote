@@ -22,7 +22,7 @@ class Storage(object):
             self.root = root
             self.user = user_sha1
             self.user_path = os.path.join(root, user_sha1)
-            self.user_path_dirs = ["notes", "share", "tmp", "rich_notes"]
+            self.user_path_dirs = ["notes", "share", "tmp", "rich_notes", "rich_note"]
             self.rich_note_path_list = ["rich_notes", "images"]
             self.note_type_list = []
         except Exception, e:
@@ -52,6 +52,8 @@ class Storage(object):
             for i in ["import", "export"]:
                 tmp_path = os.path.join(self.user_path, "tmp", i)
                 os.makedirs(tmp_path)
+            tmp_path = os.path.join(self.user_path, "rich_note", "picture")
+            os.makedirs(tmp_path)
             LOG.debug("init user_path[%s] success"%self.user_path)
             result = True
         except Exception, e:

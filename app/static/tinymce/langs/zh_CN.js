@@ -203,5 +203,6 @@ tinymce.addI18n('zh_CN',{
 "Upload": "\u4e0a\u4f20",
 "Select": "\u9009\u62e9",
 "Insert/Edit code sample": "\u63d2\u5165/\u7f16\u8f91 \u4ee3\u7801\u7247\u6bb5",
-"Language": "\u8bed\u8a00"
+"Language": "\u8bed\u8a00",
+"Export note as HTML": "\u5bfc\u51fa\u7b14\u8bb0\uff08\u0048\u0054\u004d\u004c\uff09",
 });

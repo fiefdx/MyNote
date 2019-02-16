@@ -88,7 +88,7 @@ function noteInit (scheme, locale) {
             "fontsizeselect | forecolor | bold italic underline | numlist bullist | outdent indent | codesample" // insertfile backcolor | alignleft aligncenter alignright alignjustify
         ],
         menu: {
-            file   : {title : 'File'  , items : 'create_note save_note save_note_with_proxy'}, //newdocument 
+            file   : {title : 'File'  , items : 'create_note save_note save_note_with_proxy export_note_as_html'}, //newdocument 
             edit   : {title : 'Edit'  , items : 'undo redo | cut copy paste pastetext | selectall | searchreplace'},
             insert : {title : 'Insert', items : 'link insert_image | charmap hr anchor pagebreak insertdatetime'}, // nonbreaking template
             view   : {title : 'View'  , items : 'visualchars visualblocks visualaid | preview fullscreen'},
@@ -148,6 +148,13 @@ function noteInit (scheme, locale) {
                 context: "file",
                 // shortcut: 'Ctrl+S',
                 onclick: saveNoteWithProxy,
+            });
+            editor.addMenuItem("export_note_as_html", {
+                icon: "save",
+                text: "Export note as HTML",
+                context: "file",
+                // shortcut: 'Ctrl+S',
+                onclick: exportNoteAsHTML,
             });
             // tinymceEditor = editor;
             // initNoteOperation(editor);
@@ -693,9 +700,9 @@ function noteInit (scheme, locale) {
         }
     }
 
-    function downloadNote() {
+    function exportNoteAsHTML() {
         if (current_note_id != null) {
-            var url = location.protocol + "//" + local + "/note/?option=download&id=" + current_note_id;
+            var url = location.protocol + "//" + local + "/rich/?option=download&id=" + current_note_id;
             var win = window.open(url, '_blank');
             win.focus();
         }

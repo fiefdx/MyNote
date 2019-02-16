@@ -32,6 +32,7 @@ import logging
 import shutil
 import datetime
 import dateutil
+import StringIO
 
 import tornado.web
 from tornado import gen
@@ -42,12 +43,14 @@ from config import CONFIG
 from utils import search_whoosh
 from base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive_Rich_Notes as Archive
+from utils.archive import Archive_Rich_Note as ArchiveNote
 from utils import htmlparser
 from models.item import RICH
 from utils import common_utils
 from utils.multi_async_tea import MultiProcessNoteTea
 from utils.processer import ManagerClient
 from utils.common import Servers
+from utils.htmlparser import is_svg_image
 
 
 LOG = logging.getLogger(__name__)
@@ -129,6 +132,7 @@ class RichHandler(BaseHandler):
     @tornado.web.authenticated
     @gen.coroutine
     def get(self):
+        multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
@@ -160,6 +164,66 @@ class RichHandler(BaseHandler):
                         http_proxy = user_info.http_proxy,
                         https_proxy = user_info.https_proxy,
                         socks_proxy = user_info.socks_proxy)
+        elif option == "download" and note_id != "":
+            note = Servers.DB_SERVER["RICH"].get_rich_by_id(note_id, user)
+            # note's file_content and file_title are unicode
+            if CONFIG["ENCRYPT"]:
+                # note.decrypt(user_key)
+                note = yield multi_process_note_tea.decrypt(note, *(user_key, ), **{"decrypt_content": True})
+            user_export_note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_note")
+            user_images_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_note", "picture")
+            if os.path.exists(user_export_note_path) and os.path.isdir(user_export_note_path):
+                shutil.rmtree(user_export_note_path)
+            os.makedirs(user_images_path)
+            for pic_sha1 in note.images:
+                pic = Servers.DB_SERVER["PIC"].get_data_by_sha1(pic_sha1)
+                if pic != False and pic != None:
+                    pic_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
+                    fp = open(pic_path, "rb")
+                    content = fp.read()
+                    fp.close()
+                    content_strip = content.strip()
+                    pic_ext = os.path.splitext(pic.file_name)[-1]
+                    if len(content_strip) and content_strip[0] == "<" and is_svg_image(content):
+                        pic_ext = ".svg"
+                    pic_name = pic.sha1 + pic_ext
+                    note.rich_content = note.rich_content.replace(pic_name, pic.sha1)
+                    note.rich_content = note.rich_content.replace(pic.sha1, pic_name)
+                    target_path = os.path.join(user_images_path, pic_name)
+                    if not os.path.exists(target_path):
+                        shutil.copyfile(pic_path, target_path + '.tmp')
+                        try:
+                            os.rename(target_path + '.tmp', target_path)
+                        except Exception, e:
+                            if not os.path.exists(target_path):
+                                raise e
+                        LOG.debug("Copy file[%s] to file[%s]", pic_path, target_path)
+                    else:
+                        LOG.debug("Image file[%s] has been existed!", target_path)
+            note_file_name = common_utils.construct_safe_filename(note.file_title)
+            if not note_file_name:
+                note_file_name = note.sha1
+            user_note_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_info.sha1, "rich_note", note_file_name + ".html")
+            note.rich_content = htmlparser.html_head_add_content_type(note.rich_content)
+            fp = open(user_note_path, "wb")
+            fp.write(note.rich_content.encode("utf-8"))
+            fp.close()
+
+            arch = ArchiveNote(user_info)
+            arch.archive("tar.gz", note_file_name)
+            
+            fp = open(arch.package_path, "rb")
+            self.set_header("Content-Disposition",
+                            "attachment; filename=%s.tar.gz" % note_file_name.encode("utf-8"))
+            while True:
+                buf = fp.read(1024 * 4)
+                if not buf:
+                    fp.close()
+                    break
+                self.write(buf)
+            fp.close()
+            arch.clear()
+            self.finish()
         else:
             self.render("note/rich_tinymce.html",
                     user = user,
