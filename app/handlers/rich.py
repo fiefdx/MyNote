@@ -189,6 +189,7 @@ class RichHandler(BaseHandler):
                     pic_name = pic.sha1 + pic_ext
                     note.rich_content = note.rich_content.replace(pic_name, pic.sha1)
                     note.rich_content = note.rich_content.replace(pic.sha1, pic_name)
+                    note.rich_content = note.rich_content.replace("/picture/%s" % pic_name, "picture/%s" % pic_name)
                     target_path = os.path.join(user_images_path, pic_name)
                     if not os.path.exists(target_path):
                         shutil.copyfile(pic_path, target_path + '.tmp')
