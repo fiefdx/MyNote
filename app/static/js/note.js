@@ -880,7 +880,11 @@ function noteInit (scheme, locale) {
     function updateNotesProgress(progress_id, tasks, total) {
         var percentage = "0%";
         if (total > 0) {
-            percentage = Math.floor(tasks/total*100) + "%";
+            percentage = Math.floor(tasks/total*100);
+            if (percentage > 100) {
+                percentage = 100;
+            }
+            percentage += "%";
         }
         var text = percentage; // + " - " + tasks;
         $("#" + progress_id).text(text);

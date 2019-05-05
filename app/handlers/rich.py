@@ -26,6 +26,7 @@ Modified on 2015-03-08
 '''
 
 import os.path
+import re
 import json
 import time
 import logging
@@ -1004,6 +1005,112 @@ class UploadAjaxHandler(BaseHandler):
                     shutil.move(up_file_path, fpath)
         except Exception, e:
             LOG.exception(e)
+        self.write({"result":"ok"})
+
+@tornado.web.stream_request_body
+class UploadAjaxStreamHandler(BaseHandler):
+    PARSE_READY = 0
+    PARSE_FILE_PENDING = 1
+
+    def check_xsrf_cookie(self): # ignore xsrf check
+        pass
+
+    def prepare(self):
+        self.user = self.get_current_user_name()
+        self.user_info = Servers.DB_SERVER["USER"].get_user_from_db(self.user)
+        self.mimetype = self.request.headers.get("Content-Type")
+        self.boundary = "--%s" % (self.mimetype[self.mimetype.find("boundary")+9:])
+        self.state = UploadAjaxStreamHandler.PARSE_READY
+        self.output = None
+        self.find_filename = re.compile('filename="(.*)"')
+        self.find_mimetype = re.compile('Content-Type: (.*)')
+        self.find_field = re.compile('name="(.*)"')
+        self.start = time.time()
+        self.file_name = ""
+        self.file_path = ""
+
+    def data_received(self, data):
+        LOG.debug("chunk size: %s", len(data))
+        try:
+            buff = data.split(self.boundary)
+            for index, part in enumerate(buff):
+                if part:
+                    if part == "--\r\n":
+                        break
+                    if self.state == UploadAjaxStreamHandler.PARSE_FILE_PENDING:
+                        if len(buff) > 1:
+                            self.output.write(part[:-2])
+                            self.output.close()
+                            self.state = UploadAjaxStreamHandler.PARSE_READY
+                            continue
+                        else:
+                            self.output.write(part)
+                            continue
+
+                    elif self.state == UploadAjaxStreamHandler.PARSE_READY:
+                        stream = StringIO.StringIO(part)
+                        stream.readline()
+                        form_data_type_line = stream.readline()
+                        if form_data_type_line.find("filename") > -1:
+                            filename = re.search(self.find_filename, form_data_type_line).groups()[0]
+                            self.file_name = os.path.split(filename.encode("utf-8"))[-1]
+                            self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                                          self.user_info.sha1,
+                                                          "tmp",
+                                                          "import",
+                                                          self.file_name)
+                            self.output = open(self.file_path, "wb")
+                            content_type_line = stream.readline()
+                            mimetype = re.search(self.find_mimetype, content_type_line).groups()[0]
+                            LOG.debug("%s with %s" % (filename, mimetype.strip()))
+                            stream.readline()
+                            body = stream.read()
+                            if len(buff) > index + 1:
+                                self.output.write(body[:-2])
+                                self.state = UploadAjaxStreamHandler.PARSE_READY
+                            else:
+                                self.output.write(body)
+                                self.state = UploadAjaxStreamHandler.PARSE_FILE_PENDING
+                        else:
+                            stream.readline()
+                            form_name = re.search(self.find_field, form_data_type_line).groups()[0]
+                            form_value = stream.readline()
+                            self.state = UploadAjaxStreamHandler.PARSE_READY
+                            LOG.debug("%s=%s" % (form_name.strip(), form_value.strip()))
+        except Exception, e:
+            LOG.exception(e)
+
+    @tornado.web.authenticated
+    @gen.coroutine
+    def post(self):
+        user = self.get_current_user_name()
+        user_key = self.get_current_user_key()
+        try:
+            fname = ""
+            fbody = ""
+            fileinfo = None
+            up_file_path = None
+            user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
+            try:
+                if CONFIG["WITH_NGINX"]:
+                    fileinfo = True
+                    fname = self.get_argument("up_file.name", "")
+                    up_file_path = self.get_argument("up_file.path", "")
+            except Exception, e:
+                fileinfo = None
+                LOG.error("Upload file failed, You must be sure selected a file!")
+                LOG.exception(e)
+            if fileinfo is not None:
+                fpath = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                     user_info.sha1,
+                                     "tmp",
+                                     "import",
+                                     fname)
+                if CONFIG["WITH_NGINX"]:
+                    shutil.move(up_file_path, fpath)
+        except Exception, e:
+            LOG.exception(e)
+        LOG.debug("upload node package use: %ss", time.time() - self.start)
         self.write({"result":"ok"})
 
 class ImportAjaxHandler(BaseHandler):

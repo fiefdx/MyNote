@@ -75,15 +75,22 @@ class WebServer(Thread):
             http_server = tornado.httpserver.HTTPServer(Application(),
                                                         no_keep_alive = False,
                                                         ssl_options = {
-                                                        "certfile": os.path.join(cwd, "keys", "server.crt"),
-                                                        "keyfile": os.path.join(cwd, "keys", "server.key")},
-                                                        max_buffer_size = CONFIG["MAX_BUFFER_SIZE"])
+                                                            "certfile": os.path.join(cwd, "keys", "server.crt"),
+                                                            "keyfile": os.path.join(cwd, "keys", "server.key")},
+                                                        max_buffer_size = CONFIG["MAX_BUFFER_SIZE"],
+                                                        chunk_size = 10 * 1024 * 1024)
             LOG.info("Scheme: %s", CONFIG["SERVER_SCHEME"])
         elif CONFIG["SERVER_SCHEME"].lower() == "http":
-            http_server = tornado.httpserver.HTTPServer(Application(), no_keep_alive = False)
+            http_server = tornado.httpserver.HTTPServer(Application(),
+                                                        no_keep_alive = False,
+                                                        max_buffer_size = CONFIG["MAX_BUFFER_SIZE"],
+                                                        chunk_size = 10 * 1024 * 1024)
             LOG.info("Scheme: %s", CONFIG["SERVER_SCHEME"])
         else:
-            http_server = tornado.httpserver.HTTPServer(Application(), no_keep_alive = False)
+            http_server = tornado.httpserver.HTTPServer(Application(),
+                                                        no_keep_alive = False,
+                                                        max_buffer_size = CONFIG["MAX_BUFFER_SIZE"],
+                                                        chunk_size = 10 * 1024 * 1024)
             LOG.warning("Scheme: http ignore SERVER_SCHEME")
         LOG.info("MAX_BUFFER_SIZE: %sM", CONFIG["MAX_BUFFER_SIZE"] / 1024 / 1024)
         common.Servers.HTTP_SERVER = http_server
