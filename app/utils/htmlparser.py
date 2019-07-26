@@ -38,6 +38,7 @@ import hashlib
 import traceback
 from bs4 import BeautifulSoup as BS
 import requests
+import psutil
 
 from config import CONFIG
 from models.item import PICTURE as PIC
@@ -373,6 +374,10 @@ def get_web_images(images, db_pic = None, proxy = {}):
     result = []
     image = ""
     try:
+        ifaces = psutil.net_if_addrs()
+        local_ips = ["localhost", "127.0.0.1", CONFIG["SERVER_HOST"]]
+        for _, v in ifaces.items():
+            local_ips.append(v[0].address)
         headers = {'User-Agent': 'Mozilla/5.0 (X11;Centos;Linux x86_64;rv:42.0) Gecko/20100101 Firefox/42.0',
                    'Accept-Language': 'zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3',
                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
@@ -391,7 +396,7 @@ def get_web_images(images, db_pic = None, proxy = {}):
             try:
                 # i[0] is the web src, i[1] is the local src
                 url_parts = list(urlparse.urlparse(i[0]))
-                if url_parts[1].split(":")[0] not in ["localhost", "127.0.0.1", CONFIG["SERVER_HOST"]]:
+                if url_parts[1].split(":")[0] not in local_ips:
                     # p = opener.open(i[0], timeout = 10)
                     p = requests.get(i[0], headers = headers, proxies = proxies)
                     if p.status_code == 200:
