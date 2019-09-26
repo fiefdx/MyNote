@@ -7,8 +7,8 @@ whoosh
 jieba
 chardet
 pyyaml
-cython
-numpy
+cython == 0.29.12
+numpy == 1.16.4
 lxml
 bs4
 python-dateutil
