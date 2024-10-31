@@ -9,7 +9,7 @@ chardet
 pyyaml
 cython == 0.29.12
 numpy == 1.16.4
-lxml
+lxml == 4.2.5
 bs4
 python-dateutil
 psutil
