@@ -47,7 +47,8 @@ class BaseHandler(tornado.web.RequestHandler):
     def get_user_locale(self):
         user_locale = self.get_secure_cookie("user_locale", max_age_days = COOKIE_TIME)
         if user_locale:
-            return tornado.locale.get(user_locale)
+            # cookie is bytes under Python 3; tornado.locale.get() needs str.
+            return tornado.locale.get(bytes_2_unicode(user_locale))
         return None
 
 class BaseSocketHandler(tornado.websocket.WebSocketHandler):
@@ -69,5 +70,6 @@ class BaseSocketHandler(tornado.websocket.WebSocketHandler):
     def get_user_locale(self):
         user_locale = self.get_secure_cookie("user_locale", max_age_days = COOKIE_TIME)
         if user_locale:
-            return tornado.locale.get(user_locale)
+            # cookie is bytes under Python 3; tornado.locale.get() needs str.
+            return tornado.locale.get(bytes_2_unicode(user_locale))
         return None

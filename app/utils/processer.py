@@ -48,13 +48,16 @@ class StoppableThread(Thread):
 
     def __init__(self):
         super(StoppableThread, self).__init__()
-        self._stop = threading.Event()
+        # NOTE: must NOT be named "_stop"; threading.Thread has an internal
+        # _stop() method that join()/shutdown rely on (Python 3). Shadowing it
+        # with an Event caused "'Event' object is not callable".
+        self._stop_event = threading.Event()
 
     def stop(self):
-        self._stop.set()
+        self._stop_event.set()
 
     def stopped(self):
-        return self._stop.isSet()
+        return self._stop_event.is_set()
 
 class Processer(StoppableThread):
     def __init__(self, pid, task_queue, result_queue):
