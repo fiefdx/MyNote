@@ -60,14 +60,12 @@ def shutdown():
     deadline = time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN
 
     def stop_loop():
-        now = time.time()
-        if now < deadline and (io_loop._callbacks or io_loop._timeouts):
-            io_loop.add_timeout(now + 1, stop_loop)
-        else:
-            io_loop.stop()
-            LOG.info("MyNote(%s:%s) Shutdown!", CONFIG["SERVER_HOST"], CONFIG["SERVER_PORT"])
+        # Tornado 6 / asyncio IOLoop has no _callbacks/_timeouts attributes, so
+        # just give in-flight requests MAX_WAIT_SECONDS and then stop the loop.
+        io_loop.stop()
+        LOG.info("MyNote(%s:%s) Shutdown!", CONFIG["SERVER_HOST"], CONFIG["SERVER_PORT"])
 
-    stop_loop()
+    io_loop.add_timeout(deadline, stop_loop)
 
 def shutdown_thread():
     LOG.info("Stopping MyNote(%s:%s)", CONFIG["SERVER_HOST"], CONFIG["SERVER_PORT"])
@@ -100,7 +98,10 @@ def shutdown_thread():
 
 def sig_handler(sig, frame):
     LOG.warning("Caught signal: %s", sig)
-    tornado.ioloop.IOLoop.current().add_callback(shutdown)
+    # Under Python 3 / Tornado 6 (asyncio), add_callback() from a signal handler
+    # does NOT reliably wake the event loop; add_callback_from_signal() is the
+    # documented way to schedule a callback from within a signal handler.
+    tornado.ioloop.IOLoop.current().add_callback_from_signal(shutdown)
 
 def sig_thread_handler(sig, frame):
     LOG.warning("Caught signal: %s", sig)
