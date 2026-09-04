@@ -1,15 +1,21 @@
 ################## requirements.txt ##################
+# Python 3 port (was Python 2.7 / Tornado 5)
+# - toro removed: it is Python 2 only and cannot build on modern Python.
+#   A small Tornado-6 compatible Lock shim ships at app/toro.py.
+# - tea replaced by tea_encrypt (https://github.com/fiefdx/tea_encrypt).
+#   A compatibility layer (hex-encoded output, backward compatible with the
+#   original tea format) ships at app/tea_compat.py.
+# - cython / numpy dropped: they were only needed to build the old tea C
+#   extension; tea_encrypt installs its own optional extension via pip.
 
 setuptools
-tornado == 5.1.1
-toro
+tornado >= 6.2
 whoosh
 jieba
 chardet
 pyyaml
-cython == 0.29.12
-numpy == 1.16.4
-lxml == 4.2.5
+tea_encrypt
+lxml >= 4.6
 bs4
 python-dateutil
 psutil

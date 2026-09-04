@@ -12,7 +12,13 @@
 *.log.*
 *.pid
 *.pyc
+*.pyo
+*.bak
 *.desktop
+__pycache__/
+build/
+.venv/
+venv/
 
 # ignore dirs
 

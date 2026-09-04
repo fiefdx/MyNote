@@ -9,7 +9,7 @@ import os
 import sys
 import logging
 import hashlib
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import chardet
 import shutil
 import datetime
@@ -20,7 +20,7 @@ from dateutil import tz
 import tornado.web
 
 from config import CONFIG
-from base import BaseHandler
+from .base import BaseHandler
 from models.item import PICTURE as PIC
 from utils import common_utils
 from utils.common import Servers

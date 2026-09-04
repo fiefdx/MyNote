@@ -113,24 +113,25 @@ You can run it from source or binary package, My laptop's OS is Xubuntu 64bit, s
 
 1. from source
    ```bash
-   # install pip
-   sudo apt-get install python-pip
+   # MyNote now targets Python 3 (Tornado 6). Install Python 3 + pip3.
+   sudo apt-get install python3 python3-pip
 
-   # run app/dev.sh
-   cd MyNote/app
-   ./dev.sh
+   # create a virtualenv and install dependencies
+   # (dependencies are listed in requires/requirements.txt, which now includes
+   #  tea_encrypt: https://github.com/fiefdx/tea_encrypt)
+   python3 -m venv .venv && source .venv/bin/activate
+   pip3 install -r requires/requirements.txt
+   # note: MyNoteGUI.py additionally needs wxPython (pip3 install wxPython)
 
-   # install tea package
-   # download it from github https://github.com/fiefdx/tea
-   tar xzvf ./tea.tar.gz or unzip ./tea.zip
-   cd tea
-   sudo python ./setup.py install
+   # the old "tea" package is no longer required: the encryption layer now uses
+   # tea_encrypt via the compatibility shim app/tea_compat.py, and the legacy
+   # "toro" dependency is replaced by the Tornado-6 shim app/toro.py.
 
    # edit the configuration.yml file, before run it.
    # you can try to run MyNote.py or MyNoteGUI.py in terminal, check if error occur
    cd MyNote/app
    # MyNote.py is a terminal application, MyNoteGUI.py is a GUI application(have a system tray icon) based on Wxpython
-   python ./MyNote.py or python ./MyNoteGUI.py
+   python3 ./MyNote.py or python3 ./MyNoteGUI.py
 
    # run app/Install.sh
    cd MyNote/app
@@ -297,24 +298,24 @@ FUNCTIONS:
 
 1. 从源码运行
    ```bash
-   # 安装pip
-   sudo apt-get install python-pip
+   # MyNote 现已支持 Python 3（Tornado 6），请安装 Python 3 及 pip3
+   sudo apt-get install python3 python3-pip
 
-   # 运行app/dev.sh
-   cd MyNote/app
-   ./dev.sh
+   # 创建虚拟环境并安装依赖
+   # （依赖列在 requires/requirements.txt 中，已包含 tea_encrypt：
+   #   https://github.com/fiefdx/tea_encrypt）
+   python3 -m venv .venv && source .venv/bin/activate
+   pip3 install -r requires/requirements.txt
+   # 注意：MyNoteGUI.py 还需额外安装 wxPython（pip3 install wxPython）
 
-   # 安装tea包，用来加密笔记内容
-   # 从github下载tea https://github.com/fiefdx/tea
-   tar xzvf ./tea.tar.gz 或 unzip ./tea.zip
-   cd tea
-   sudo python ./setup.py install
+   # 不再需要旧的 tea 包：加密层现通过兼容层 app/tea_compat.py 使用 tea_encrypt，
+   # 旧的 toro 依赖已替换为 Tornado 6 兼容层 app/toro.py。
 
    # 在运行笔记之前要先更改configuration.yml配置文件
    # 可以在终端中运行MyNote.py或者MyNoteGUI.py，观察是否有报错
    cd MyNote/app
    # MyNote.py是一个终端程序，MyNoteGUI.py是一个基于Wxpython的图形界面程序（会显示一个系统托盘图标）
-   python ./MyNote.py 或 python ./MyNoteGUI.py
+   python3 ./MyNote.py 或 python3 ./MyNoteGUI.py
 
    # 运行app/Install.sh安装脚本
    cd MyNote/app

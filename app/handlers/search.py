@@ -12,7 +12,7 @@ from tornado import gen
 
 from config import CONFIG
 from utils import search_whoosh
-from base import BaseHandler
+from .base import BaseHandler
 from utils.common import Servers
 
 

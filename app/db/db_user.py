@@ -27,7 +27,7 @@ class DB(object):
             if self.conn:
                 self.conn.close()
             LOG.info("Close user conn success")
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Close user conn failed")
             LOG.exception(e)
 
@@ -62,7 +62,7 @@ class DB(object):
                             item["socks_proxy"],
                             item["user_name"])
 
-        for i in xrange(retries):
+        for i in range(retries):
             try:
                 c = self.conn.cursor()
                 if mode == "UPDATE":
@@ -86,7 +86,7 @@ class DB(object):
                     result = None
                     LOG.info("The same item[%s] have been in user service, so ignore the insert & update action!", item["id"])
                     break
-            except Exception, e:
+            except Exception as e:
                 if self.conn:
                     self.conn.rollback()
                 if i < retries - 1:
@@ -122,7 +122,7 @@ class DB(object):
                 user.socks_proxy = i[10]
                 result = user
             LOG.debug("Get user[%s] data from db success", user_name)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -134,7 +134,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Delete user[%s] from db success", user_name)
-        except Exception, e:
+        except Exception as e:
             if self.conn:
                 self.conn.rollback()
             LOG.exception(e)

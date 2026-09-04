@@ -56,7 +56,7 @@ def shutdown():
         Servers.WEB_SERVER.close()
         LOG.info("Stop web server!")
     LOG.info("Will shutdown in %s seconds ...", MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
-    io_loop = tornado.ioloop.IOLoop.instance()
+    io_loop = tornado.ioloop.IOLoop.current()
     deadline = time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN
 
     def stop_loop():
@@ -100,7 +100,7 @@ def shutdown_thread():
 
 def sig_handler(sig, frame):
     LOG.warning("Caught signal: %s", sig)
-    tornado.ioloop.IOLoop.instance().add_callback(shutdown)
+    tornado.ioloop.IOLoop.current().add_callback(shutdown)
 
 def sig_thread_handler(sig, frame):
     LOG.warning("Caught signal: %s", sig)

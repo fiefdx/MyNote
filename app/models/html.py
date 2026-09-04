@@ -84,5 +84,5 @@ class HTML(object):
 if __name__ == "__main__":
     html = HTML()
     html.sha1 = "1234"
-    print html.sha1
-    print 'everything is ok.'
+    print(html.sha1)
+    print('everything is ok.')

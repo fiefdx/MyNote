@@ -25,7 +25,7 @@ class Storage(object):
             self.user_path_dirs = ["notes", "share", "tmp", "rich_notes", "rich_note"]
             self.rich_note_path_list = ["rich_notes", "images"]
             self.note_type_list = []
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def init(self):
@@ -56,7 +56,7 @@ class Storage(object):
             os.makedirs(tmp_path)
             LOG.debug("init user_path[%s] success"%self.user_path)
             result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             result = False
         return result
@@ -71,7 +71,7 @@ class Storage(object):
             else:
                 LOG.debug("rm user_path[%s] do not exists"%self.user_path)
                 result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             result = False
         return result

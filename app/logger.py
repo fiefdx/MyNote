@@ -85,17 +85,17 @@ class ConsoleStreamHandler(logging.StreamHandler):
         try:
             message = self.format(record)
             stream = self.stream
-            if unicode and isinstance(message, unicode):
-                enc = getattr(stream, 'encoding', 'utf-8')
-                if not enc: # just for pyinstaller None bugfix
-                    enc = 'utf-8'
-                message = message.encode(enc, 'replace')
+            # Python 3: sys.stdout/stderr are text streams and expect str, so we
+            # must NOT encode to bytes here (that only worked under Python 2).
+            if isinstance(message, bytes):
+                enc = getattr(stream, 'encoding', None) or 'utf-8'
+                message = message.decode(enc, 'replace')
             stream.write(message)
             stream.write(getattr(self, 'terminator', '\n'))
             self.flush()
         except (KeyboardInterrupt, SystemExit):
             raise
-        except:
+        except Exception:
             self.handleError(record)
 
 def config_logging(logger_name = "",

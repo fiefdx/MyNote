@@ -106,7 +106,7 @@ def process_mission(mission_queue, result_queue, exts = None, storage_path = Non
                 time.sleep(0.01)
         mission_queue.put('mission complete')
         result_queue.put([total_count_file, success_processed_count_file])
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         exc = traceback.format_exc()
 
@@ -142,7 +142,7 @@ def mission_generator(source_dir, process_num, queue_size, exts = None, storage_
                 files_len = len(files)
                 if files_len >= process_num:
                     mission_len = int(files_len/process_num)
-                    for i in xrange(process_num):
+                    for i in range(process_num):
                         while mission_queue.full() == True:
                             time.sleep(0.01)
                         if i != (process_num - 1):
@@ -165,7 +165,7 @@ def mission_generator(source_dir, process_num, queue_size, exts = None, storage_
             tmp = result_queue.get()
             total_count_file += tmp[0]
             success_processed_count_file += tmp[1]
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         exc = traceback.format_exc()
 

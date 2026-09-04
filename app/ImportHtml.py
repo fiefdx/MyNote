@@ -102,7 +102,7 @@ def process_mission( mission_queue, result_queue, db_file_path, exts = None, sto
                             # LOG.debug("html file encoding:%s and confidence:%.8f"%(encoding['encoding'], encoding['confidence']))
                             m = hashlib.sha1(html_content)
                             m.digest()
-                            html.sha1 = m.hexdigest().decode("utf-8") # unicode
+                            html.sha1 = m.hexdigest() # unicode
                             html.file_name = os.path.split(fpath)[1] # unicode
                             html_content = htmlparser.html_decode_unicode(html_content) # unicode
 
@@ -127,7 +127,7 @@ def process_mission( mission_queue, result_queue, db_file_path, exts = None, sto
                                     if os.path.exists(file_dir) and os.path.isdir(file_dir):
                                         html_path, html_name = os.path.split(fpath)
                                         # static_path = os.path.join('/getstatic', html.sha1)
-                                        static_path = u'/getstatic/%s'%html.sha1
+                                        static_path = '/getstatic/%s'%html.sha1
                                         new_content = htmlparser.html_change_src(html_content, 
                                                                                  html_name, 
                                                                                  os.path.split(file_dir)[1], 
@@ -167,7 +167,7 @@ def process_mission( mission_queue, result_queue, db_file_path, exts = None, sto
                 time.sleep(0.01)
         mission_queue.put('mission complete')
         result_queue.put([total_count_file, success_processed_count_file])
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         # exc = traceback.format_exc()
         # print 'process_mission :\n',exc
@@ -244,7 +244,7 @@ def mission_generator(source_dir, process_num, queue_size, db_file_path, exts = 
                 files_len = len(files)
                 if files_len >= process_num:
                     mission_len = int(files_len/process_num)
-                    for i in xrange(process_num):
+                    for i in range(process_num):
                         while mission_queue.full() == True:
                             time.sleep( 0.01 )
                         if i != (process_num - 1):
@@ -263,7 +263,7 @@ def mission_generator(source_dir, process_num, queue_size, db_file_path, exts = 
             tmp = result_queue.get()
             total_count_file += tmp[0]
             success_processed_count_file += tmp[1]
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
     end_time = datetime.datetime.now()

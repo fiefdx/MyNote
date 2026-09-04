@@ -130,9 +130,9 @@ class NoteImportProcesser(TaskProcesser):
                         fpath = os.path.join(root, fname)
                         LOG.debug("Processing [%s]", fpath)
                         yield [self.name, self.task_key, fname, fpath, storage_path, user.user_name, key, password]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
@@ -160,7 +160,7 @@ class NoteImportProcesser(TaskProcesser):
                     LOG.error("write note to database failed")
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -294,9 +294,9 @@ class RichImportProcesser(TaskProcesser):
                         LOG.debug("Processing [%s]", fpath)
                         yield [self.name, self.task_key, fname, fpath, storage_path, user.user_name, key, password]
                         task_num += 1
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", "", ""]
 
     def map(self, x):
@@ -353,7 +353,7 @@ class RichImportProcesser(TaskProcesser):
                         LOG.error("write rich note to database failed")
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -393,11 +393,11 @@ class NoteIndexProcesser(TaskProcesser):
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
             try:
-                self.writer.delete_by_term("user_name", unicode(str(user.user_name)))
+                self.writer.delete_by_term("user_name", str(str(user.user_name)))
                 self.writer.commit(merge = True)
                 self.writer = AsyncWriter(self.ix.ix)
                 LOG.debug("Delete all rich notes index user[%s] success", user.user_name)
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 self.writer.cancel()
                 LOG.error("Delete all rich notes index user[%s] failed!", user.user_name)
@@ -409,9 +409,9 @@ class NoteIndexProcesser(TaskProcesser):
                     note.decrypt(key, decrypt_description = False)
                 LOG.debug("Indexing note[id: %s]", note.id)
                 yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 
     def map(self, x):
@@ -419,7 +419,7 @@ class NoteIndexProcesser(TaskProcesser):
         result = (self.name, self.task_key, False)
         try:
             if file_title != StopSignal:
-                self.writer.update_document(doc_id = unicode(str(doc_id)),
+                self.writer.update_document(doc_id = str(str(doc_id)),
                                             user_name = user_name,
                                             file_title = file_title,
                                             file_content = file_content)
@@ -444,7 +444,7 @@ class NoteIndexProcesser(TaskProcesser):
                     self.writer = AsyncWriter(self.ix.ix)
                     self.current_size = 0
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.writer.cancel()
         return result
@@ -485,11 +485,11 @@ class RichIndexProcesser(TaskProcesser):
         key = user_key if CONFIG["ENCRYPT"] else ""
         try:
             try:
-                self.writer.delete_by_term("user_name", unicode(str(user.user_name)))
+                self.writer.delete_by_term("user_name", str(str(user.user_name)))
                 self.writer.commit(merge = True)
                 self.writer = AsyncWriter(self.ix.ix)
                 LOG.debug("Delete all rich notes index user[%s] success", user.user_name)
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 self.writer.cancel()
                 LOG.error("Delete all rich notes index user[%s] failed!", user.user_name)
@@ -501,9 +501,9 @@ class RichIndexProcesser(TaskProcesser):
                     note.decrypt(key, decrypt_description = False)
                 LOG.debug("Indexing rich[id: %s]", note.id)
                 yield [self.name, self.task_key, note.file_title, note.id, note.user_name, note.file_content]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 
     def map(self, x):
@@ -511,7 +511,7 @@ class RichIndexProcesser(TaskProcesser):
         result = (self.name, self.task_key, False)
         try:
             if file_title != StopSignal:
-                self.writer.update_document(doc_id = unicode(str(doc_id)),
+                self.writer.update_document(doc_id = str(str(doc_id)),
                                             user_name = user_name,
                                             file_title = file_title,
                                             file_content = file_content)
@@ -536,7 +536,7 @@ class RichIndexProcesser(TaskProcesser):
                     self.current_size = 0
                 self.current_size += 1
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.writer.cancel()
         return result
@@ -566,7 +566,7 @@ def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 =
         doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
         fp.close()
         result = True
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -576,13 +576,13 @@ def create_category_info(storage_users_path, user_name, user_sha1, user_note_boo
         file_path = os.path.join(storage_users_path, user_sha1, "notes", "category.json")
         fp = open(file_path, 'wb')
         if category["name"] == "All":
-            fp.write(user_note_books)
+            fp.write(user_note_books.encode("utf-8"))
         else:
-            fp.write(json.dumps([category]))
+            fp.write(json.dumps([category]).encode("utf-8"))
         fp.close()
         LOG.info("create user[%s] category.json[%s]", user_name, file_path)
         result = True
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -629,9 +629,9 @@ class NoteExportProcesser(TaskProcesser):
             yield [self.name, self.task_key, user.user_name, user.sha1, category, user.note_books, "category_info"]
             for note in self.db_note.get_note_from_db_by_user_type_iter(user.user_name, note_category):
                 yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", ""]
 
     def map(self, x):
@@ -657,7 +657,7 @@ class NoteExportProcesser(TaskProcesser):
                         LOG.error("write category info to file failed")
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -697,14 +697,14 @@ def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = ""
                     shutil.copyfile(image_path, target_path + '.tmp')
                     try:
                         os.rename(target_path + '.tmp', target_path)
-                    except Exception, e:
+                    except Exception as e:
                         if not os.path.exists(target_path):
                             raise e
                     LOG.debug("Copy file[%s] to file[%s]", image_path, target_path)
                 else:
                     LOG.debug("Image file[%s] has been existed!", target_path)
         result = True
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -714,13 +714,13 @@ def create_rich_category_info(storage_users_path, user_name, user_sha1, user_ric
         file_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "category.json")
         fp = open(file_path, 'wb')
         if category["name"] == "All":
-            fp.write(user_rich_books)
+            fp.write(user_rich_books.encode("utf-8"))
         else:
-            fp.write(json.dumps([category]))
+            fp.write(json.dumps([category]).encode("utf-8"))
         fp.close()
         LOG.info("create user[%s] category.json[%s]", user_name, file_path)
         result = True
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -776,9 +776,9 @@ class RichExportProcesser(TaskProcesser):
             yield [self.name, self.task_key, user.user_name, user.sha1, category, user.rich_books, "category_info"]
             for note in self.db_rich.get_rich_from_db_by_user_type_iter(user.user_name, note_category):
                 yield [self.name, self.task_key, user.user_name, user.sha1, key, password, note]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", "", ""]
 
     def map(self, x):
@@ -804,7 +804,7 @@ class RichExportProcesser(TaskProcesser):
                         LOG.error("write rich category info to file failed")
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -834,7 +834,7 @@ class NoteArchiveProcesser(TaskProcesser):
         key = user_key if CONFIG["ENCRYPT"] else ""
         yield [self.name, self.task_key, StartSignal, 1, "", ""]
         yield [self.name, self.task_key, note_category, key, password, user.to_dict()]
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 
     def map(self, x):
@@ -857,7 +857,7 @@ class NoteArchiveProcesser(TaskProcesser):
                 result = [self.name, self.task_key, True, arch.package]
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -887,7 +887,7 @@ class RichArchiveProcesser(TaskProcesser):
         key = user_key if CONFIG["ENCRYPT"] else ""
         yield [self.name, self.task_key, StartSignal, 1, "", ""]
         yield [self.name, self.task_key, note_category, key, password, user.to_dict()]
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             yield [self.name, self.task_key, StopSignal, "", "", ""]
 
     def map(self, x):
@@ -910,7 +910,7 @@ class RichArchiveProcesser(TaskProcesser):
                 result = [self.name, self.task_key, True, arch.package]
             else:
                 result = [self.name, self.task_key, StopSignal]
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 

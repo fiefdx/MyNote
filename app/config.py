@@ -27,7 +27,7 @@ cwd = os.path.split(os.path.realpath(__file__))[0]
 configpath = os.path.join(cwd, "configuration.yml")
 
 def update(**kwargs):
-    config = load(stream = file(configpath), Loader = Loader)
+    config = load(stream = open(configpath), Loader = Loader)
     for k in kwargs:
         if k in config:
             config[k] = kwargs[k]
@@ -39,7 +39,7 @@ CONFIG = {}
 try:
     # script in the app dir
     # cwd = os.path.split(os.path.realpath(__file__))[0]
-    localConf = load(stream = file(configpath), Loader = Loader)
+    localConf = load(stream = open(configpath), Loader = Loader)
     CONFIG.update(localConf)
     if CONFIG["USB_MODE"] == True:
         datapath = os.path.join("../..", "MyNoteData")
@@ -70,31 +70,31 @@ try:
     if not os.path.exists(CONFIG["STORAGE_DB_PATH"]) or not os.path.isdir(CONFIG["STORAGE_DB_PATH"]):
         os.makedirs(CONFIG["STORAGE_DB_PATH"])
     CONFIG["PID_PATH"] = cwd
-    if not CONFIG.has_key("FUNCTIONS"):
+    if "FUNCTIONS" not in CONFIG:
         CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
     CONFIG["LOG_FILE_NAME"] = "MyNote.log"
-    if not CONFIG.has_key("MAX_AGE_DAYS"):
+    if "MAX_AGE_DAYS" not in CONFIG:
         CONFIG["MAX_AGE_DAYS"] = 30 # cookie expiration time for service
-    if not CONFIG.has_key("EXPIRES_DAYS"):
+    if "EXPIRES_DAYS" not in CONFIG:
         CONFIG["EXPIRES_DAYS"] = None #1 # cookie expiration time for browser
-    if not CONFIG.has_key("NOTE_NUM_PER_FETCH"):
+    if "NOTE_NUM_PER_FETCH" not in CONFIG:
         CONFIG["NOTE_NUM_PER_FETCH"] = 20
-    if not CONFIG.has_key("PROCESS_NUM"):
+    if "PROCESS_NUM" not in CONFIG:
         CONFIG["PROCESS_NUM"] = 4
-    if not CONFIG.has_key("THREAD_NUM"):
+    if "THREAD_NUM" not in CONFIG:
         CONFIG["THREAD_NUM"] = 1
-    if not CONFIG.has_key("ASYNC_WRITER_PROCESS_NUM"):
+    if "ASYNC_WRITER_PROCESS_NUM" not in CONFIG:
         CONFIG["ASYNC_WRITER_PROCESS_NUM"] = 2
-    if not CONFIG.has_key("WITH_NGINX"):
+    if "WITH_NGINX" not in CONFIG:
         CONFIG["WITH_NGINX"] = False
-    if not CONFIG.has_key("ITEMS_PER_PAGE"):
+    if "ITEMS_PER_PAGE" not in CONFIG:
         CONFIG["ITEMS_PER_PAGE"] = 10
-    if not CONFIG.has_key("DELETE_ORIGINAL_FILE"):
+    if "DELETE_ORIGINAL_FILE" not in CONFIG:
         CONFIG["DELETE_ORIGINAL_FILE"] = False
-except Exception, e:
-    print e
+except Exception as e:
+    print(e)
 
 if __name__ == "__main__":
-    print "cwd: %s"%cwd
-    print "configpath: %s"%configpath
-    print "CONFIG: %s"%CONFIG
+    print("cwd: %s"%cwd)
+    print("configpath: %s"%configpath)
+    print("CONFIG: %s"%CONFIG)

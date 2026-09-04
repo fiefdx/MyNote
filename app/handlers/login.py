@@ -22,7 +22,7 @@ import tornado.web
 from tornado import gen
 
 from config import CONFIG
-from base import BaseHandler
+from .base import BaseHandler
 from models.item import USER
 from utils.user_storage import Storage
 from utils import common_utils
@@ -57,7 +57,7 @@ class LoginHandler(BaseHandler):
             else:
                 LOG.debug("User: %s Invalid.", user)
                 self.render("info.html", info_msg = self.locale.translate("Sorry, Invalid User!"))
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.render("info.html", info_msg = self.locale.translate("Sorry, Exception Occurs!"))
 
@@ -101,7 +101,7 @@ class RegisterHandler(BaseHandler):
             else:
                 LOG.debug("register user[%s] failed: user name or Password error!", r_user.user_name)
                 self.render("info.html", info_msg = self.locale.translate("Sorry, User name or Password error!"))
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.render("error.html", error_msg = self.locale.translate("Sorry, Exception Occurs!"))
 
@@ -124,7 +124,7 @@ class RedirectHandler(BaseHandler):
             else:
                 url = "/help"
             self.redirect(url)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.render("error.html", error_msg = self.locale.translate("Sorry, Exception Occurs!"))
 
@@ -143,7 +143,7 @@ class SettingsHandler(BaseHandler):
             redirect_to = self.get_argument("redirect_to", "")
             old_user_pass = common_utils.sha256sum(old_passwd)
             user = self.get_current_user_name()
-            LOG.debug("user unicode: %s", isinstance(user, unicode))
+            LOG.debug("user unicode: %s", isinstance(user, str))
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             change_passwd_flag = False
             if user_info:
@@ -191,7 +191,7 @@ class SettingsHandler(BaseHandler):
                 else:
                     LOG.error("Change user[%s] settings failed", user)
             self.redirect(redirect_to)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.redirect("/")
 
@@ -232,7 +232,7 @@ class DeleteUserHandler(BaseHandler):
             else:
                 LOG.debug("Delete the User[%s] failed!", user)
                 self.render("info.html", info_msg = delete_failed)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.render("error.html", error_msg = self.locale.translate("Sorry, Exception Occurs!"))
             
@@ -254,5 +254,6 @@ class TestHandler(BaseHandler):
         if not self.current_user:
             self.redirect("/login")
             return
-        name = tornado.escape.xhtml_escape(self.current_user)
+        # current_user is bytes under Python 3; use the decoded user name.
+        name = tornado.escape.xhtml_escape(self.get_current_user_name())
         self.write("Hello, " + name)

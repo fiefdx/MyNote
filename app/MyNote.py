@@ -75,7 +75,7 @@ if __name__ == "__main__":
     PID = ""
     pid_file_path = os.path.join(CONFIG["PID_PATH"], "application.pid")
     if os.path.exists(pid_file_path) and os.path.isfile(pid_file_path):
-        fp = open(pid_file_path, "rb")
+        fp = open(pid_file_path, "r")
         PID = fp.read()
         fp.close()
     try:
@@ -90,13 +90,13 @@ if __name__ == "__main__":
                         break
     except psutil.NoSuchProcess:
         LOG.debug("no such process: %s", PID)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         should_start_new = False
         LOG.error("checkout PID: %s error!", PID)
     if should_start_new:
         PID = str(os.getpid())
-        fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "wb")
+        fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "w")
         fp.write(PID)
         fp.close()
         # init database conns
@@ -139,7 +139,7 @@ if __name__ == "__main__":
                                                         max_buffer_size = CONFIG["MAX_BUFFER_SIZE"],
                                                         chunk_size = 10 * 1024 * 1024)
             LOG.warning("Scheme: http ignore SERVER_SCHEME")
-        LOG.info("MAX_BUFFER_SIZE: %sM", CONFIG["MAX_BUFFER_SIZE"] / 1024 / 1024)
+        LOG.info("MAX_BUFFER_SIZE: %sM", CONFIG["MAX_BUFFER_SIZE"] // 1024 // 1024)
         common.Servers.HTTP_SERVER = http_server
         # http_server.listen(options.port)
         if CONFIG["APP_DEBUG"] == True:
@@ -155,8 +155,8 @@ if __name__ == "__main__":
         try:
             signal.signal(signal.SIGTERM, common.sig_handler)
             signal.signal(signal.SIGINT, common.sig_handler)
-            tornado.ioloop.IOLoop.instance().start()
-        except Exception, e:
+            tornado.ioloop.IOLoop.current().start()
+        except Exception as e:
             LOG.exception(e)
         finally:
             LOG.info("MyNote Exit!")

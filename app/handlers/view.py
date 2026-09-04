@@ -10,7 +10,7 @@ import logging
 import tornado.web
 
 from config import CONFIG
-from base import BaseHandler
+from .base import BaseHandler
 from utils.common import Servers
 
 LOG = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def get_html_path(file_sha1):
             return file_path
         else:
             return ""
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         LOG.debug("there is some except occur, so return ''.")
         return ""
@@ -52,5 +52,5 @@ class ViewHandler(BaseHandler):
                 # self.set_header("Content-Type", "text/xml; charset=UTF-8")Connection:keep-alive
                 # self.write(buf)
                 # self.finish()
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)

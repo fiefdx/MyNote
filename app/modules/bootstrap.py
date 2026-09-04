@@ -130,12 +130,12 @@ class ThumbnailCollections(tornado.web.UIModule):
         total_count = len(elements)
         row_count = int(math.ceil(total_count * 1.0 / column_count))
 
-        for i in xrange(column_count):
+        for i in range(column_count):
             html += """
                 <div class="col-md-%s">
                     <ul class="list-unstyled">
                 """ %(12 / column_count)
-            for j in xrange(row_count):
+            for j in range(row_count):
                 current_index = i * row_count + j
                 if current_index < total_count:
                     element = elements[current_index]
@@ -197,12 +197,12 @@ class Paginator(tornado.web.UIModule):
             html += "<li><a href=\"%s\">&laquo;</a></li>\n"%(url_pre_page,)
 
         # construct previous page links
-        for i in xrange(max_pages_pre):
+        for i in range(max_pages_pre):
             html += format_li(url, current_page - max_pages_pre + i)
         # construct current page link
         html += format_li(url, current_page, True)
         # construct post page links
-        for i in xrange(max_pages_post):
+        for i in range(max_pages_post):
             html += format_li(url, current_page + 1 + i)
         # construct next page link
         if current_page < total_page - 1:

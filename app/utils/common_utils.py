@@ -26,7 +26,7 @@ def sha1sum(content):
     '''
     m = hashlib.sha1(content.encode("utf-8"))
     m.digest()
-    result = m.hexdigest().decode("utf-8")
+    result = m.hexdigest()
     return result
 
 def sha256sum(content):
@@ -36,7 +36,7 @@ def sha256sum(content):
     '''
     m = hashlib.sha256(content.encode("utf-8"))
     m.digest()
-    result = m.hexdigest().decode("utf-8")
+    result = m.hexdigest()
     return result
 
 def md5twice(content):
@@ -45,7 +45,7 @@ def md5twice(content):
     result is unicode
     '''
     m = hashlib.md5(content.encode("utf-8")).hexdigest()
-    result = hashlib.md5(m).hexdigest().decode("utf-8")
+    result = hashlib.md5(m.encode("utf-8")).hexdigest()
     return result
 
 def get_ftype(fname):
@@ -83,7 +83,7 @@ def construct_safe_filename(file_name):
         if flag != []:
             new_file_name = e_src.sub(re_replace, new_file_name)
         result = new_file_name + ext
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -99,7 +99,7 @@ def get_description_text(content, length):
     if flag != []:
         # LOG.debug("flag: %s"%flag)
         content = e_src.sub(re_replace, content)
-    excerpts = u""
+    excerpts = ""
     # content = content.replace(' ','')
     len_content = len(content)
     if len_content > length:
@@ -144,7 +144,7 @@ def safe_dir_filename(dir_path):
                     flag = e_src.findall(files_str)
                     if flag != []:
                         LOG.debug("Regulation flag: %s", flag)
-                        for j in xrange(len(flag)):
+                        for j in range(len(flag)):
                             new_file_name = file_name + "_%s"%j + file_ext
                             n = j
                             while new_file_name in files:
@@ -158,7 +158,7 @@ def safe_dir_filename(dir_path):
                                       os.path.join(root, new_file_name))
                             result_dict["change_file"].append([flag[j], new_file_name])
                     change_list.append(result_dict)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         change_list = []
     return change_list

@@ -64,7 +64,7 @@ def get_whoosh_index(index_path, index_name = ""):
                     result = ix
         else:
             LOG.warning("Lost index name, so return None!")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -79,16 +79,16 @@ def update_whoosh_index_doc(index, item, index_name, key = "", merge = False):
                 # writer = index.writer()
                 writer = AsyncWriter(index)
                 if index_name == "HTML":
-                    writer.update_document(doc_id = unicode(str(item.id)),
+                    writer.update_document(doc_id = str(str(item.id)),
                                            file_name = item.file_name,
                                            file_content = item.file_content)
                 elif index_name == "NOTE":
-                    writer.update_document(doc_id = unicode(str(item.id)),
+                    writer.update_document(doc_id = str(str(item.id)),
                                            user_name = item.user_name,
                                            file_title = item.file_title,
                                            file_content = item.file_content)
                 elif index_name == "RICH":
-                    writer.update_document(doc_id = unicode(str(item.id)),
+                    writer.update_document(doc_id = str(str(item.id)),
                                            user_name = item.user_name,
                                            file_title = item.file_title,
                                            file_content = item.file_content)
@@ -97,11 +97,11 @@ def update_whoosh_index_doc(index, item, index_name, key = "", merge = False):
                 writer.commit(merge = merge)
                 LOG.debug("Update index[%s] doc_id[%s]", index_name, item.id)
                 result = True
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 writer.cancel()
                 result = False
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -118,16 +118,16 @@ def update_whoosh_index_doc_num(index, item_iter, item_num, index_name, key = ""
                     if key != "":
                         item.decrypt(key)
                     if index_name == "HTML":
-                        writer.update_document(doc_id = unicode(str(item.id)),
+                        writer.update_document(doc_id = str(str(item.id)),
                                                file_name = item.file_name,
                                                file_content = item.file_content)
                     elif index_name == "NOTE":
-                        writer.update_document(doc_id = unicode(str(item.id)),
+                        writer.update_document(doc_id = str(str(item.id)),
                                                user_name = item.user_name,
                                                file_title = item.file_title,
                                                file_content = item.file_content)
                     elif index_name == "RICH":
-                        writer.update_document(doc_id = unicode(str(item.id)),
+                        writer.update_document(doc_id = str(str(item.id)),
                                                user_name = item.user_name,
                                                file_title = item.file_title,
                                                file_content = item.file_content)
@@ -147,13 +147,13 @@ def update_whoosh_index_doc_num(index, item_iter, item_num, index_name, key = ""
                     LOG.debug("Commit use %ss", ss - s)
                     LOG.info("Commit index[%s] success", index_name)
                 result = True
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 writer.cancel()
                 result = False
         else:
             LOG.error("index object is False or None!")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -168,11 +168,11 @@ def delete_whoosh_index_doc_num(index, item_iter, item_num, index_name, merge = 
                 for item in item_iter:
                     n += 1
                     if index_name == "HTML":
-                        writer.delete_by_term("doc_id", unicode(str(item.id)))
+                        writer.delete_by_term("doc_id", str(str(item.id)))
                     elif index_name == "NOTE":
-                        writer.delete_by_term("doc_id", unicode(str(item.id)))
+                        writer.delete_by_term("doc_id", str(str(item.id)))
                     elif index_name == "RICH":
-                        writer.delete_by_term("doc_id", unicode(str(item.id)))
+                        writer.delete_by_term("doc_id", str(str(item.id)))
                     else:
                         LOG.error("index_name error: in the delete_whoosh_index_doc_num!")
                     LOG.debug("Delete index[%s] doc_id[%s]", index_name, item.id)
@@ -186,11 +186,11 @@ def delete_whoosh_index_doc_num(index, item_iter, item_num, index_name, merge = 
                     writer.commit(merge = merge)
                     LOG.info("Commit index[%s] success", index_name)
                 result = True
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 writer.cancel()
                 result = False
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -202,20 +202,20 @@ def delete_whoosh_index_doc_num_by_user(index, user_name, index_name, merge = Fa
             writer = AsyncWriter(index)
             try:
                 if index_name == "NOTE":
-                    writer.delete_by_term("user_name", unicode(str(user_name)))
+                    writer.delete_by_term("user_name", str(str(user_name)))
                 elif index_name == "RICH":
-                    writer.delete_by_term("user_name", unicode(str(user_name)))
+                    writer.delete_by_term("user_name", str(str(user_name)))
                 else:
                     LOG.error("index_name error: in the delete_whoosh_index_doc_num_by_user!")
                 LOG.debug("Delete index[%s] user[%s]", index_name, user_name)
                 writer.commit(merge = merge)
                 LOG.info("Commit index[%s] success", index_name)
                 result = True
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 writer.cancel()
                 result = False
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -230,11 +230,11 @@ def delete_whoosh_index_doc(index, doc_id, index_name, merge = False):
                 writer.commit(merge = merge)
                 LOG.debug("Delete index[%s] doc_id[%s]", index_name, doc_id)
                 result = True
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
                 writer.cancel()
                 result = False
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -247,6 +247,6 @@ def delete_whoosh_index(index_path, index_name):
             result = True
         else:
             result = True
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result

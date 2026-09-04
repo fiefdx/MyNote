@@ -74,7 +74,7 @@ class DB(object):
                     LOG.info("Init %s success", DB.DB_CONNS[n])
                 else:
                     LOG.info("Inited %s success", DB.DB_CONNS[n])
-            except Exception, e:
+            except Exception as e:
                 LOG.info("Init %s failed", DB.DB_CONNS[n])
                 LOG.exception(e)
         if init_object:
@@ -100,7 +100,7 @@ class DB(object):
                     getattr(cls, db_conn_attr).close()
                     setattr(cls, cls.DB_PATHS[n], None)
                 LOG.info("Close DB %s success", db_conn_attr)
-            except Exception, e:
+            except Exception as e:
                 LOG.info("Close DB %s failed", db_conn_attr)
                 LOG.exception(e)
 
@@ -110,7 +110,7 @@ class DB(object):
                 if hasattr(self, db_conn_attr) and getattr(self, db_conn_attr):
                     getattr(self, db_conn_attr).close()
                 LOG.info("Close %s success", db_conn_attr)
-            except Exception, e:
+            except Exception as e:
                 LOG.info("Close %s failed", db_conn_attr)
                 LOG.exception(e)
 
@@ -122,7 +122,7 @@ def get_conn_sqlite(db_path):
         # end_time = time.time()
         # LOG.info("get conn time: %s", end_time - start_time)
         #  get conn time: 9.70363616943e-05
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return conn
 
@@ -198,12 +198,12 @@ def init_sqlite(db_path, db_type):
         if conn != False:
             c = conn.cursor()
             c.execute(sql[db_type])
-            if sql_script.has_key(db_type):
+            if db_type in sql_script:
                 c.executescript(sql_script[db_type])
             conn.commit()
             LOG.debug("init sqlite %s success.", db_type)
             result = True
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -238,7 +238,7 @@ def get_db_path(root_path, db_type):
             else:
                 result = False
                 LOG.debug("%s.db do not exists and init db failed.", db_type)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -258,7 +258,7 @@ def update_flag(index_name, conn = None):
             conn.commit()
             result = True
             LOG.debug("Update old_time to new_time to %s success.", index_name)
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -279,7 +279,7 @@ def update_old_flag(index_name, conn = None):
             conn.commit()
             result = True
             LOG.debug("Update old_time to %s success.", index_name, )
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -300,7 +300,7 @@ def get_flag_from_db(index_name, conn = None):
             else:
                 result = i[2]
                 LOG.debug("Get a flag[%s] from db[%s] success.", result, index_name)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -444,7 +444,7 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
                             item["socks_proxy"],
                             item["user_name"])
 
-    for i in xrange(retries):
+    for i in range(retries):
         # if db_type in locks:
         #     locks[db_type].acquire()
         try:
@@ -484,7 +484,7 @@ def save_data_to_db(item, db_type, mode = "INSERT OR UPDATE", conn = None, retri
                 result = None
                 LOG.info("The same item[%s] have been in %s service, so ignore the insert & update action!", item["id"], db_type)
                 break
-        except Exception, e:
+        except Exception as e:
             if conn:
                 conn.rollback()
             if i < retries - 1:
@@ -522,7 +522,7 @@ def get_data_from_db(conn = None):
                 result.append(item)
                 i = c.fetchone()
             LOG.debug("get all picture from db success.")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -549,7 +549,7 @@ def get_data_by_sha1(sha1, conn = None):
             else:
                 result = None
             LOG.debug("get picture from db by sha1[%s] success.", sha1)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 #
@@ -585,7 +585,7 @@ def get_note_by_user_type_created_at(user_name, note_type, order = "DESC", offse
                 result.append(item)
                 i = c.fetchone()
             LOG.debug("get all note from db success.")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -615,7 +615,7 @@ def get_note_by_flag_iter(flag, conn = None):
                 yield item
                 i = c.fetchone()
             LOG.debug("Get all note[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_note_from_db_iter(conn = None, batch = 100):
@@ -651,7 +651,7 @@ def get_note_from_db_iter(conn = None, batch = 100):
                 else:
                     finish = True
             LOG.debug("Get all note[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_note_from_db_by_user_iter(user_name, conn = None, batch = 100):
@@ -687,7 +687,7 @@ def get_note_from_db_by_user_iter(user_name, conn = None, batch = 100):
                 else:
                     finish = True
             LOG.debug("Get all note[%s] by user[%s] from db success.", total, user_name)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_note_from_db_by_user_type_iter(user_name, note_type, conn = None, batch = 100):
@@ -726,7 +726,7 @@ def get_note_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
                 else:
                     finish = True
             LOG.debug("Get all note[%s] by user[%s] type[%s] from db success.", total, user_name, note_type)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_note_by_id(doc_id, user_name, conn = None):
@@ -755,7 +755,7 @@ def get_note_by_id(doc_id, user_name, conn = None):
                 item.type = i[9]
                 result = item
             LOG.debug("Get a user[%s]'s note[%s] from db success.", user_name, doc_id)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -785,7 +785,7 @@ def get_note_by_sha1(sha1, user_name, conn = None):
                 item.type = i[9]
                 result = item
             LOG.debug("Get a user[%s]'s note[%s] from db success.", user_name, sha1)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -800,7 +800,7 @@ def get_note_num_by_type_user(note_type, user_name, conn = None):
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s notebook[%s] num[%s] from db success.", user_name, note_type, i)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -815,7 +815,7 @@ def delete_note_by_id(user_name, doc_id, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete note[%s] by user[%s] from db success.", doc_id, user_name)
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -832,7 +832,7 @@ def delete_note_by_type(user_name, note_type, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete notes type[%s] by user[%s] from db success.", note_type, user_name)
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -850,7 +850,7 @@ def delete_note_by_user(user_name, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete all note by user[%s] from db success.", user_name)
-    except Exception, e:
+    except Exception as e:
         LOG.debug("Delete all note by user[%s] from db failed.", user_name)
         if conn:
             conn.rollback()
@@ -892,7 +892,7 @@ def get_rich_by_user_type_created_at(user_name, note_type, order = "DESC", offse
                 result.append(item)
                 i = c.fetchone()
             LOG.debug("get all rich from db success.")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -924,7 +924,7 @@ def get_rich_by_flag_iter(flag, conn = None):
                 yield item
                 i = c.fetchone()
             LOG.debug("Get all rich[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_rich_from_db_iter(conn = None, batch = 100):
@@ -962,7 +962,7 @@ def get_rich_from_db_iter(conn = None, batch = 100):
                 else:
                     finish = True
             LOG.debug("Get all rich[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_rich_from_db_by_user_iter(user_name, conn = None, batch = 100):
@@ -1000,7 +1000,7 @@ def get_rich_from_db_by_user_iter(user_name, conn = None, batch = 100):
                 else:
                     finish = True
             LOG.debug("Get all rich[%s] by user[%s] from db success.", total, user_name)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_rich_from_db_by_user_type_iter(user_name, note_type, conn = None, batch = 100):
@@ -1042,7 +1042,7 @@ def get_rich_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
                     finish = True
 
             LOG.debug("Get all rich[%s] by user[%s] type[%s] from db success.", total, user_name, note_type)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_rich_by_id(doc_id, user_name, conn = None):
@@ -1073,13 +1073,13 @@ def get_rich_by_id(doc_id, user_name, conn = None):
                 item.type = i[11]
                 result = item
             LOG.debug("Get a user[%s]'s rich[%s] from db success.", user_name, doc_id)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
 def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
     result = False
-    for i in xrange(retries):
+    for i in range(retries):
         try:
             if conn == None:
                 conn = DB.conn_rich
@@ -1107,7 +1107,7 @@ def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
                     result = item
                 LOG.debug("Get a user[%s]'s rich[%s] from db success.", user_name, sha1)
                 break
-        except Exception, e:
+        except Exception as e:
             if i < retries - 1:
                 time.sleep(0.5)
             else:
@@ -1126,7 +1126,7 @@ def get_rich_num_by_type_user(note_type, user_name, conn = None):
             result = i[0]
             # print "Num: %s"%result, type(i)
             LOG.debug("Get user[%s]'s rich notebook[%s] num[%s] from db success.", user_name, note_type, i)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1141,7 +1141,7 @@ def delete_rich_by_id(user_name, doc_id, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete rich[%s] by user[%s] from db success." % (doc_id, user_name))
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -1158,7 +1158,7 @@ def delete_rich_by_type(user_name, note_type, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete rich notes type[%s] by user[%s] from db success.", note_type, user_name)
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)
@@ -1175,7 +1175,7 @@ def delete_rich_by_user(user_name, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete all rich by user[%s] from db success.", user_name)
-    except Exception, e:
+    except Exception as e:
         LOG.debug("Delete all rich by user[%s] from db failed.", user_name)
         if conn:
             conn.rollback()
@@ -1206,7 +1206,7 @@ def get_html_from_db(conn = None):
                 result.append(html)
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success.", len(result))
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1232,7 +1232,7 @@ def get_html_from_db_iter(conn = None):
                 yield html
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_html_by_flag_iter(flag, conn = None):
@@ -1257,7 +1257,7 @@ def get_html_by_flag_iter(flag, conn = None):
                 yield html
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success.", total)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def get_html_by_id(doc_id, conn = None):
@@ -1282,7 +1282,7 @@ def get_html_by_id(doc_id, conn = None):
                 html.file_path = i[5]
                 result = html
             LOG.debug("Get a html[%s] from db success.", doc_id)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1308,7 +1308,7 @@ def get_html_by_sha1(sha1, conn = None):
                 html.file_path = i[5]
                 result = html
             LOG.debug("Get a html[%s] from db success.", sha1)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1323,7 +1323,7 @@ def get_html_num_from_db(conn = None):
             i = c.fetchone()
             result = i
             LOG.debug("Get a html num[%s] from db success.", i)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1357,7 +1357,7 @@ def get_user_from_db(user_name, conn = None):
                 user.socks_proxy = i[10]
                 result = user
             LOG.debug("Get user[%s] data from db success.", user_name)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     return result
 
@@ -1372,7 +1372,7 @@ def delete_user_from_db(user_name, conn = None):
             conn.commit()
             result = True
             LOG.debug("Delete user[%s] from db success.", user_name)
-    except Exception, e:
+    except Exception as e:
         if conn:
             conn.rollback()
         LOG.exception(e)

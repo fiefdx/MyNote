@@ -7,8 +7,8 @@ Created on 2013-10-30 21:09
 Modified on 2013-11-09 22:58
 @author: YangHaitao
 '''
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 class LinkItem(object):
     """html <a> tag 's python representation"""
@@ -132,12 +132,12 @@ def add_params_to_url(url, params):
     @param params: dict value
     """
     url = url.encode('utf-8')
-    url_parts = list(urlparse.urlparse(url))
-    query = dict(urlparse.parse_qsl(url_parts[4]))
+    url_parts = list(urllib.parse.urlparse(url))
+    query = dict(urllib.parse.parse_qsl(url_parts[4]))
     query.update(params)
-    url_parts[4] = urllib.urlencode(query)
-    return urlparse.urlunparse(url_parts)
+    url_parts[4] = urllib.parse.urlencode(query)
+    return urllib.parse.urlunparse(url_parts)
 
 
 if __name__ == "__main__":
-    print add_params_to_url('/search?q=杨&query=(@(file_name) 杨)|(@(file_content) 杨)&search_project=all_results&search_time=All_Times',dict({'page':10}))
+    print(add_params_to_url('/search?q=杨&query=(@(file_name) 杨)|(@(file_content) 杨)&search_project=all_results&search_time=All_Times',dict({'page':10})))

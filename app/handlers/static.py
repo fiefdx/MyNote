@@ -9,7 +9,7 @@ import os
 import sys
 import logging
 import hashlib
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import chardet
 import shutil
 import datetime
@@ -21,7 +21,7 @@ import tornado.web
 from tornado import gen
 
 from config import CONFIG
-from base import BaseHandler
+from .base import BaseHandler
 
 LOG = logging.getLogger(__name__)
 

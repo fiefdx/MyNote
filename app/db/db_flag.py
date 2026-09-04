@@ -24,7 +24,7 @@ class DB(object):
             if self.conn:
                 self.conn.close()
             LOG.info("Close flag conn success")
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Close flag conn failed")
             LOG.exception(e)
 
@@ -40,7 +40,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Update old_time to new_time to %s success", index_name)
-        except Exception, e:
+        except Exception as e:
             if self.conn:
                 self.conn.rollback()
             LOG.exception(e)
@@ -58,7 +58,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Update old_time to %s success", index_name)
-        except Exception, e:
+        except Exception as e:
             if self.conn:
                 self.conn.rollback()
             LOG.exception(e)
@@ -76,6 +76,6 @@ class DB(object):
             else:
                 result = i[2]
                 LOG.debug("Get a flag[%s] from db[%s] success", result, index_name)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result

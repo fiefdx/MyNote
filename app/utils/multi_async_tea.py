@@ -20,8 +20,7 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 import toro
 
-import tea
-from tea import EncryptStr, DecryptStr
+from tea_compat import EncryptStr, DecryptStr
 
 from config import CONFIG
 import logger
@@ -84,12 +83,12 @@ class NoteTeaProcess(Process):
                 except EOFError:
                     LOG.error("EOFError NoteTeaProcess(%s) Write Thread exit!", self.process_id)
                     return
-                except Exception, e:
+                except Exception as e:
                     LOG.exception(e)
             LOG.info("Leveldb Process(%s) exit!", self.process_id)
         except KeyboardInterrupt:
             LOG.info("KeyboardInterrupt: NoteTeaProcess(%s) exit!", self.process_id)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
 class MultiProcessNoteTea(object):
@@ -103,7 +102,7 @@ class MultiProcessNoteTea(object):
     def __init__(self, process_num = 1):
         if MultiProcessNoteTea._instance == None:
             self.process_num = process_num
-            for i in xrange(process_num):
+            for i in range(process_num):
                 pipe_master, pipe_client = Pipe()
                 MultiProcessNoteTea.WRITE_LOCKS.append(toro.Lock())
                 p = NoteTeaProcess(i, pipe_client)
@@ -174,11 +173,11 @@ class MultiProcessNoteTea(object):
         try:
             # for i in MultiProcessNoteTea.PROCESS_DICT.iterkeys():
             #     MultiProcessNoteTea.PROCESS_DICT[i][0].terminate()
-            for i in MultiProcessNoteTea.PROCESS_DICT.iterkeys():
+            for i in MultiProcessNoteTea.PROCESS_DICT.keys():
                 MultiProcessNoteTea.PROCESS_DICT[i][1].send(("EXIT", (), {}, None))
-            for i in MultiProcessNoteTea.PROCESS_DICT.iterkeys():
+            for i in MultiProcessNoteTea.PROCESS_DICT.keys():
                 while MultiProcessNoteTea.PROCESS_DICT[i][0].is_alive():
                     time.sleep(0.5)
             LOG.info("All NoteTea Process Exit!")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)

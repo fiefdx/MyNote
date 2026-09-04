@@ -27,7 +27,7 @@ class DB(object):
             if self.conn:
                 self.conn.close()
             LOG.info("Close pic conn success")
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Close pic conn failed")
             LOG.exception(e)
 
@@ -46,7 +46,7 @@ class DB(object):
                             item["file_path"],
                             item["sha1"])
 
-        for i in xrange(retries):
+        for i in range(retries):
             try:
                 c = self.conn.cursor()
                 if mode == "UPDATE":
@@ -74,7 +74,7 @@ class DB(object):
                     result = None
                     LOG.info("The same item[%s] have been in pic, so ignore the insert & update action!", item["id"])
                     break
-            except Exception, e:
+            except Exception as e:
                 if self.conn:
                     self.conn.rollback()
                 if i < retries - 1:
@@ -103,7 +103,7 @@ class DB(object):
                 result.append(item)
                 i = c.fetchone()
             LOG.debug("get all picture from db success")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -127,6 +127,6 @@ class DB(object):
             else:
                 result = None
             LOG.debug("get picture from db by sha1[%s] success", sha1)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result

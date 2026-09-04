@@ -33,7 +33,7 @@ import logging
 import shutil
 import datetime
 import dateutil
-import StringIO
+import io
 
 import tornado.web
 from tornado import gen
@@ -42,7 +42,7 @@ from whoosh.writing import AsyncWriter
 
 from config import CONFIG
 from utils import search_whoosh
-from base import BaseHandler, BaseSocketHandler
+from .base import BaseHandler, BaseSocketHandler
 from utils.archive import Archive_Rich_Notes as Archive
 from utils.archive import Archive_Rich_Note as ArchiveNote
 from utils import htmlparser
@@ -99,9 +99,9 @@ def create_category_info(storage_users_path, user_info, category):
     file_path = os.path.join(storage_users_path, user_info.sha1, "rich_notes", "category.json")
     fp = open(file_path, 'wb')
     if category["name"] == "All":
-        fp.write(user_info.rich_books)
+        fp.write(user_info.rich_books.encode("utf-8"))
     else:
-        fp.write(json.dumps([category]))
+        fp.write(json.dumps([category]).encode("utf-8"))
     fp.close()
     LOG.info("create user[%s] category.json[%s]", user_info.user_name, file_path)
 
@@ -196,7 +196,7 @@ class RichHandler(BaseHandler):
                         shutil.copyfile(pic_path, target_path + '.tmp')
                         try:
                             os.rename(target_path + '.tmp', target_path)
-                        except Exception, e:
+                        except Exception as e:
                             if not os.path.exists(target_path):
                                 raise e
                         LOG.debug("Copy file[%s] to file[%s]", pic_path, target_path)
@@ -308,7 +308,7 @@ def process_query(query, user, page = 1, user_key = ""):
         else:
             result["totalcount"] = 0
             result["result"] = []
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result["totalcount"] = 0
         result["result"] = []
@@ -519,7 +519,7 @@ def create_note(note_dict, user, handler, user_locale, user_key = "", proxy = {}
             data['note'] = note.to_dict()
             data['save'] = save
             send_msg(json.dumps(data), user, handler)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 @gen.coroutine
@@ -569,7 +569,7 @@ def delete_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
             tmp_books['numbers']['Search'] = result["totalcount"]
             data['books'] = tmp_books
         send_msg(json.dumps(data), user, handler)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 @gen.coroutine
@@ -642,13 +642,13 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = "", pr
         elif flag.sha1 == note.sha1:
             data['save'] = 'save_ok'
             send_msg(json.dumps(data), user, handler)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def send_msg(msg, user, handler):
     try:
         handler.write_message(msg)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 class RichSocketHandler(BaseSocketHandler):
@@ -665,7 +665,7 @@ class RichSocketHandler(BaseSocketHandler):
             user_locale = self.get_user_locale()
             user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
             if user_info:
-                if RichSocketHandler.socket_handlers.has_key(user):
+                if user in RichSocketHandler.socket_handlers:
                     RichSocketHandler.socket_handlers[user].add(self)
                     LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
                 else:
@@ -674,7 +674,7 @@ class RichSocketHandler(BaseSocketHandler):
                     LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
 
                 LOG.info("open rich note websocket: %s", user)
-                LOG.info("rich note websocket users: %s", RichSocketHandler.socket_handlers.keys())
+                LOG.info("rich note websocket users: %s", list(RichSocketHandler.socket_handlers.keys()))
                 data = {}
                 data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
                 if data['notes'] != []:
@@ -697,7 +697,7 @@ class RichSocketHandler(BaseSocketHandler):
     @gen.coroutine
     def on_close(self):
         user = self.get_current_user_name()
-        if user and RichSocketHandler.socket_handlers.has_key(user):
+        if user and user in RichSocketHandler.socket_handlers:
             RichSocketHandler.socket_handlers[user].remove(self)
             LOG.info("close rich note websocket: %s", user)
             LOG.info("rich note websocket[%s] len: %s", user, len(RichSocketHandler.socket_handlers[user]))
@@ -721,7 +721,7 @@ class RichSocketHandler(BaseSocketHandler):
             msg = json.loads(msg)
             data = {}
             note_list = []
-            if msg.has_key('note'):
+            if 'note' in msg:
                 cmd = msg['note']['cmd']
                 if cmd == 'select':
                     note_id = msg['note']['note_id']
@@ -737,7 +737,7 @@ class RichSocketHandler(BaseSocketHandler):
                     send_msg(json.dumps(data), user, self)
                 elif cmd == 'save':
                     proxy = {}
-                    if msg['note'].has_key('proxy') and msg['note']['proxy']:
+                    if 'proxy' in msg['note'] and msg['note']['proxy']:
                         user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
                         if user_info.socks_proxy != "":
                             proxy["socks"] = user_info.socks_proxy
@@ -750,7 +750,7 @@ class RichSocketHandler(BaseSocketHandler):
                         yield create_note(msg['note'], user, self, user_locale, user_key = user_key, proxy = proxy)
                     elif note_id != None:
                         yield save_note(msg['note'], user, self, user_locale, page = 1, user_key = user_key, proxy = proxy)
-            if msg.has_key('category'):
+            if 'category' in msg:
                 cmd = msg['category']['cmd']
                 LOG.info("category operation: %s", cmd)
                 if cmd == 'create':
@@ -770,7 +770,7 @@ class RichSocketHandler(BaseSocketHandler):
                     note_id = msg['category']['note_id']
                     q = msg['category']['q']
                     yield load_category(category_name, note_id, user, self, user_locale, user_key, offset, q)
-            if msg.has_key('reinit'):
+            if 'reinit' in msg:
                 data = {}
                 data['notes'] = (yield update_notes('All', user, user_key = user_key, offset = 0))['notes_list']
                 if data['notes'] != []:
@@ -779,7 +779,7 @@ class RichSocketHandler(BaseSocketHandler):
                 else:
                     data['note'] = {'file_title':'', 'file_content':'', 'rich_content':''}
                     data['current_note_id'] = None
-                if msg['reinit'].has_key('package_name'):
+                if 'package_name' in msg['reinit']:
                     user_info = Servers.DB_SERVER["USER"].get_user_from_db(user)
                     arch = Archive(user_info)
                     arch.package_path = os.path.join(arch.export_path, msg['reinit']['package_name'])
@@ -787,7 +787,7 @@ class RichSocketHandler(BaseSocketHandler):
                 data['note_list_action'] = 'init' # init, append
                 data['books'] = yield update_categories(user_locale, user)
                 data['current_category'] = 'All'
-                data['option'] = msg['reinit']['option'] if msg['reinit'].has_key('option') else ''
+                data['option'] = msg['reinit']['option'] if 'option' in msg['reinit'] else ''
                 send_msg(json.dumps(data), user, self)
         else:
             self.close()
@@ -818,7 +818,7 @@ class ExportHandler(BaseHandler):
                 self.finish()
             else:
                 self.write("Download Archive Error!")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
 class ExportAjaxHandler(BaseHandler):
@@ -848,7 +848,7 @@ class ExportAjaxHandler(BaseHandler):
                 result["flag"] = True
             else:
                 LOG.error("Export rich notes user[%s] failed!", user)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -864,7 +864,7 @@ class ExportAjaxHandler(BaseHandler):
             flag = yield manager_client.get_export_rate_of_progress(export_category, user_info)
             LOG.debug("export rich notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s", export_category, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"])
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -895,7 +895,7 @@ class ArchiveAjaxHandler(BaseHandler):
                 result["flag"] = True
             else:
                 LOG.error("Archive rich notes user[%s] failed!", user)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -911,7 +911,7 @@ class ArchiveAjaxHandler(BaseHandler):
             flag = yield manager_client.get_archive_rate_of_progress(export_category, user_info)
             LOG.debug("archive rich notes %s by user[%s] flag: %s, rate: %s/%s, finish: %s, predict_total: %s, package_name: %s", export_category, user, flag["flag"], flag["tasks"], flag["total"], flag["finish"], flag["predict_total"], flag["package_name"])
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -962,7 +962,7 @@ class DeleteHandler(BaseHandler):
             else:
                 LOG.error("Delete user[%s] all rich notes index failed", user)
             self.redirect("/rich")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             self.render("info.html", info_msg = "Delete user[%s]'s rich notes failed." % user)
 
@@ -987,7 +987,7 @@ class UploadAjaxHandler(BaseHandler):
                     fileinfo = True
                     fname = self.get_argument("up_file.name", "")
                     up_file_path = self.get_argument("up_file.path", "")
-            except Exception, e:
+            except Exception as e:
                 fileinfo = None
                 LOG.error("Upload file failed, You must be sure selected a file!")
                 LOG.exception(e)
@@ -1003,7 +1003,7 @@ class UploadAjaxHandler(BaseHandler):
                     fp.close()
                 else:
                     shutil.move(up_file_path, fpath)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write({"result":"ok"})
 
@@ -1048,7 +1048,7 @@ class UploadAjaxStreamHandler(BaseHandler):
                             continue
 
                     elif self.state == UploadAjaxStreamHandler.PARSE_READY:
-                        stream = StringIO.StringIO(part)
+                        stream = io.StringIO(part)
                         stream.readline()
                         form_data_type_line = stream.readline()
                         if form_data_type_line.find("filename") > -1:
@@ -1077,7 +1077,7 @@ class UploadAjaxStreamHandler(BaseHandler):
                             form_value = stream.readline()
                             self.state = UploadAjaxStreamHandler.PARSE_READY
                             LOG.debug("%s=%s" % (form_name.strip(), form_value.strip()))
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     @tornado.web.authenticated
@@ -1096,7 +1096,7 @@ class UploadAjaxStreamHandler(BaseHandler):
                     fileinfo = True
                     fname = self.get_argument("up_file.name", "")
                     up_file_path = self.get_argument("up_file.path", "")
-            except Exception, e:
+            except Exception as e:
                 fileinfo = None
                 LOG.error("Upload file failed, You must be sure selected a file!")
                 LOG.exception(e)
@@ -1108,7 +1108,7 @@ class UploadAjaxStreamHandler(BaseHandler):
                                      fname)
                 if CONFIG["WITH_NGINX"]:
                     shutil.move(up_file_path, fpath)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         LOG.debug("upload node package use: %ss", time.time() - self.start)
         self.write({"result":"ok"})
@@ -1135,7 +1135,7 @@ class ImportAjaxHandler(BaseHandler):
                 result["flag"] = True
             else:
                 LOG.error("Import notes user[%s] failed!", user)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -1165,7 +1165,7 @@ class ImportAjaxHandler(BaseHandler):
                 if os.path.exists(import_root_path) and os.path.isdir(import_root_path):
                     shutil.rmtree(import_root_path)
                     LOG.info("delete import_path[%s] success.", import_root_path)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -1189,7 +1189,7 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
             if key != "":
                 note.decrypt(key, decrypt_description = False)
                 # note = yield multi_process_note_tea.decrypt(note, *(key, False))
-            writer.update_document(doc_id = unicode(str(note.id)), 
+            writer.update_document(doc_id = str(str(note.id)), 
                                    user_name = note.user_name, 
                                    file_title = note.file_title, 
                                    file_content = note.file_content)
@@ -1213,7 +1213,7 @@ def async_index(fname, user_info, key = "", index_batch_size = 1000, merge = Fal
             LOG.debug("Commit use %ss", ss - s)
             LOG.info("Commit index[RICH] success.")
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         writer.cancel()
     IndexAjaxHandler.tasks[get_index_key(fname, user_info)]["flag"] = True
@@ -1238,7 +1238,7 @@ class IndexAjaxHandler(BaseHandler):
             IndexAjaxHandler.tasks[get_index_key(fname, user_info)] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": total_tasks if total_tasks is not False else 0}
             ioloop.IOLoop.current().spawn_callback(async_index, fname, user_info, key, merge = True)
             result["flag"] = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)
 
@@ -1258,6 +1258,6 @@ class IndexAjaxHandler(BaseHandler):
             if flag["flag"] is True:
                 del IndexAjaxHandler.tasks[get_index_key(fname, user_info)]
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         self.write(result)

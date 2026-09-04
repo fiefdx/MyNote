@@ -34,7 +34,7 @@ class IX(object):
         self.ix = None
         try:
             self.ix = get_whoosh_index(CONFIG["INDEX_ROOT_PATH"], self.name)
-        except Exception, e:
+        except Exception as e:
             LOG.info("Init index(%s) failed", self.name)
             LOG.exception(e)
 
@@ -43,7 +43,7 @@ class IX(object):
             if self.ix:
                 self.ix.close()
             LOG.info("Close index(%s) success", self.name)
-        except Exception, e:
+        except Exception as e:
             LOG.info("Close index(%s) failed", self.name)
             LOG.exception(e)
 
@@ -59,7 +59,7 @@ class IX(object):
                     else:
                         LOG.debug("Index html[%s] failed", html.file_name)
                 result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -79,6 +79,6 @@ class IX(object):
                                                            self.name,
                                                            merge = merge)
                         result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result

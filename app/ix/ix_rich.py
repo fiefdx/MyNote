@@ -35,7 +35,7 @@ class IX(object):
         self.ix = None
         try:
             self.ix = get_whoosh_index(CONFIG["INDEX_ROOT_PATH"], self.name)
-        except Exception, e:
+        except Exception as e:
             LOG.info("Init index(%s) failed", self.name)
             LOG.exception(e)
 
@@ -44,7 +44,7 @@ class IX(object):
             if self.ix:
                 self.ix.close()
             LOG.info("Close index(%s) success", self.name)
-        except Exception, e:
+        except Exception as e:
             LOG.info("Close index(%s) failed", self.name)
             LOG.exception(e)
 
@@ -65,7 +65,7 @@ class IX(object):
                                                            key = key,
                                                            merge = merge)
                         result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -80,7 +80,7 @@ class IX(object):
                                                key = key,
                                                merge = merge)
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -95,7 +95,7 @@ class IX(object):
                                                key = key,
                                                merge = merge)
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -105,7 +105,7 @@ class IX(object):
             note = db_rich.get_rich_by_id(doc_id, user_name)
             flag = update_whoosh_index_doc(self.ix, note, self.name, key = key, merge = merge)
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -114,7 +114,7 @@ class IX(object):
         try:
             flag = delete_whoosh_index_doc(self.ix, doc_id, self.name, merge = merge)
             result = flag
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -125,6 +125,6 @@ class IX(object):
                                                          user_name,
                                                          self.name,
                                                          merge = merge)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result

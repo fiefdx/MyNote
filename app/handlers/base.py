@@ -19,15 +19,14 @@ LOG = logging.getLogger(__name__)
 COOKIE_TIME = CONFIG["MAX_AGE_DAYS"]
 
 def bytes_2_unicode(string):
-    string_unicode = string
-    try:
-        string_unicode = unicode(string)
-    except UnicodeDecodeError, e:
+    # In Python 3, get_secure_cookie returns bytes; decode to str.
+    if isinstance(string, bytes):
         try:
-            string_unicode = string.decode("utf-8")
-        except Exception, e:
+            return string.decode("utf-8")
+        except Exception as e:
             LOG.exception(e)
-    return string_unicode
+            return string.decode("utf-8", "replace")
+    return str(string)
 
 class BaseHandler(tornado.web.RequestHandler):
     def get_current_user(self):

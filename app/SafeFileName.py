@@ -90,7 +90,7 @@ def process_mission( mission_queue, result_queue, db_file_path, exts = None, sto
                             fp.close()
                             m = hashlib.sha1(html_content)
                             m.digest()
-                            file_sha1 = m.hexdigest().decode("utf-8") # unicode
+                            file_sha1 = m.hexdigest() # unicode
                             file_name = os.path.split(fpath)[1] # unicode
                             LOG.debug("Old file name: %s", file_name)
                             new_file_name = file_sha1 + os.path.splitext(file_name)[1] # unicode
@@ -118,7 +118,7 @@ def process_mission( mission_queue, result_queue, db_file_path, exts = None, sto
                 time.sleep(0.01)
         mission_queue.put('mission complete')
         result_queue.put([total_count_file, success_processed_count_file])
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 def mission_generator(source_dir, process_num, queue_size, db_file_path, exts = None, storage_path = None):
@@ -195,7 +195,7 @@ def mission_generator(source_dir, process_num, queue_size, db_file_path, exts = 
                 files_len = len(files)
                 if files_len >= process_num:
                     mission_len = int(files_len/process_num)
-                    for i in xrange(process_num):
+                    for i in range(process_num):
                         while mission_queue.full() == True:
                             time.sleep( 0.01 )
                         if i != (process_num - 1):
@@ -214,7 +214,7 @@ def mission_generator(source_dir, process_num, queue_size, db_file_path, exts = 
             tmp = result_queue.get()
             total_count_file += tmp[0]
             success_processed_count_file += tmp[1]
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         # exc = traceback.format_exc()
         # print 'mission_generator :\n',exc

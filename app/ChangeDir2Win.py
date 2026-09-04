@@ -37,7 +37,7 @@ def change_dir2win(source_dir):
             if os.path.isdir(path):
                 shutil.move(path, path + "_win")
                 LOG.info("Change [%s] to [%s]", path, path + "_win")
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
 
 if __name__ == "__main__":

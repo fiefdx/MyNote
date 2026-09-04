@@ -13,12 +13,12 @@ class Mapping(object):
         self.mapping[task_processer.name] = task_processer
 
     def delete(self, name):
-        if self.mapping.has_key(name):
+        if name in self.mapping:
             del self.mapping[name]
 
     def get(self, name):
         result = None
-        if self.mapping.has_key(name):
+        if name in self.mapping:
             result = self.mapping[name]
         return result
 

@@ -24,7 +24,7 @@ import logger
 LOG = logging.getLogger(__name__)
 
 
-TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in xrange(CONFIG["PROCESS_NUM"])]
+TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in range(CONFIG["PROCESS_NUM"])]
 ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
 ImportRich = "IMPORT_RICH"
 ImportNote = "IMPORT_NOTE"
@@ -91,13 +91,13 @@ class Processer(StoppableThread):
                             LOG.debug("processed task: %s", job[0])
                         else:
                             break
-                    except Exception, e:
+                    except Exception as e:
                         LOG.exception(e)
                 else:
                     LOG.info("Processer(%03d) exit by signal!", self.pid)
                     break
             self.task_queue.put(StopSignal)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         LOG.info("Processer(%03d) exit", self.pid)
 
@@ -136,7 +136,7 @@ class Worker(Process):
         LOG.info("Worker(%03d) start", self.wid)
         try:
             threads = []
-            for i in xrange(CONFIG["THREAD_NUM"]):
+            for i in range(CONFIG["THREAD_NUM"]):
                 t = Processer(i, self.task_queue, self.result_queue)
                 threads.append(t)
 
@@ -145,7 +145,7 @@ class Worker(Process):
 
             for t in threads:
                 t.join()
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         LOG.info("Worker(%03d) exit", self.wid)
 
@@ -262,9 +262,9 @@ class Dispatcher(StoppableThread):
                             self.tasks[task_key]["total"] += 1
                     self.tasks[task_key]["total"] -= CONFIG["PROCESS_NUM"]
                     LOG.info("dispatch archive rich notes over: %s, %s, %s", command, file_name, user.sha1)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
-        for i in xrange(CONFIG["PROCESS_NUM"]):
+        for i in range(CONFIG["PROCESS_NUM"]):
             self.task_queues[i].put(StopSignal)
         LOG.info("Dispatcher exit")
 
@@ -293,11 +293,11 @@ class Collector(StoppableThread):
                     LOG.debug("collect: %s", task)
                     if task != StopSignal:
                         flag = False
-                        if self.tasks.has_key(task[1]):
+                        if task[1] in self.tasks:
                             self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(self.tasks[task[1]]["tasks"], task[2], self.tasks[task[1]]["finish"])
                         else:
                             self.tasks[task[1]]["tasks"], flag, self.tasks[task[1]]["finish"] = self.mapping.get(task[0]).reduce(0, task[2], 0)
-                        if len(task) >= 4 and self.tasks[task[1]].has_key("package_name"): # for archive notes processer
+                        if len(task) >= 4 and "package_name" in self.tasks[task[1]]: # for archive notes processer
                             self.tasks[task[1]]["package_name"] = task[3]
                         if flag and self.tasks[task[1]]["finish"] == CONFIG["PROCESS_NUM"] and self.tasks[task[1]]["flag"] is False:
                             self.tasks[task[1]]["flag"] = True
@@ -307,7 +307,7 @@ class Collector(StoppableThread):
                 else:
                     LOG.info("Collector(%03d) exit by signal!", self.pid)
                     break
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         LOG.info("Collector(%03d) exit", self.pid)
 
@@ -365,21 +365,21 @@ class Manager(Process):
                 if command == ImportNote:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == ImportRich:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager import rich %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetRate:
                     task_key = get_key(file_name, user)
                     LOG.debug("Manager get rate %s[%s]", user.sha1, user.user_name)
-                    if self.tasks.has_key(task_key):
+                    if task_key in self.tasks:
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
                             del self.tasks[task_key]
@@ -388,21 +388,21 @@ class Manager(Process):
                 elif command == IndexNote:
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager index note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == IndexRich:
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager index rich %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetIndexRate:
                     task_key = get_index_key(file_name, user)
                     LOG.debug("Manager get index rate %s[%s]", user.sha1, user.user_name)
-                    if self.tasks.has_key(task_key):
+                    if task_key in self.tasks:
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
                             del self.tasks[task_key]
@@ -411,21 +411,21 @@ class Manager(Process):
                 elif command == ExportNote:
                     task_key = get_export_key(file_name, user)
                     LOG.debug("Manager export note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == ExportRich:
                     task_key = get_export_key(file_name, user)
                     LOG.debug("Manager export rich note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetExportRate:
                     task_key = get_export_key(file_name, user)
                     LOG.debug("Manager get export rate %s[%s]", user.sha1, user.user_name)
-                    if self.tasks.has_key(task_key):
+                    if task_key in self.tasks:
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
                             del self.tasks[task_key]
@@ -434,21 +434,21 @@ class Manager(Process):
                 elif command == ArchiveNote:
                     task_key = get_archive_key(file_name, user)
                     LOG.debug("Manager archive note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0, "package_name": ""}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == ArchiveRich:
                     task_key = get_archive_key(file_name, user)
                     LOG.debug("Manager archive rich note %s[%s]", user.sha1, user.user_name)
-                    if not self.tasks.has_key(task_key):
+                    if task_key not in self.tasks:
                         self.tasks[task_key] = {"total": 0, "tasks": 0, "flag": False, "finish": 0, "predict_total": 0, "package_name": ""}
                     self.queue.put((command, file_name, user, user_key, password))
                     self.pipe_client.send((command, self.tasks[task_key]))
                 elif command == GetArchiveRate:
                     task_key = get_archive_key(file_name, user)
                     LOG.debug("Manager get archive rate %s[%s]", user.sha1, user.user_name)
-                    if self.tasks.has_key(task_key):
+                    if task_key in self.tasks:
                         self.pipe_client.send((command, self.tasks[task_key]))
                         if self.tasks[task_key]["flag"] == True:
                             del self.tasks[task_key]
@@ -461,7 +461,7 @@ class Manager(Process):
                     LOG.info("Manager exit by EXIT command!")
                     break
 
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         for task_queue in self.task_queues:
             task_queue.put(StopSignal)
@@ -483,7 +483,7 @@ class ManagerClient(object):
             ManagerClient.PROCESS_LIST.append(p)
             ManagerClient.PROCESS_DICT["manager"] = [p, pipe_master]
             p.start()
-            for i in xrange(process_num):
+            for i in range(process_num):
                 p = Worker(i, TaskQueues[i], ResultQueue)
                 p.daemon = True
                 ManagerClient.PROCESS_LIST.append(p)
@@ -778,5 +778,5 @@ class ManagerClient(object):
                 while p.is_alive():
                     time.sleep(0.5)
             LOG.info("All Processer Process Exit!")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)

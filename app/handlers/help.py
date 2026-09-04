@@ -9,7 +9,7 @@ import logging
 import tornado
 
 from config import CONFIG
-from base import BaseHandler
+from .base import BaseHandler
 
 LOG = logging.getLogger(__name__)
 

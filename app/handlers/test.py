@@ -11,7 +11,7 @@ import tornado
 
 
 from config import CONFIG
-from base import BaseHandler, BaseSocketHandler
+from .base import BaseHandler, BaseSocketHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -41,9 +41,9 @@ class TestHandler(BaseHandler):
 
 def send_msg(msg, user):
     try:
-        if SocketHandler.socket_handlers.has_key(user):
+        if user in SocketHandler.socket_handlers:
             SocketHandler.socket_handlers[user].write_message(msg)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     # for handler in SocketHandler.socket_handlers:
     #     try:
@@ -62,7 +62,7 @@ class SocketHandler(BaseSocketHandler):
         LOG.info("open websocket: %s", user)
         # SocketHandler.socket_handlers.add(self)
         send_msg("Open a websocket", user)
-        LOG.info("websocket users: %s", SocketHandler.socket_handlers.keys())
+        LOG.info("websocket users: %s", list(SocketHandler.socket_handlers.keys()))
 
     @tornado.web.authenticated
     def on_close(self):
@@ -70,7 +70,7 @@ class SocketHandler(BaseSocketHandler):
         # SocketHandler.socket_handlers.remove(self)
         SocketHandler.socket_handlers.pop(user)
         LOG.info("close websocket: %s", user)
-        LOG.info("websocket users: %s", SocketHandler.socket_handlers.keys())
+        LOG.info("websocket users: %s", list(SocketHandler.socket_handlers.keys()))
         # send_msg("Close a websocket", user)
 
     @tornado.web.authenticated

@@ -92,7 +92,7 @@ class WebServer(Thread):
                                                         max_buffer_size = CONFIG["MAX_BUFFER_SIZE"],
                                                         chunk_size = 10 * 1024 * 1024)
             LOG.warning("Scheme: http ignore SERVER_SCHEME")
-        LOG.info("MAX_BUFFER_SIZE: %sM", CONFIG["MAX_BUFFER_SIZE"] / 1024 / 1024)
+        LOG.info("MAX_BUFFER_SIZE: %sM", CONFIG["MAX_BUFFER_SIZE"] // 1024 // 1024)
         common.Servers.HTTP_SERVER = http_server
         # http_server.listen(options.port)
         if CONFIG["APP_DEBUG"] == True:
@@ -106,9 +106,9 @@ class WebServer(Thread):
                 LOG.info("Listen: localhost:%s", options.port)
             http_server.start(num_processes = 1)
         try:
-            self.ioloop_instance = tornado.ioloop.IOLoop.instance()
-            tornado.ioloop.IOLoop.instance().start()
-        except Exception, e:
+            self.ioloop_instance = tornado.ioloop.IOLoop.current()
+            tornado.ioloop.IOLoop.current().start()
+        except Exception as e:
             LOG.exception(e)
         finally:
             LOG.info("IOLoop instance Exit!")
@@ -135,7 +135,7 @@ def restart_program():
     common.sig_thread_handler(signal.SIGINT, None)
     python = sys.executable
     LOG.debug("restart cmd: %s, %s", python, sys.argv)
-    fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "wb")
+    fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "w")
     fp.write("")
     fp.close()
     os.execl(python, python, * sys.argv)
@@ -256,7 +256,7 @@ class PreferenceFrame(wx.Frame):
             try:
                 v = int(self.te_server_port.GetValue())
                 values["SERVER_PORT"] = v
-            except Exception, e:
+            except Exception as e:
                 LOG.exception(e)
         update(**values)
         self.Destroy()
@@ -289,7 +289,7 @@ if __name__ == "__main__":
     PID = ""
     pid_file_path = os.path.join(CONFIG["PID_PATH"], "application.pid")
     if os.path.exists(pid_file_path) and os.path.isfile(pid_file_path):
-        fp = open(pid_file_path, "rb")
+        fp = open(pid_file_path, "r")
         PID = fp.read()
         fp.close()
     try:
@@ -304,13 +304,13 @@ if __name__ == "__main__":
                         break
     except psutil.NoSuchProcess:
         LOG.debug("no such process: %s", PID)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         should_start_new = False
         LOG.error("checkout PID: %s error!", PID)
     if should_start_new:
         PID = str(os.getpid())
-        fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "wb")
+        fp = open(os.path.join(CONFIG["PID_PATH"], "application.pid"), "w")
         fp.write(PID)
         fp.close()
         # init database conns
@@ -339,7 +339,7 @@ if __name__ == "__main__":
         try:
             app = App(False)
             app.MainLoop()
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         LOG.info("MyNote Exit!")
     else:

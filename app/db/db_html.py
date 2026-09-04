@@ -27,7 +27,7 @@ class DB(object):
             if self.conn:
                 self.conn.close()
             LOG.info("Close html conn success")
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Close html conn failed")
             LOG.exception(e)
 
@@ -51,7 +51,7 @@ class DB(object):
                             item["file_path"],
                             item["sha1"])
 
-        for i in xrange(retries):
+        for i in range(retries):
             try:
                 c = self.conn.cursor()
                 if mode == "UPDATE":
@@ -79,7 +79,7 @@ class DB(object):
                     result = None
                     LOG.info("The same item[%s] have been in html service, so ignore the insert & update action!", item["id"])
                     break
-            except Exception, e:
+            except Exception as e:
                 if self.conn:
                     self.conn.rollback()
                 if i < retries - 1:
@@ -109,7 +109,7 @@ class DB(object):
                 result.append(html)
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success", len(result))
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -132,7 +132,7 @@ class DB(object):
                 yield html
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success", total)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_html_by_flag_iter(self, flag):
@@ -154,7 +154,7 @@ class DB(object):
                 yield html
                 i = c.fetchone()
             LOG.debug("Get all html[%s] from db success", total)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_html_by_id(self, doc_id):
@@ -176,7 +176,7 @@ class DB(object):
                 html.file_path = i[5]
                 result = html
             LOG.debug("Get a html[%s] from db success", doc_id)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -199,7 +199,7 @@ class DB(object):
                 html.file_path = i[5]
                 result = html
             LOG.debug("Get a html[%s] from db success", sha1)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -211,6 +211,6 @@ class DB(object):
             i = c.fetchone()
             result = i
             LOG.debug("Get a html num[%s] from db success", i)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result

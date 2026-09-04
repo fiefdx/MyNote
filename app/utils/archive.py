@@ -45,7 +45,7 @@ def archive_py_zip( file_list, zip_path, archive_name ):
             # LOG.info( 'Add the file :%s into zipfile : %s.'%( f, zip_path ) )
         z.close()
         return zip_path
-    except Exception , ex:
+    except Exception as ex:
         LOG.exception(ex)
         return False
 
@@ -75,7 +75,7 @@ def archive_py_tar(file_path, archive_path, archive_name, archive_type):
             result = archive_name
         else:
             LOG.warning("The file_path do not exists!")
-    except Exception , ex:
+    except Exception as ex:
         LOG.exception(ex)
         result = False
     return result
@@ -108,7 +108,7 @@ def extract_py_tar(extract_path, archive_path, archive_name, archive_type):
             result = archive_name
         else:
             LOG.warning("The extract_path do not exists!")
-    except Exception , ex:
+    except Exception as ex:
         LOG.exception(ex)
         result = False
     return result
@@ -138,7 +138,7 @@ def archive_7z(file_path, archive_path, archive_name, archive_type):
         msg = pipe.read()
         LOG.debug("7z msg: %s"%msg)
         result = archive_name
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -171,7 +171,7 @@ def extract_7z(extract_path, archive_path, archive_name, archive_type):
         msg = pipe.read()
         LOG.debug("7z extract msg: %s"%msg)
         result = archive_name
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -199,7 +199,7 @@ def archive_tar(file_path, archive_path, archive_name, archive_type):
         msg = pipe.read()
         LOG.debug("tar msg: %s"%msg)
         result = archive_name
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -231,7 +231,7 @@ def extract_tar(extract_path, archive_path, archive_name, archive_type):
         msg = pipe.read()
         LOG.debug("tar extract msg: %s"%msg)
         result = archive_name
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     return result
@@ -264,7 +264,7 @@ class Archive(object):
             self.package = package_name
             self.package_path = os.path.join(self.export_path, self.package)
             LOG.debug("Created package[%s] success"%self.package)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def extract(self, archive_name, archive_type):
@@ -291,7 +291,7 @@ class Archive(object):
             self.package = package_name
             self.package_path = os.path.join(self.import_path, self.package)
             LOG.debug("Extract package[%s] success"%self.package)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def clear(self):
@@ -301,7 +301,7 @@ class Archive(object):
             if os.path.isfile(file_path) and os.path.exists(file_path):
                 os.remove(file_path)
                 LOG.debug("Clear [%s]"%file_path)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
 class Archive_Rich_Notes(object):
@@ -332,7 +332,7 @@ class Archive_Rich_Notes(object):
             self.package = package_name
             self.package_path = os.path.join(self.export_path, self.package)
             LOG.debug("Created package[%s] success"%self.package)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def extract(self, archive_name, archive_type):
@@ -359,7 +359,7 @@ class Archive_Rich_Notes(object):
             self.package = package_name
             self.package_path = os.path.join(self.import_path, self.package)
             LOG.debug("Extract package[%s] success"%self.package)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def clear(self):
@@ -369,7 +369,7 @@ class Archive_Rich_Notes(object):
             if os.path.isfile(file_path) and os.path.exists(file_path):
                 os.remove(file_path)
                 LOG.debug("Clear [%s]"%file_path)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
 class Archive_Rich_Note(object):
@@ -398,7 +398,7 @@ class Archive_Rich_Note(object):
             self.package = package_name
             self.package_path = os.path.join(self.export_path, self.package)
             LOG.debug("Created package[%s] success"%self.package)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def clear(self):
@@ -408,5 +408,5 @@ class Archive_Rich_Note(object):
             if os.path.isfile(file_path) and os.path.exists(file_path):
                 os.remove(file_path)
                 LOG.debug("Clear [%s]"%file_path)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)

@@ -50,7 +50,7 @@ def search_index_page(index, query, index_name, page, limits, filter = None):
         mparser = MultifieldParser(search_field[index_name], schema = index.schema)
         q = mparser.parse(query)
         result = searcher.search_page(q, page, filter = filter, pagelen = limits)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     raise gen.Return(result)
@@ -66,7 +66,7 @@ def search_index_no_page(index, query, index_name, limits = None, filter = None)
         mparser = MultifieldParser(search_field[index_name], schema = index.schema)
         q = mparser.parse(query)
         result = searcher.search(q, filter = filter, limit = limits)
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     raise gen.Return(result)
@@ -107,7 +107,7 @@ def search_query_page(ix, query_string, index_name, page = 0, limits = None, db_
             item.description = html.updated_at[0:19]
             result["result"].append(item)
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     # return result
@@ -153,7 +153,7 @@ def search_query_page_note_user(ix, query_string, index_name, user_name, page = 
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))
-            LOG.info("file_title unicode: %s", isinstance(note.file_title, unicode))
+            LOG.info("file_title unicode: %s", isinstance(note.file_title, str))
             file_title = hit.highlights("file_title", text = note.file_title)
             note_tmp = NOTE()
             note_tmp.id = note.id
@@ -171,7 +171,7 @@ def search_query_page_note_user(ix, query_string, index_name, user_name, page = 
             if results_num == 1:
                 result["note"] = note
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     # return result
@@ -216,7 +216,7 @@ def search_query_no_page_note_user(ix, query_string, index_name, user_name, limi
             if key != "":
                 # note.decrypt(key)
                 note = yield multi_process_note_tea.decrypt(note, *(key, ))
-            LOG.info("file_title unicode: %s", isinstance(note.file_title, unicode))
+            LOG.info("file_title unicode: %s", isinstance(note.file_title, str))
             file_title = hit.highlights("file_title", text = note.file_title)
             note_tmp = NOTE()
             note_tmp.id = note.id
@@ -234,7 +234,7 @@ def search_query_no_page_note_user(ix, query_string, index_name, user_name, limi
             if results_num == 1:
                 result["note"] = note
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     # return result
@@ -298,7 +298,7 @@ def search_query_page_rich_user(ix, query_string, index_name, user_name, page = 
             if results_num == 1:
                 result["note"] = note
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     # return result
@@ -360,7 +360,7 @@ def search_query_no_page_rich_user(ix, query_string, index_name, user_name, limi
             if results_num == 1:
                 result["note"] = note
             yield gen.moment
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
         result = False
     # return result
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     LOG.debug("CWD: %s"%cwd)
     LOG.debug("SOURCE: %s"%source_path)
     if len(sys.argv) < 2:
-        print >> sys.stderr, "Usage: %s QUERY" % sys.argv[0]
+        print("Usage: %s QUERY" % sys.argv[0], file=sys.stderr)
         sys.exit(1)
     doc_num = 0
     query_string = str.join(' ', sys.argv[1:])
@@ -400,23 +400,23 @@ if __name__ == "__main__":
         results_len = 0
         if results.has_exact_length():
             results_len = len(results)
-        print "Have %s results:"%results_len
+        print("Have %s results:"%results_len)
         results_num = 0
         for hit in results:
             # print dir(hit)
             results_num += 1
-            print ">"*30, " %s "%results_num, "<"*30
+            print(">"*30, " %s "%results_num, "<"*30)
             # print hit.matched_terms()
             # print "Doc Num: ", hit.docnum
             # print dir(hit.highlights)
             fields = hit.fields()
-            print "Doc_id: ", fields["doc_id"]
+            print("Doc_id: ", fields["doc_id"])
             # print "Title: ", fields["title"]
             # print "Content: ", fields["content"]
-            print "Highlights Title: ", hit.highlights("title", top = 2)
-            print "Highlights Content: ", hit.highlights("content", top = 2)
-        print "="*65
+            print("Highlights Title: ", hit.highlights("title", top = 2))
+            print("Highlights Content: ", hit.highlights("content", top = 2))
+        print("="*65)
         # ix.close()
-    except Exception, e:
+    except Exception as e:
         LOG.exception(e)
     LOG.debug("Index all file OK!")

@@ -42,7 +42,7 @@ import json
 
 from lxml import etree
 
-from tea import EncryptStr, DecryptStr
+from tea_compat import EncryptStr, DecryptStr
 
 LOG = logging.getLogger(__name__)
 
@@ -272,7 +272,7 @@ class NOTE(object):
             self.file_title = EncryptStr(self.file_title, key).decode("utf-8")
             self.file_content = EncryptStr(self.file_content, key).decode("utf-8")
             result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -285,7 +285,7 @@ class NOTE(object):
             if decrypt_content:
                 self.file_content = DecryptStr(self.file_content, key).decode("utf-8")
             result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -322,7 +322,7 @@ class NOTE(object):
             self.file_path = file_path
             result = True
             fp.close()
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -350,7 +350,7 @@ class NOTE(object):
             file_path.text = self.file_path
             file_content = etree.SubElement(root, 'file_content')
             file_content.text = self.file_content
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             result = False
         return result
@@ -432,7 +432,7 @@ class RICH(object):
             self.file_content = EncryptStr(self.file_content, key).decode("utf-8")
             self.rich_content = EncryptStr(self.rich_content, key).decode("utf-8")
             result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -446,7 +446,7 @@ class RICH(object):
                 self.file_content = DecryptStr(self.file_content, key).decode("utf-8")
                 self.rich_content = DecryptStr(self.rich_content, key).decode("utf-8")
             result = True
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             # raise e
         return result
@@ -491,7 +491,7 @@ class RICH(object):
                 result = True
             else:
                 result = None
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -540,7 +540,7 @@ class RICH(object):
             self.from_json("images", images)
             result = True
             fp.close()
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -569,7 +569,7 @@ class RICH(object):
             rich_content.text = self.rich_content
             images = etree.SubElement(root, 'images')
             images.text = self.to_json("images")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
             result = False
         return result

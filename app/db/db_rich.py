@@ -28,7 +28,7 @@ class DB(object):
             if self.conn:
                 self.conn.close()
             LOG.info("Close rich conn success")
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Close rich conn failed")
             LOG.exception(e)
 
@@ -90,7 +90,7 @@ class DB(object):
                                    item["user_name"],
                                    item["sha1"])
 
-        for i in xrange(retries):
+        for i in range(retries):
             try:
                 c = self.conn.cursor()
                 if mode == "UPDATE":
@@ -118,7 +118,7 @@ class DB(object):
                     result = None
                     LOG.info("The same item[%s] have been in rich service, so ignore the insert & update action!", item["id"])
                     break
-            except Exception, e:
+            except Exception as e:
                 if self.conn:
                     self.conn.rollback()
                 if i < retries - 1:
@@ -159,7 +159,7 @@ class DB(object):
                 result.append(item)
                 i = c.fetchone()
             LOG.debug("get all rich from db success")
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -188,7 +188,7 @@ class DB(object):
                 yield item
                 i = c.fetchone()
             LOG.debug("Get all rich[%s] from db success", total)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_rich_from_db_iter(self, batch = 100):
@@ -223,7 +223,7 @@ class DB(object):
                 else:
                     finish = True
             LOG.debug("Get all rich[%s] from db success", total)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_rich_from_db_by_user_iter(self, user_name, batch = 100):
@@ -258,7 +258,7 @@ class DB(object):
                 else:
                     finish = True
             LOG.debug("Get all rich[%s] by user[%s] from db success", total, user_name)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_rich_from_db_by_user_type_iter(self, user_name, note_type, batch = 100):
@@ -296,7 +296,7 @@ class DB(object):
                 else:
                     finish = True
             LOG.debug("Get all rich[%s] by user[%s] type[%s] from db success", total, user_name, note_type)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
 
     def get_rich_by_id(self, doc_id, user_name):
@@ -324,13 +324,13 @@ class DB(object):
                 item.type = i[11]
                 result = item
             LOG.debug("Get a user[%s]'s rich[%s] from db success", user_name, doc_id)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
     def get_rich_by_sha1(self, sha1, user_name, retries = 3):
         result = False
-        for i in xrange(retries):
+        for i in range(retries):
             try:
                 c = self.conn.cursor()
                 c.execute("SELECT * FROM RICH WHERE sha1 = '%s' and user_name = '%s'" % (sha1, user_name))
@@ -355,7 +355,7 @@ class DB(object):
                     result = item
                 LOG.debug("Get a user[%s]'s rich[%s] from db success", user_name, sha1)
                 break
-            except Exception, e:
+            except Exception as e:
                 if i < retries - 1:
                     time.sleep(0.5)
                 else:
@@ -370,7 +370,7 @@ class DB(object):
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s rich notebook[%s] num[%s] from db success", user_name, note_type, i)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -382,7 +382,7 @@ class DB(object):
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s rich notes num[%s] from db success", user_name, i)
-        except Exception, e:
+        except Exception as e:
             LOG.exception(e)
         return result
 
@@ -394,7 +394,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Delete rich[%s] by user[%s] from db success" % (doc_id, user_name))
-        except Exception, e:
+        except Exception as e:
             if self.conn:
                 self.conn.rollback()
             LOG.exception(e)
@@ -408,7 +408,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Delete rich notes type[%s] by user[%s] from db success", note_type, user_name)
-        except Exception, e:
+        except Exception as e:
             if self.conn:
                 self.conn.rollback()
             LOG.exception(e)
@@ -422,7 +422,7 @@ class DB(object):
             self.conn.commit()
             result = True
             LOG.debug("Delete all rich by user[%s] from db success", user_name)
-        except Exception, e:
+        except Exception as e:
             LOG.debug("Delete all rich by user[%s] from db failed", user_name)
             if self.conn:
                 self.conn.rollback()
