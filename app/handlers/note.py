@@ -487,6 +487,10 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
         note.sha1 = common_utils.sha1sum(note.file_title + note.file_content)
         data = {}
         flag = Servers.DB_SERVER["NOTE"].get_note_by_id(note.id, user)
+        if not flag:
+            LOG.warning("save_note: note id %s not found for user %s, creating it", note.id, user)
+            yield create_note(note_dict, user, handler, user_locale, user_key = user_key)
+            return
         note.type = flag.type
         if note.file_title.strip() == "" and note.file_content.strip() == "":
             delete_note(note_dict, user, handler, user_locale, page = 1, user_key = user_key)

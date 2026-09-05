@@ -588,6 +588,10 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = "", pr
         note.file_content = htmlparser.get_html_content(note_content)["content"] if note_content.strip() != "" else ""
         data = {}
         flag = Servers.DB_SERVER["RICH"].get_rich_by_id(note.id, user)
+        if not flag:
+            LOG.warning("save_note: rich note id %s not found for user %s, creating it", note.id, user)
+            yield create_note(note_dict, user, handler, user_locale, user_key = user_key, proxy = proxy)
+            return
         note.type = flag.type
         # if note_dict['type'] != 'Search':
         if note.file_title.strip() == "" and note.file_content.strip() == "":

@@ -154,7 +154,7 @@ class DB(object):
                 item.rich_content = i[7]
                 item.file_path = i[8]
                 item.description = i[9]
-                item.images = json.loads(i[10])
+                item.images = json.loads(i[10] or "[]")
                 item.type = i[11]
                 result.append(item)
                 i = c.fetchone()
@@ -181,7 +181,7 @@ class DB(object):
                 item.rich_content = i[7]
                 item.file_path = i[8]
                 item.description = i[9]
-                item.images = json.loads(i[10])
+                item.images = json.loads(i[10] or "[]")
                 item.type = i[11]
                 LOG.debug("Get rich[%s] from db success", item.file_title)
                 total += 1
@@ -213,7 +213,7 @@ class DB(object):
                     item.rich_content = i[7]
                     item.file_path = i[8]
                     item.description = i[9]
-                    item.images = json.loads(i[10])
+                    item.images = json.loads(i[10] or "[]")
                     item.type = i[11]
                     LOG.debug("Get rich[%s] from db success", item.file_title)
                     total += 1
@@ -248,7 +248,7 @@ class DB(object):
                     item.rich_content = i[7]
                     item.file_path = i[8]
                     item.description = i[9]
-                    item.images = json.loads(i[10])
+                    item.images = json.loads(i[10] or "[]")
                     item.type = i[11]
                     LOG.debug("Get rich[%s] from db success", item.file_title)
                     total += 1
@@ -286,7 +286,7 @@ class DB(object):
                     item.rich_content = i[7]
                     item.file_path = i[8]
                     item.description = i[9]
-                    item.images = json.loads(i[10])
+                    item.images = json.loads(i[10] or "[]")
                     item.type = i[11]
                     LOG.debug("Get rich[%s] from db success", item.file_title)
                     total += 1
@@ -320,7 +320,7 @@ class DB(object):
                 item.rich_content = i[7]
                 item.file_path = i[8]
                 item.description = i[9]
-                item.images = json.loads(i[10])
+                item.images = json.loads(i[10] or "[]")
                 item.type = i[11]
                 result = item
             LOG.debug("Get a user[%s]'s rich[%s] from db success", user_name, doc_id)
@@ -350,7 +350,7 @@ class DB(object):
                     item.rich_content = i[7]
                     item.file_path = i[8]
                     item.description = i[9]
-                    item.images = json.loads(i[10])
+                    item.images = json.loads(i[10] or "[]")
                     item.type = i[11]
                     result = item
                 LOG.debug("Get a user[%s]'s rich[%s] from db success", user_name, sha1)
