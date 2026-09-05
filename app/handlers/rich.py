@@ -494,7 +494,9 @@ def create_note(note_dict, user, handler, user_locale, user_key = "", proxy = {}
             flag = Servers.DB_SERVER["RICH"].save_data_to_db(note.to_dict(), mode = "INSERT")
             if flag == True:
                 note = Servers.DB_SERVER["RICH"].get_rich_by_sha1(note.sha1, user)
-                flag = Servers.IX_SERVER["RICH"].index_all_rich_by_num_flag(100, key = user_key, db_flag = Servers.DB_SERVER["FLAG"], db_rich = Servers.DB_SERVER["RICH"])
+                # index this note directly (deterministic) instead of relying on
+                # the shared time-window batch, which can miss the just-saved note.
+                flag = Servers.IX_SERVER["RICH"].index_rich_by_id(note.id, user, key = user_key, db_rich = Servers.DB_SERVER["RICH"])
                 if flag == True:
                     LOG.info("Index rich note[%s] user[%s] success.", note.file_title, user)
                 else:
@@ -607,7 +609,10 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = "", pr
                 note = yield multi_process_note_tea.encrypt(note, *(user_key, ))
             flag = Servers.DB_SERVER["RICH"].save_data_to_db(note.to_dict(), mode = "UPDATE")
             if flag == True: # save note success
-                flag = Servers.IX_SERVER["RICH"].index_all_rich_by_num_flag(100, user_key, Servers.DB_SERVER["FLAG"], Servers.DB_SERVER["RICH"])
+                # index the updated note directly so the search index always
+                # reflects this save (was a shared time-window batch that could
+                # skip the just-updated note -> stale search results).
+                flag = Servers.IX_SERVER["RICH"].index_rich_by_id(note.id, user, key = user_key, db_rich = Servers.DB_SERVER["RICH"])
                 if flag == True:
                     LOG.info("Update index rich note[%s] user[%s] success.", note.file_title, user)
                 else:
