@@ -268,11 +268,28 @@ function noteInit (scheme, locale) {
             note_scroll = $('.wysihtml5-sandbox').contents().find('html,body').scrollTop();
             console.log("save scrollTop: " + note_scroll);
             console.log("save note: " + current_note_id);
+            // Read the authoritative HTML straight from the wysihtml5 editor.
+            // The hidden #note_text textarea can be stale (the note is loaded
+            // with setValue(..., true) which suppresses change-sync), so
+            // $note_content.val() may still hold the PRE-edit content. That made
+            // edits save unchanged content (identical sha1) -> the server skipped
+            // the DB update and the search re-index, so the list and search kept
+            // showing the old content.
+            var content;
+            try {
+                content = (wysihtml5Editor && typeof wysihtml5Editor.getValue === 'function')
+                          ? wysihtml5Editor.getValue() : $note_content.val();
+            } catch (e) {
+                content = $note_content.val();
+            }
+            if (content === undefined || content === null) {
+                content = $note_content.val();
+            }
             var data = {};
             data['note'] = {'cmd':'save', 
                             'note_id':current_note_id, 
                             'note_title':$note_title.val(), 
-                            'note_content':$note_content.val(), 
+                            'note_content':content, 
                             'type':current_category, 
                             'q':$('#search_input').val()};
             console.log(data);

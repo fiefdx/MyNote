@@ -328,9 +328,11 @@ def get_web_image_src(file_content):
             if i.tag == "img":
                 if i.attrib["src"] != "":
                     url = i.attrib["src"]
-                    url = url.encode('utf-8')
-                    url_parts = list(urllib.parse.urlparse(url))
-                    if url_parts[0] != "" and url_parts[1] != "":
+                    # parse as str (was bytes before, which made urlparse return
+                    # bytes parts and `!= ""` always True -> even local
+                    # /picture/ images were misclassified as web images).
+                    url_parts = urllib.parse.urlparse(url)
+                    if url_parts.scheme in ("http", "https") and url_parts.netloc != "":
                         result.append([i.attrib["src"], ""])
                         LOG.debug("img_absolute: %s"%i.attrib["src"])
     except Exception as e:
@@ -397,12 +399,15 @@ def get_web_images(images, db_pic = None, proxy = {}):
                 url_parts = list(urllib.parse.urlparse(i[0]))
                 if url_parts[1].split(":")[0] not in local_ips:
                     # p = opener.open(i[0], timeout = 10)
-                    p = requests.get(i[0], headers = headers, proxies = proxies)
+                    # timeout: this runs synchronously inside the tornado IOLoop;
+                    # an unreachable image host would otherwise freeze the whole
+                    # server (saving AND searching would hang).
+                    p = requests.get(i[0], headers = headers, proxies = proxies, timeout = 15)
                     if p.status_code == 200:
                         image = p.content
                         image_name = os.path.split(list(urllib.parse.urlparse(i[0]))[2])[1]
                         image_name = util.construct_safe_filename(image_name)
-                        fp = io.StringIO(image)
+                        fp = io.BytesIO(image)  # image is bytes; StringIO(bytes) raises in py3
                         if imghdr.what(fp) != None or is_jpeg_image(image) != None:
                             pic = PIC()
                             m = hashlib.sha1(image)
