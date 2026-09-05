@@ -161,6 +161,21 @@ function noteInit (scheme, locale) {
                 console.log("note_id: " + current_note_id);
                 $('a#a_' + current_note_id).attr("class","note_list_item list-group-item active");
             }
+            // refresh the single edited note row in place. The server sends
+            // note_list_action='update' with data.note and no notes list, so we
+            // update the existing #a_<id> row instead of re-appending (which
+            // would duplicate the note).
+            if (data.note_list_action === 'update' && data.note && data.current_note_id) {
+                var $row = $('#a_' + data.current_note_id);
+                if ($row.length) {
+                    var $title = $row.find('.note_item_title');
+                    $title.contents().filter(function () { return this.nodeType === 3; }).remove();
+                    $title.append(document.createTextNode('\u00A0' + data.note.file_title + '\u00A0'));
+                    $row.find('.note_item_description').html(data.note.description);
+                    $row.find('.note_item_datetime .pull-left').text(data.note.created_at);
+                    $row.find('.note_item_datetime .pull-right').text(data.note.updated_at);
+                }
+            }
             // init selected note
             if (data.note){
                 console.log("selected note: " + current_note_id);

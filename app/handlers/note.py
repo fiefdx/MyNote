@@ -528,10 +528,6 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
                 note.created_at = str(note.created_at)[:19]
                 note.updated_at = str(note.updated_at)[:19]
                 data['note'] = note.to_dict()
-                # refresh the note list so the saved note's new title/description
-                # show up (the client rebuilds the list only from data.notes,
-                # which the update response used to omit).
-                data['notes'] = (yield update_notes(note.type, user, user_key = user_key))['notes_list']
             # save note in Search category
             else:
                 data['current_note_id'] = note.id
@@ -544,12 +540,11 @@ def save_note(note_dict, user, handler, user_locale, page = 1, user_key = ""):
                 note.created_at = str(note.created_at)[:19]
                 note.updated_at = str(note.updated_at)[:19]
                 data['note'] = note.to_dict()
-                data['note_list_action'] = 'append'
+                if save == "save_ok":
+                    data['note_list_action'] = 'update'
+                else:
+                    data['note_list_action'] = 'append'
                 data['current_category'] = 'Search'
-                # re-run the current search so the result list reflects the edit
-                q = note_dict.get('q', '') if isinstance(note_dict.get('q', ''), str) else ''
-                search_result = yield process_query(q, user, page = 1, user_key = user_key)
-                data['notes'] = search_result['result']
 
             data['save'] = save
             send_msg(json.dumps(data), user, handler)
