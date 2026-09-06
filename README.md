@@ -364,11 +364,3 @@ FUNCTIONS:
    ![Alt text](/doc/text_note_zh.png?raw=true "pure_text_note_page")
 
 4. 笔记中没有直接删除一篇笔记的功能，把想要删除的笔记的标题和内容清空，再保存该笔记，该篇笔记就会被删除了
-
-
-# 二进制包下载地址
-
-我打包了Windows 32位和Linux 64位的二进制包，笔记在windows下的性能没有在linux下的性能好，不过依然工作正常，这个包是非常旧的版本，不建议使用了，最好直接用源码
-
-1. [Windows 32位](https://pan.baidu.com/s/1pLnTRtx)
-2. [Linux 64位](https://pan.baidu.com/s/1slRfu37)
