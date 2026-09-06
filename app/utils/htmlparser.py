@@ -131,33 +131,52 @@ def get_html_content_old(file_content):
         LOG.exception(e)
     return result
 
+# Tags whose text is never note content (kept out of file_content / the note
+# description / the whoosh index).
+NON_CONTENT_TAGS = frozenset(["script", "style", "noscript", "template"])
+
+def _element_text(element):
+    """
+    Return the text of an element and its descendants, including the tails
+    (the text after a child element), skipping non-content subtrees.
+
+    NOTE: this replaces the old `page.itertext(allow_tags)` extraction.
+    itertext(tags) is an element *selector*: it only yields .text/.tail of the
+    elements that match the list. Text owned by a non-listed element - most
+    importantly a bare text node directly inside <body>, which is what the rich
+    editor produces for plain typed lines, and <body>/<blockquote> themselves -
+    was silently dropped, so file_content (and therefore note.description) came
+    out empty for real notes.
+    """
+    tag = element.tag
+    # comments / processing instructions: tag is a callable, not a string
+    if not isinstance(tag, str) or tag.lower() in NON_CONTENT_TAGS:
+        return ""
+    text = element.text or ""
+    for child in element:
+        text += _element_text(child)
+        if child.tail:
+            text += child.tail
+    return text
+
 def get_html_content(file_content):
     """
     param: file_content is unicode
     result: title and content is unicode
     """
     result = {"title":"", "content":""}
-    allow_tags = ["h1", "h2", "h3", "h4", "h5", "h6", "b", "strong", "i", "em", "dfn", "u", "ins", "strike", "s", "del",
-                  "tt", "plaintext", "listing", "font", "hr", "br", "nobr", "p", "center", "base", "a", "img", "table",
-                  "td", "frameset", "address", "big", "blink", "caption", "code", "cite", "frame", "ul", "li", "ol", "pre",
-                  "samp", "select", "small", "strike", "sub", "sup", "textarea", "th", "title", "var", "div", "span"]
-    # allow_tags = " ".join(allow_tags)
     file_content = file_content.encode("utf-8")
     try:
         utf8_parser = etree.HTMLParser(encoding="utf-8")
         page = etree.HTML(file_content, parser = utf8_parser)
+        if page is None:
+            return result
         title = page.xpath("//title") # <title></title> title[0].text == None
         title_text = ""
         if title != [] and title[0].text != None and title[0].text.strip() != "":
             title_text = title[0].text.strip()
             LOG.debug("Html Title: %s", title_text)
-        text = ""
-        # print help(page.itertext)
-        # LOG.info("Flag>>>>>>>>>>>>>>>>>>>>>")
-        # for i in page.itertext(" ".join(allow_tags)):
-        for i in page.itertext(allow_tags):
-            if i != "":
-                text += i
+        text = _element_text(page)
         text = text.replace("\r", "")
         text_list = text.split("\n")
         content = ""
