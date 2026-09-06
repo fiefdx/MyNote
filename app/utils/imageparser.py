@@ -84,8 +84,11 @@ def process_mission(mission_queue, result_queue, exts = None, storage_path = Non
                         m.digest()
                         pic.sha1 = m.hexdigest()
                         pic.imported_at = datetime.datetime.now(dateutil.tz.tzlocal())
-                        pic.file_name = util.construct_safe_filename(i.decode("utf-8"))
-                        pic.file_path = construct_file_path(pic.sha1, pic.file_name).decode("utf-8")
+                        # py3: os.walk() yields str and construct_file_path returns
+                        # str; these py2 ".decode()" calls raised AttributeError and
+                        # every scanned image was skipped.
+                        pic.file_name = util.construct_safe_filename(i)
+                        pic.file_path = construct_file_path(pic.sha1, pic.file_name)
                         # db_file_path = sqlite.get_db_path(CONFIG["STORAGE_DB_PATH"], db.pic)
                         storage_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], os.path.split(pic.file_path)[0])
                         storage_file_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)

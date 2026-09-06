@@ -63,7 +63,8 @@ def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 =
     note_file_path = os.path.join(storage_users_path, user_sha1, "notes", note.type, note.sha1)
     multi_process_note_tea = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
     if not os.path.exists(note_path):
-        os.makedirs(note_path)
+        # concurrent requests (or tabs) may save into the same new category
+        os.makedirs(note_path, exist_ok=True)
         LOG.info("create user[%s] path[%s]", user, note_path)
     if key != "":
         # note.decrypt(key)
@@ -124,9 +125,12 @@ class NoteHandler(BaseHandler):
             if CONFIG["ENCRYPT"]:
                 # note.decrypt(user_key)
                 note = yield multi_process_note_tea.decrypt(note, *(user_key, ))
-            fp = io.StringIO(note.file_content.encode("utf-8"))
+            # py3: the body is unicode, so the encoded bytes must go through
+            # BytesIO. StringIO(bytes) raised TypeError, which made this download
+            # answer 500 for every single note.
+            fp = io.BytesIO(note.file_content.encode("utf-8"))
             self.set_header("Content-Disposition",
-                            "attachment; filename=%s.txt" % note.file_title.encode("utf-8").replace(" ", "_"))
+                            common_utils.content_disposition("%s.txt" % note.file_title.replace(" ", "_")))
             while True:
                 buf = fp.read(1024 * 4)
                 if not buf:

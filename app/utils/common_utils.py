@@ -13,6 +13,7 @@ import os
 import re
 import logging
 import hashlib
+from urllib.parse import quote as urlquote
 
 
 # cwd = os.path.split(os.path.realpath(__file__))[0]
@@ -162,3 +163,23 @@ def safe_dir_filename(dir_path):
         LOG.exception(e)
         change_list = []
     return change_list
+
+
+def content_disposition(file_name):
+    """
+    Build the Content-Disposition value for a download.
+
+    py3: this used to be "attachment; filename=%s" % file_name.encode("utf-8"),
+    which interpolated a *bytes* object into a str header and sent a literal
+    "b'\\xe4\\xb8...'" to the browser. The name is given twice below: an ascii
+    fallback for old clients and the RFC 5987 form every current browser reads.
+    """
+    result = "attachment"
+    if file_name:
+        file_name = file_name.replace('"', "").replace("/", "").replace("\\", "").strip()
+        ascii_name = file_name.encode("ascii", "ignore").decode("ascii").strip()
+        if ascii_name == "":
+            ascii_name = "download" + os.path.splitext(file_name)[1]
+        result = "attachment; filename=\"%s\"; filename*=UTF-8''%s" % (
+            ascii_name, urlquote(file_name.encode("utf-8"), safe=""))
+    return result

@@ -44,6 +44,37 @@ def get_export_key(note_category, user):
 def get_archive_key(note_category, user):
     return "archive_%s_%s" % (note_category, user.sha1)
 
+def read_categories_info(categories_path):
+    """
+    Read the category list written by the exporter inside an import package.
+
+    Returns None when the package carries no category info (the caller then
+    falls back to the default categories), and a possibly empty list when the
+    file exists. An unreadable or malformed file used to raise inside iter(),
+    which aborted the whole import job without a single task being reported.
+    """
+    if not (os.path.exists(categories_path) and os.path.isfile(categories_path)):
+        return None
+    try:
+        fp = open(categories_path, 'rb')
+        content = fp.read()
+        fp.close()
+        categories = json.loads(content)
+    except Exception as e:
+        LOG.error("read category info[%s] failed: %s", categories_path, e)
+        return []
+    if not isinstance(categories, list):
+        LOG.error("category info[%s] is not a list but[%s]",
+                  categories_path, type(categories).__name__)
+        return []
+    result = []
+    for category in categories:
+        if not isinstance(category, dict) or "name" not in category or "sha1" not in category:
+            LOG.error("ignore invalid category info[%s]", category)
+            continue
+        result.append(category)
+    return result
+
 class NoteImportProcesser(TaskProcesser):
     name = "note"
 
@@ -81,13 +112,10 @@ class NoteImportProcesser(TaskProcesser):
                                        "import",
                                        "notes",
                                        "category.json")
-        if os.path.exists(categories_path) and os.path.isfile(categories_path):
-            fp = open(categories_path, 'rb')
-            categories = json.loads(fp.read())
-            fp.close()
-        else:
-            note_books = ["work", "think", "person", "enjoy", "other"]
-            for n in note_books:
+        categories = read_categories_info(categories_path)
+        if categories is None:
+            categories = []
+            for n in ["work", "think", "person", "enjoy", "other"]:
                 categories.append({'name':n, 'sha1':common_utils.sha1sum(n)})
         note_books = json.loads(user.note_books)
         # LOG.info("note_books[%s]: %s", user, note_books)
@@ -225,13 +253,10 @@ class RichImportProcesser(TaskProcesser):
                                        "import",
                                        "rich_notes",
                                        "category.json")
-        if os.path.exists(categories_path) and os.path.isfile(categories_path):
-            fp = open(categories_path, 'rb')
-            categories = json.loads(fp.read())
-            fp.close()
-        else:
-            note_books = ["work", "think", "person", "enjoy", "other"]
-            for n in note_books:
+        categories = read_categories_info(categories_path)
+        if categories is None:
+            categories = []
+            for n in ["work", "think", "person", "enjoy", "other"]:
                 categories.append({'name':n, 'sha1':common_utils.sha1sum(n)})
         note_books = json.loads(user.rich_books)
         # LOG.info("note_books[%s]: %s", user, note_books)
@@ -313,8 +338,11 @@ class RichImportProcesser(TaskProcesser):
                     m.digest()
                     pic.sha1 = m.hexdigest()
                     pic.imported_at = datetime.datetime.now(dateutil.tz.tzlocal())
-                    pic.file_name = common_utils.construct_safe_filename(fname.decode("utf-8"))
-                    pic.file_path = construct_file_path(pic.sha1, pic.file_name).decode("utf-8")
+                    # py3: os.walk() already yields str names and construct_file_path
+                    # returns str; the old py2 ".decode()" calls raised AttributeError
+                    # here, so every image in an imported package was dropped.
+                    pic.file_name = common_utils.construct_safe_filename(fname)
+                    pic.file_path = construct_file_path(pic.sha1, pic.file_name)
                     image_storage_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], os.path.split(pic.file_path)[0])
                     storage_file_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
                     if (not os.path.exists(image_storage_path)) or (not os.path.isdir(image_storage_path)):
@@ -556,7 +584,16 @@ class RichIndexProcesser(TaskProcesser):
 def create_note_file(storage_users_path, user, user_sha1, note, key = "", key1 = ""):
     result = False
     try:
-        note_file_path = os.path.join(storage_users_path, user_sha1, "notes", note.type, note.sha1)
+        note_path = os.path.join(storage_users_path, user_sha1, "notes", note.type)
+        note_file_path = os.path.join(note_path, note.sha1)
+        # the category directory is normally prepared by the export iter(), but a
+        # note can belong to a category that is not in user.note_books (e.g. after
+        # the categories were edited), and then the export silently wrote nothing.
+        if not os.path.exists(note_path):
+            # export maps notes over several worker processes: two of them may
+            # create the same category directory at the same time
+            os.makedirs(note_path, exist_ok=True)
+            LOG.info("create user[%s] path[%s]", user, note_path)
         if key != "":
             note.decrypt(key)
         if key1 != "":
@@ -676,7 +713,19 @@ class NoteExportProcesser(TaskProcesser):
 def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = "", key1 = ""):
     result = False
     try:
-        note_file_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "rich_notes", note.type, note.sha1)
+        notes_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "rich_notes", note.type)
+        note_file_path = os.path.join(notes_path, note.sha1)
+        # same as create_note_file: never assume the category directory exists,
+        # otherwise every note of that category fails to export and the package
+        # comes out empty (which then looks like "import did nothing").
+        if not os.path.exists(notes_path):
+            # export maps notes over several worker processes: two of them may
+            # create the same category directory at the same time
+            os.makedirs(notes_path, exist_ok=True)
+            LOG.info("create user[%s] path[%s]", user, notes_path)
+        images_path = os.path.join(storage_users_path, user_sha1, "rich_notes", "images")
+        if not os.path.exists(images_path):
+            os.makedirs(images_path, exist_ok=True)
         if key != "":
             note.decrypt(key)
         if key1 != "":
@@ -686,13 +735,12 @@ def create_rich_file(db_pic, storage_users_path, user, user_sha1, note, key = ""
         doc.write(fp, xml_declaration=True, encoding='utf-8', pretty_print=True)
         fp.close()
 
-        user_images_path = os.path.join(CONFIG["STORAGE_USERS_PATH"], user_sha1, "rich_notes", "images")
         for image_sha1 in note.images:
             pic = db_pic.get_data_by_sha1(image_sha1)
             if pic != None and pic != False:
                 image_path = os.path.join(CONFIG["STORAGE_PICTURES_PATH"], pic.file_path)
                 file_name = pic.sha1 + os.path.splitext(pic.file_name)[-1]
-                target_path = os.path.join(user_images_path, file_name)
+                target_path = os.path.join(images_path, file_name)
                 if not os.path.exists(target_path):
                     shutil.copyfile(image_path, target_path + '.tmp')
                     try:

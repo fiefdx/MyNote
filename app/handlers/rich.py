@@ -33,7 +33,6 @@ import logging
 import shutil
 import datetime
 import dateutil
-import io
 
 import tornado.web
 from tornado import gen
@@ -216,7 +215,7 @@ class RichHandler(BaseHandler):
             
             fp = open(arch.package_path, "rb")
             self.set_header("Content-Disposition",
-                            "attachment; filename=%s.tar.gz" % note_file_name.encode("utf-8"))
+                            common_utils.content_disposition("%s.tar.gz" % note_file_name))
             while True:
                 buf = fp.read(1024 * 4)
                 if not buf:
@@ -1021,8 +1020,26 @@ class UploadAjaxHandler(BaseHandler):
 
 @tornado.web.stream_request_body
 class UploadAjaxStreamHandler(BaseHandler):
+    """
+    Stream an uploaded rich-notes package straight to disk.
+
+    py3: tornado hands data_received() *bytes*, so the multipart parser has to
+    work on bytes as well. The old py2 parser mixed str and bytes and blew up on
+    the first chunk with "a bytes-like object is required, not 'str'", the
+    exception was swallowed here, so the package was never written and the import
+    step had nothing to read.
+
+    Parts are re-assembled across chunks: a boundary (or a part header) may be
+    split over two data_received() calls, so anything that is not a complete part
+    is kept in self.buffer until more data arrives.
+    """
     PARSE_READY = 0
     PARSE_FILE_PENDING = 1
+    PARSE_SKIP_PENDING = 2
+
+    find_filename = re.compile(b'filename="([^"]*)"')
+    find_mimetype = re.compile(b'Content-Type: *(.*)')
+    find_field = re.compile(b'name="([^"]*)"')
 
     def check_xsrf_cookie(self): # ignore xsrf check
         pass
@@ -1030,73 +1047,151 @@ class UploadAjaxStreamHandler(BaseHandler):
     def prepare(self):
         self.user = self.get_current_user_name()
         self.user_info = Servers.DB_SERVER["USER"].get_user_from_db(self.user)
-        self.mimetype = self.request.headers.get("Content-Type")
-        self.boundary = "--%s" % (self.mimetype[self.mimetype.find("boundary")+9:])
+        self.mimetype = self.request.headers.get("Content-Type", "")
+        boundary = ""
+        for field in self.mimetype.split(";"):
+            field = field.strip()
+            if field.lower().startswith("boundary="):
+                boundary = field[len("boundary="):].strip('"')
+        if boundary == "":
+            LOG.error("Upload file failed, no multipart boundary in Content-Type[%s]!", self.mimetype)
+            self.boundary = None
+        else:
+            # the parser runs on bytes, tornado gives us bytes
+            self.boundary = ("--%s" % boundary).encode("utf-8")
         self.state = UploadAjaxStreamHandler.PARSE_READY
         self.output = None
-        self.find_filename = re.compile('filename="(.*)"')
-        self.find_mimetype = re.compile('Content-Type: (.*)')
-        self.find_field = re.compile('name="(.*)"')
+        self.buffer = b""
         self.start = time.time()
         self.file_name = ""
         self.file_path = ""
 
     def data_received(self, data):
         LOG.debug("chunk size: %s", len(data))
+        if self.boundary is None:
+            return
+        self.buffer += data
         try:
-            buff = data.split(self.boundary)
-            for index, part in enumerate(buff):
-                if part:
-                    if part == "--\r\n":
-                        break
-                    if self.state == UploadAjaxStreamHandler.PARSE_FILE_PENDING:
-                        if len(buff) > 1:
-                            self.output.write(part[:-2])
-                            self.output.close()
-                            self.state = UploadAjaxStreamHandler.PARSE_READY
-                            continue
-                        else:
-                            self.output.write(part)
-                            continue
-
-                    elif self.state == UploadAjaxStreamHandler.PARSE_READY:
-                        stream = io.StringIO(part)
-                        stream.readline()
-                        form_data_type_line = stream.readline()
-                        if form_data_type_line.find("filename") > -1:
-                            filename = re.search(self.find_filename, form_data_type_line).groups()[0]
-                            self.file_name = os.path.split(filename.encode("utf-8"))[-1]
-                            self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
-                                                          self.user_info.sha1,
-                                                          "tmp",
-                                                          "import",
-                                                          self.file_name)
-                            self.output = open(self.file_path, "wb")
-                            content_type_line = stream.readline()
-                            mimetype = re.search(self.find_mimetype, content_type_line).groups()[0]
-                            LOG.debug("%s with %s" % (filename, mimetype.strip()))
-                            stream.readline()
-                            body = stream.read()
-                            if len(buff) > index + 1:
-                                self.output.write(body[:-2])
-                                self.state = UploadAjaxStreamHandler.PARSE_READY
-                            else:
-                                self.output.write(body)
-                                self.state = UploadAjaxStreamHandler.PARSE_FILE_PENDING
-                        else:
-                            stream.readline()
-                            form_name = re.search(self.find_field, form_data_type_line).groups()[0]
-                            form_value = stream.readline()
-                            self.state = UploadAjaxStreamHandler.PARSE_READY
-                            LOG.debug("%s=%s" % (form_name.strip(), form_value.strip()))
+            while self._parse():
+                pass
         except Exception as e:
             LOG.exception(e)
+            self._close_output()
+
+    def _parse(self):
+        """
+        Consume as much of self.buffer as possible.
+        Returns True when something was consumed (i.e. worth looping), False when
+        self.buffer is incomplete and we have to wait for the next chunk.
+        """
+        if self.state != UploadAjaxStreamHandler.PARSE_READY:
+            return self._parse_body()
+
+        # PARSE_READY: self.buffer is positioned on a boundary. Nothing is
+        # consumed until the whole part header is available, otherwise a boundary
+        # that arrives before its headers would be swallowed and the parser would
+        # sit waiting for a boundary that has already gone by.
+        if not self.buffer.startswith(self.boundary):
+            # preamble before the first boundary (normally empty)
+            index = self.buffer.find(self.boundary)
+            if index == -1:
+                return False
+            self.buffer = self.buffer[index:]
+        rest = self.buffer[len(self.boundary):]
+
+        # "--<boundary>--\r\n" closes the request
+        if rest.startswith(b"--"):
+            self.buffer = b""
+            self._close_output()
+            return False
+        if rest.startswith(b"\r\n"):
+            rest = rest[2:]
+
+        head_end = rest.find(b"\r\n\r\n")
+        if head_end == -1:
+            return False # part headers not complete yet, wait for the next chunk
+        headers = rest[:head_end]
+        self.buffer = rest[head_end + 4:]
+
+        filename_match = self.find_filename.search(headers)
+        if filename_match:
+            filename = filename_match.groups()[0].decode("utf-8", "replace")
+            # browsers may send a full path; keep the file name only
+            self.file_name = re.split(r"[\\/]", filename)[-1]
+            mimetype_match = self.find_mimetype.search(headers)
+            LOG.debug("%s with %s", filename,
+                      mimetype_match.groups()[0].decode("utf-8", "replace") if mimetype_match else "")
+            if not self.file_name or self.file_name in (".", "..") or self.user_info is None:
+                LOG.error("Upload file failed, empty file name or unknown user[%s]!", self.user)
+                self.file_path = ""
+                self.state = UploadAjaxStreamHandler.PARSE_SKIP_PENDING
+                return True
+            self.file_path = os.path.join(CONFIG["STORAGE_USERS_PATH"],
+                                          self.user_info.sha1,
+                                          "tmp",
+                                          "import",
+                                          self.file_name)
+            try:
+                import_dir = os.path.dirname(self.file_path)
+                if not os.path.isdir(import_dir):
+                    os.makedirs(import_dir)
+                self.output = open(self.file_path, "wb")
+            except Exception as e:
+                LOG.exception(e)
+                self.state = UploadAjaxStreamHandler.PARSE_SKIP_PENDING
+                return True
+            self.state = UploadAjaxStreamHandler.PARSE_FILE_PENDING
+            return True
+
+        field_match = self.find_field.search(headers)
+        LOG.debug("%s", field_match.groups()[0].decode("utf-8", "replace") if field_match else "unknown form field")
+        # plain form fields are not needed here, drop their body
+        self.state = UploadAjaxStreamHandler.PARSE_SKIP_PENDING
+        return True
+
+    def _parse_body(self):
+        """Handle the body of the current part (file body or a field to discard)."""
+        write = self.output.write if self.state == UploadAjaxStreamHandler.PARSE_FILE_PENDING else None
+        index = self.buffer.find(self.boundary)
+        if index == -1:
+            # the tail of the buffer may hold a partial boundary, hold it back
+            hold = len(self.boundary) + 2
+            if len(self.buffer) > hold:
+                if write:
+                    write(self.buffer[:len(self.buffer) - hold])
+                self.buffer = self.buffer[len(self.buffer) - hold:]
+            return False
+
+        # the "\r\n" in front of a boundary belongs to the boundary, not to the body
+        end = index - 2 if self.buffer[max(index - 2, 0):index] == b"\r\n" else index
+        if write:
+            write(self.buffer[:end])
+        self.buffer = self.buffer[index:]
+        self._close_output()
+        self.state = UploadAjaxStreamHandler.PARSE_READY
+        return True
+
+    def _close_output(self):
+        if self.output:
+            try:
+                self.output.close()
+                LOG.debug("upload [%s] written to %s", self.file_name, self.file_path)
+            except Exception as e:
+                LOG.exception(e)
+            self.output = None
+
+    def on_finish(self):
+        # the upload may have been cut short: never leak the file handle
+        self._close_output()
 
     @tornado.web.authenticated
     @gen.coroutine
     def post(self):
         user = self.get_current_user_name()
         user_key = self.get_current_user_key()
+        # the importer runs on the client's *next* request: the package has to be
+        # flushed and closed before we answer "ok".
+        self._close_output()
         try:
             fname = ""
             fbody = ""
