@@ -68,7 +68,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM FLAG WHERE index_name = '%s'" % index_name)
+            c.execute("SELECT * FROM FLAG WHERE index_name = ?", (index_name,))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the flag in db[%s], so i will return None", index_name)
