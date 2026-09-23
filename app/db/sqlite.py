@@ -114,6 +114,32 @@ class DB(object):
                 LOG.info("Close %s failed", db_conn_attr)
                 LOG.exception(e)
 
+
+def sql_int(value, default = 0):
+    """
+    Coerce a value used in a numeric SQL position (id, LIMIT, OFFSET) to int.
+
+    Bound parameters are already injection safe; this only keeps the types
+    honest, so a client sending a non numeric offset gets the default instead
+    of a datatype error from inside the query.
+    """
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def sort_order(order):
+    """
+    Return a safe ORDER BY direction.
+
+    The direction is part of the statement itself (identifiers and keywords
+    cannot be bound as parameters), so it is whitelisted instead of quoted:
+    anything but ASC falls back to DESC.
+    """
+    return "ASC" if str(order).strip().upper() == "ASC" else "DESC"
+
+
 def get_conn_sqlite(db_path):
     conn = False
     try:
@@ -292,7 +318,7 @@ def get_flag_from_db(index_name, conn = None):
             conn = DB.conn_flag
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM FLAG WHERE index_name = '%s'" % index_name)
+            c.execute("SELECT * FROM FLAG WHERE index_name = ?", (index_name, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the flag in db[%s], so i will return None", index_name)
@@ -536,7 +562,7 @@ def get_data_by_sha1(sha1, conn = None):
             conn = DB.conn_pic
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM PIC WHERE sha1 = '%s'" % sha1)
+            c.execute("SELECT * FROM PIC WHERE sha1 = ?", (sha1, ))
             i = c.fetchone()
             if i != None:
                 item = PIC()
@@ -556,6 +582,8 @@ def get_data_by_sha1(sha1, conn = None):
 # functions for note
 #
 def get_note_by_user_type_created_at(user_name, note_type, order = "DESC", offset = 0, limit = 20, conn = None):
+    limit = sql_int(limit, 20)
+    offset = sql_int(offset, 0)
     result = False
     try:
         if conn == None:
@@ -563,11 +591,11 @@ def get_note_by_user_type_created_at(user_name, note_type, order = "DESC", offse
         if conn != False:
             c = conn.cursor()
             if note_type.lower() == "all":
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, order, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, limit, offset))
             else:
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' AND type = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, note_type, order, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? AND type = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
             result = []
             i = c.fetchone()
             while i != None:
@@ -595,7 +623,7 @@ def get_note_by_flag_iter(flag, conn = None):
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM NOTE WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i != None:
@@ -629,7 +657,7 @@ def get_note_from_db_iter(conn = None, batch = 100):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM NOTE LIMIT %s OFFSET %s" % (limit, offset))
+                c.execute("SELECT * FROM NOTE LIMIT ? OFFSET ?", (limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -665,7 +693,7 @@ def get_note_from_db_by_user_iter(user_name, conn = None, batch = 100):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? LIMIT ? OFFSET ?", (user_name, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -702,9 +730,9 @@ def get_note_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
             total = 0
             while not finish:
                 if note_type == "All":
-                    c.execute("SELECT * FROM NOTE WHERE user_name = '%s' LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                    c.execute("SELECT * FROM NOTE WHERE user_name = ? LIMIT ? OFFSET ?", (user_name, limit, offset))
                 else:
-                    c.execute("SELECT * FROM NOTE WHERE user_name = '%s' and type = '%s' LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
+                    c.execute("SELECT * FROM NOTE WHERE user_name = ? and type = ? LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -730,13 +758,14 @@ def get_note_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
         LOG.exception(e)
 
 def get_note_by_id(doc_id, user_name, conn = None):
+    doc_id = sql_int(doc_id)
     result = False
     try:
         if conn == None:
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE id = %s and user_name = '%s'" % (doc_id, user_name))
+            c.execute("SELECT * FROM NOTE WHERE id = ? and user_name = ?", (doc_id, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the note[%s] by user[%s], so i will return None", doc_id, user_name)
@@ -766,7 +795,7 @@ def get_note_by_sha1(sha1, user_name, conn = None):
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE sha1 = '%s' and user_name = '%s'" % (sha1, user_name))
+            c.execute("SELECT * FROM NOTE WHERE sha1 = ? and user_name = ?", (sha1, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the note[%s] by user[%s], so i will return None", sha1, user_name)
@@ -796,7 +825,7 @@ def get_note_num_by_type_user(note_type, user_name, conn = None):
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT count(*) FROM NOTE WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("SELECT count(*) FROM NOTE WHERE user_name = ? and type = ?", (user_name, note_type))
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s notebook[%s] num[%s] from db success.", user_name, note_type, i)
@@ -805,13 +834,14 @@ def get_note_num_by_type_user(note_type, user_name, conn = None):
     return result
 
 def delete_note_by_id(user_name, doc_id, conn = None):
+    doc_id = sql_int(doc_id)
     result = False
     try:
         if conn == None:
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s' and id = %s" % (user_name, doc_id))
+            c.execute("DELETE FROM NOTE WHERE user_name = ? and id = ?", (user_name, doc_id))
             conn.commit()
             result = True
             LOG.debug("Delete note[%s] by user[%s] from db success.", doc_id, user_name)
@@ -828,7 +858,7 @@ def delete_note_by_type(user_name, note_type, conn = None):
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("DELETE FROM NOTE WHERE user_name = ? and type = ?", (user_name, note_type))
             conn.commit()
             result = True
             LOG.debug("Delete notes type[%s] by user[%s] from db success.", note_type, user_name)
@@ -846,7 +876,7 @@ def delete_note_by_user(user_name, conn = None):
             conn = DB.conn_note
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM NOTE WHERE user_name = ?", (user_name, ))
             conn.commit()
             result = True
             LOG.debug("Delete all note by user[%s] from db success.", user_name)
@@ -861,6 +891,8 @@ def delete_note_by_user(user_name, conn = None):
 # functions for rich note
 #
 def get_rich_by_user_type_created_at(user_name, note_type, order = "DESC", offset = 0, limit = 20, conn = None):
+    limit = sql_int(limit, 20)
+    offset = sql_int(offset, 0)
     result = False
     try:
         if conn == None:
@@ -868,11 +900,11 @@ def get_rich_by_user_type_created_at(user_name, note_type, order = "DESC", offse
         if conn != False:
             c = conn.cursor()
             if note_type.lower() == "all":
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, order, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, limit, offset))
             else:
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' AND type = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, note_type, order, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? AND type = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
             result = []
             i = c.fetchone()
             while i != None:
@@ -902,7 +934,7 @@ def get_rich_by_flag_iter(flag, conn = None):
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM RICH WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM RICH WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i != None:
@@ -938,7 +970,7 @@ def get_rich_from_db_iter(conn = None, batch = 100):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM RICH LIMIT %s OFFSET %s" % (limit, offset))
+                c.execute("SELECT * FROM RICH LIMIT ? OFFSET ?", (limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -976,7 +1008,7 @@ def get_rich_from_db_by_user_iter(user_name, conn = None, batch = 100):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -1015,9 +1047,9 @@ def get_rich_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
             total = 0
             while not finish:
                 if note_type == "All":
-                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                    c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, limit, offset))
                 else:
-                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' and type = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
+                    c.execute("SELECT * FROM RICH WHERE user_name = ? and type = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -1046,13 +1078,14 @@ def get_rich_from_db_by_user_type_iter(user_name, note_type, conn = None, batch 
         LOG.exception(e)
 
 def get_rich_by_id(doc_id, user_name, conn = None):
+    doc_id = sql_int(doc_id)
     result = False
     try:
         if conn == None:
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM RICH WHERE id = %s and user_name = '%s'" % (doc_id, user_name))
+            c.execute("SELECT * FROM RICH WHERE id = ? and user_name = ?", (doc_id, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", doc_id, user_name)
@@ -1085,7 +1118,7 @@ def get_rich_by_sha1(sha1, user_name, conn = None, retries = 3):
                 conn = DB.conn_rich
             if conn != False:
                 c = conn.cursor()
-                c.execute("SELECT * FROM RICH WHERE sha1 = '%s' and user_name = '%s'" % (sha1, user_name))
+                c.execute("SELECT * FROM RICH WHERE sha1 = ? and user_name = ?", (sha1, user_name))
                 i = c.fetchone()
                 if i is None:
                     LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", sha1, user_name)
@@ -1121,7 +1154,7 @@ def get_rich_num_by_type_user(note_type, user_name, conn = None):
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT count(*) FROM RICH WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("SELECT count(*) FROM RICH WHERE user_name = ? and type = ?", (user_name, note_type))
             i = c.fetchone()
             result = i[0]
             # print "Num: %s"%result, type(i)
@@ -1131,13 +1164,14 @@ def get_rich_num_by_type_user(note_type, user_name, conn = None):
     return result
 
 def delete_rich_by_id(user_name, doc_id, conn = None):
+    doc_id = sql_int(doc_id)
     result = False
     try:
         if conn == None:
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s' and id = %s" % (user_name, doc_id))
+            c.execute("DELETE FROM RICH WHERE user_name = ? and id = ?", (user_name, doc_id))
             conn.commit()
             result = True
             LOG.debug("Delete rich[%s] by user[%s] from db success." % (doc_id, user_name))
@@ -1154,7 +1188,7 @@ def delete_rich_by_type(user_name, note_type, conn = None):
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("DELETE FROM RICH WHERE user_name = ? and type = ?", (user_name, note_type))
             conn.commit()
             result = True
             LOG.debug("Delete rich notes type[%s] by user[%s] from db success.", note_type, user_name)
@@ -1171,7 +1205,7 @@ def delete_rich_by_user(user_name, conn = None):
             conn = DB.conn_rich
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM RICH WHERE user_name = ?", (user_name, ))
             conn.commit()
             result = True
             LOG.debug("Delete all rich by user[%s] from db success.", user_name)
@@ -1216,7 +1250,7 @@ def get_html_from_db_iter(conn = None):
             conn = DB.conn_html
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM HTML WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i != None:
@@ -1241,7 +1275,7 @@ def get_html_by_flag_iter(flag, conn = None):
             conn = DB.conn_html
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM HTML WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i != None:
@@ -1261,13 +1295,14 @@ def get_html_by_flag_iter(flag, conn = None):
         LOG.exception(e)
 
 def get_html_by_id(doc_id, conn = None):
+    doc_id = sql_int(doc_id)
     result = False
     try:
         if conn == None:
             conn = DB.conn_html
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE id = %s" % doc_id)
+            c.execute("SELECT * FROM HTML WHERE id = ?", (doc_id, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the html[%s], so i will return None", doc_id)
@@ -1293,7 +1328,7 @@ def get_html_by_sha1(sha1, conn = None):
             conn = DB.conn_html
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE sha1 = '%s'" % sha1)
+            c.execute("SELECT * FROM HTML WHERE sha1 = ?", (sha1, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the html[%s], so i will return None", sha1)
@@ -1337,7 +1372,7 @@ def get_user_from_db(user_name, conn = None):
             conn = DB.conn_user
         if conn != False:
             c = conn.cursor()
-            c.execute("SELECT * FROM USER WHERE user_name = '%s';" % user_name)
+            c.execute("SELECT * FROM USER WHERE user_name = ?;", (user_name, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the user[%s], so i will return None", user_name)
@@ -1368,7 +1403,7 @@ def delete_user_from_db(user_name, conn = None):
             conn = DB.conn_user
         if conn != False:
             c = conn.cursor()
-            c.execute("DELETE FROM USER WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM USER WHERE user_name = ?", (user_name, ))
             conn.commit()
             result = True
             LOG.debug("Delete user[%s] from db success.", user_name)

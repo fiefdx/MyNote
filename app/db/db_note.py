@@ -12,7 +12,7 @@ import sqlite3
 
 from config import CONFIG
 from models.item import NOTE
-from db.sqlite import get_db_path, get_conn_sqlite
+from db.sqlite import get_db_path, get_conn_sqlite, sort_order, sql_int
 
 LOG = logging.getLogger(__name__)
 
@@ -120,15 +120,17 @@ class DB(object):
         return result
 
     def get_note_by_user_type_created_at(self, user_name, note_type, order = "DESC", offset = 0, limit = 20):
+        limit = sql_int(limit, 20)
+        offset = sql_int(offset, 0)
         result = False
         try:
             c = self.conn.cursor()
             if note_type.lower() == "all":
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, order, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, limit, offset))
             else:
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' AND type = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, note_type, order, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? AND type = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
             result = []
             i = c.fetchone()
             while i is not None:
@@ -153,7 +155,7 @@ class DB(object):
     def get_note_by_flag_iter(self, flag):
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM NOTE WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i is not None:
@@ -184,7 +186,7 @@ class DB(object):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM NOTE LIMIT %s OFFSET %s" % (limit, offset))
+                c.execute("SELECT * FROM NOTE LIMIT ? OFFSET ?", (limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -217,7 +219,7 @@ class DB(object):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM NOTE WHERE user_name = '%s' LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                c.execute("SELECT * FROM NOTE WHERE user_name = ? LIMIT ? OFFSET ?", (user_name, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -251,9 +253,9 @@ class DB(object):
             total = 0
             while not finish:
                 if note_type == "All":
-                    c.execute("SELECT * FROM NOTE WHERE user_name = '%s' LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                    c.execute("SELECT * FROM NOTE WHERE user_name = ? LIMIT ? OFFSET ?", (user_name, limit, offset))
                 else:
-                    c.execute("SELECT * FROM NOTE WHERE user_name = '%s' and type = '%s' LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
+                    c.execute("SELECT * FROM NOTE WHERE user_name = ? and type = ? LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = NOTE()
@@ -279,10 +281,11 @@ class DB(object):
             LOG.exception(e)
 
     def get_note_by_id(self, doc_id, user_name):
+        doc_id = sql_int(doc_id)
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE id = %s and user_name = '%s'" % (doc_id, user_name))
+            c.execute("SELECT * FROM NOTE WHERE id = ? and user_name = ?", (doc_id, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the note[%s] by user[%s], so i will return None", doc_id, user_name)
@@ -309,7 +312,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM NOTE WHERE sha1 = '%s' and user_name = '%s'" % (sha1, user_name))
+            c.execute("SELECT * FROM NOTE WHERE sha1 = ? and user_name = ?", (sha1, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the note[%s] by user[%s], so i will return None", sha1, user_name)
@@ -336,7 +339,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT count(*) FROM NOTE WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("SELECT count(*) FROM NOTE WHERE user_name = ? and type = ?", (user_name, note_type))
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s notebook[%s] num[%s] from db success", user_name, note_type, i)
@@ -348,7 +351,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT count(*) FROM NOTE WHERE user_name = '%s'" % (user_name, ))
+            c.execute("SELECT count(*) FROM NOTE WHERE user_name = ?", (user_name, ))
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s notes num[%s] from db success", user_name, i)
@@ -357,10 +360,11 @@ class DB(object):
         return result
 
     def delete_note_by_id(self, user_name, doc_id):
+        doc_id = sql_int(doc_id)
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s' and id = %s" % (user_name, doc_id))
+            c.execute("DELETE FROM NOTE WHERE user_name = ? and id = ?", (user_name, doc_id))
             self.conn.commit()
             result = True
             LOG.debug("Delete note[%s] by user[%s] from db success", doc_id, user_name)
@@ -374,7 +378,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("DELETE FROM NOTE WHERE user_name = ? and type = ?", (user_name, note_type))
             self.conn.commit()
             result = True
             LOG.debug("Delete notes type[%s] by user[%s] from db success", note_type, user_name)
@@ -388,7 +392,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM NOTE WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM NOTE WHERE user_name = ?", (user_name, ))
             self.conn.commit()
             result = True
             LOG.debug("Delete all note by user[%s] from db success", user_name)

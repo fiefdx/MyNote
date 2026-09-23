@@ -166,6 +166,9 @@ class RichHandler(BaseHandler):
                         socks_proxy = user_info.socks_proxy)
         elif option == "download" and note_id != "":
             note = Servers.DB_SERVER["RICH"].get_rich_by_id(note_id, user)
+            if note is False or note is None:
+                # unknown/garbage id: answer 404 instead of blowing up on None
+                raise tornado.web.HTTPError(404)
             # note's file_content and file_title are unicode
             if CONFIG["ENCRYPT"]:
                 # note.decrypt(user_key)

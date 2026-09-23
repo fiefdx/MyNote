@@ -12,7 +12,7 @@ import sqlite3
 
 from config import CONFIG
 from models.item import HTML
-from db.sqlite import get_db_path, get_conn_sqlite
+from db.sqlite import get_db_path, get_conn_sqlite, sql_int
 
 LOG = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class DB(object):
     def get_html_from_db_iter(self):
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM HTML WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i is not None:
@@ -138,7 +138,7 @@ class DB(object):
     def get_html_by_flag_iter(self, flag):
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM HTML WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i is not None:
@@ -158,10 +158,11 @@ class DB(object):
             LOG.exception(e)
 
     def get_html_by_id(self, doc_id):
+        doc_id = sql_int(doc_id)
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE id = %s" % doc_id)
+            c.execute("SELECT * FROM HTML WHERE id = ?", (doc_id, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the html[%s], so i will return None", doc_id)
@@ -184,7 +185,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM HTML WHERE sha1 = '%s'" % sha1)
+            c.execute("SELECT * FROM HTML WHERE sha1 = ?", (sha1, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the html[%s], so i will return None", sha1)

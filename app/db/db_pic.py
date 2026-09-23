@@ -114,7 +114,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM PIC WHERE sha1 = '%s'" % sha1)
+            c.execute("SELECT * FROM PIC WHERE sha1 = ?", (sha1, ))
             i = c.fetchone()
             if i is not None:
                 item = PIC()

@@ -13,7 +13,7 @@ import json
 
 from config import CONFIG
 from models.item import RICH
-from db.sqlite import get_db_path, get_conn_sqlite
+from db.sqlite import get_db_path, get_conn_sqlite, sort_order, sql_int
 
 LOG = logging.getLogger(__name__)
 
@@ -131,15 +131,17 @@ class DB(object):
         return result
 
     def get_rich_by_user_type_created_at(self, user_name, note_type, order = "DESC", offset = 0, limit = 20):
+        limit = sql_int(limit, 20)
+        offset = sql_int(offset, 0)
         result = False
         try:
             c = self.conn.cursor()
             if note_type.lower() == "all":
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, order, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, limit, offset))
             else:
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' AND type = '%s' ORDER BY "\
-                          "created_at %s LIMIT %s OFFSET %s" % (user_name, note_type, order, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? AND type = ? ORDER BY "
+                          "created_at " + sort_order(order) + " LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
             result = []
             i = c.fetchone()
             while i is not None:
@@ -166,7 +168,7 @@ class DB(object):
     def get_rich_by_flag_iter(self, flag):
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM RICH WHERE updated_at > '%s'" % flag)
+            c.execute("SELECT * FROM RICH WHERE updated_at > ?", (flag, ))
             total = 0
             i = c.fetchone()
             while i is not None:
@@ -199,7 +201,7 @@ class DB(object):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM RICH LIMIT %s OFFSET %s" % (limit, offset))
+                c.execute("SELECT * FROM RICH LIMIT ? OFFSET ?", (limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -234,7 +236,7 @@ class DB(object):
             finish = False
             total = 0
             while not finish:
-                c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -270,9 +272,9 @@ class DB(object):
             total = 0
             while not finish:
                 if note_type == "All":
-                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, limit, offset))
+                    c.execute("SELECT * FROM RICH WHERE user_name = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, limit, offset))
                 else:
-                    c.execute("SELECT * FROM RICH WHERE user_name = '%s' and type = '%s' ORDER BY id LIMIT %s OFFSET %s" % (user_name, note_type, limit, offset))
+                    c.execute("SELECT * FROM RICH WHERE user_name = ? and type = ? ORDER BY id LIMIT ? OFFSET ?", (user_name, note_type, limit, offset))
                 result = c.fetchall()
                 for i in result:
                     item = RICH()
@@ -300,10 +302,11 @@ class DB(object):
             LOG.exception(e)
 
     def get_rich_by_id(self, doc_id, user_name):
+        doc_id = sql_int(doc_id)
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM RICH WHERE id = %s and user_name = '%s'" % (doc_id, user_name))
+            c.execute("SELECT * FROM RICH WHERE id = ? and user_name = ?", (doc_id, user_name))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", doc_id, user_name)
@@ -333,7 +336,7 @@ class DB(object):
         for i in range(retries):
             try:
                 c = self.conn.cursor()
-                c.execute("SELECT * FROM RICH WHERE sha1 = '%s' and user_name = '%s'" % (sha1, user_name))
+                c.execute("SELECT * FROM RICH WHERE sha1 = ? and user_name = ?", (sha1, user_name))
                 i = c.fetchone()
                 if i is None:
                     LOG.warning("Can not find the rich[%s] by user[%s], so i will return None", sha1, user_name)
@@ -366,7 +369,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT count(*) FROM RICH WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("SELECT count(*) FROM RICH WHERE user_name = ? and type = ?", (user_name, note_type))
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s rich notebook[%s] num[%s] from db success", user_name, note_type, i)
@@ -378,7 +381,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT count(*) FROM RICH WHERE user_name = '%s'" % (user_name, ))
+            c.execute("SELECT count(*) FROM RICH WHERE user_name = ?", (user_name, ))
             i = c.fetchone()
             result = i[0]
             LOG.debug("Get user[%s]'s rich notes num[%s] from db success", user_name, i)
@@ -387,10 +390,11 @@ class DB(object):
         return result
 
     def delete_rich_by_id(self, user_name, doc_id):
+        doc_id = sql_int(doc_id)
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s' and id = %s" % (user_name, doc_id))
+            c.execute("DELETE FROM RICH WHERE user_name = ? and id = ?", (user_name, doc_id))
             self.conn.commit()
             result = True
             LOG.debug("Delete rich[%s] by user[%s] from db success" % (doc_id, user_name))
@@ -404,7 +408,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s' and type = '%s'" % (user_name, note_type))
+            c.execute("DELETE FROM RICH WHERE user_name = ? and type = ?", (user_name, note_type))
             self.conn.commit()
             result = True
             LOG.debug("Delete rich notes type[%s] by user[%s] from db success", note_type, user_name)
@@ -418,7 +422,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM RICH WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM RICH WHERE user_name = ?", (user_name, ))
             self.conn.commit()
             result = True
             LOG.debug("Delete all rich by user[%s] from db success", user_name)

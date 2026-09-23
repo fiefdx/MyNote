@@ -102,7 +102,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("SELECT * FROM USER WHERE user_name = '%s';" % user_name)
+            c.execute("SELECT * FROM USER WHERE user_name = ?;", (user_name, ))
             i = c.fetchone()
             if i is None:
                 LOG.warning("Can not find the user[%s], so i will return None", user_name)
@@ -130,7 +130,7 @@ class DB(object):
         result = False
         try:
             c = self.conn.cursor()
-            c.execute("DELETE FROM USER WHERE user_name = '%s'" % user_name)
+            c.execute("DELETE FROM USER WHERE user_name = ?", (user_name, ))
             self.conn.commit()
             result = True
             LOG.debug("Delete user[%s] from db success", user_name)
