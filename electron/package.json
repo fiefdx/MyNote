@@ -1,0 +1,48 @@
+{
+  "name": "mynote-desktop",
+  "productName": "MyNote",
+  "version": "1.0.0",
+  "description": "MyNote desktop app: Electron shell with a bundled PyInstaller Python/Tornado backend",
+  "main": "main.js",
+  "scripts": {
+    "build:backend": "bash build-backend.sh",
+    "start": "electron .",
+    "start:headless": "MYNOTE_ELECTRON_HEADLESS=1 electron .",
+    "dist": "bash build-backend.sh && electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^37.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "com.mynote.desktop",
+    "productName": "MyNote",
+    "files": [
+      "main.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/MyNote",
+        "to": "backend"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
+  }
+}

@@ -24,8 +24,13 @@ import logger
 LOG = logging.getLogger(__name__)
 
 
-TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in range(CONFIG["PROCESS_NUM"])]
-ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
+# NOTE: task/result queues are created lazily inside ManagerClient.__init__:
+# creating multiprocessing.Queue at module import time allocates semaphores in
+# every re-executed helper process (resource tracker / spawn workers of
+# PyInstaller-frozen apps), which leaks file descriptors and can spawn extra
+# resource trackers.
+TaskQueues = None
+ResultQueue = None
 ImportRich = "IMPORT_RICH"
 ImportNote = "IMPORT_NOTE"
 IndexNote = "INDEX_NOTE"
@@ -479,6 +484,9 @@ class ManagerClient(object):
     def __init__(self, process_num = 1):
         if ManagerClient._instance == None:
             self.process_num = process_num
+            global TaskQueues, ResultQueue
+            TaskQueues = [Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2) for _ in range(CONFIG["PROCESS_NUM"])]
+            ResultQueue = Queue(CONFIG["PROCESS_NUM"] * CONFIG["THREAD_NUM"] * 2)
             pipe_master, pipe_client = Pipe()
             ManagerClient.WRITE_LOCK = toro.Lock()
             p = Manager(pipe_client, TaskQueues, ResultQueue)

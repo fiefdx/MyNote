@@ -30,3 +30,6 @@ dist/*
 !requires/requirements.txt
 !.data
 !.doc
+
+# electron build
+.venv-electron/

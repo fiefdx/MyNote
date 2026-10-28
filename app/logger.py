@@ -11,7 +11,7 @@ import logging.handlers
 
 from config import CONFIG
 
-CWD = CONFIG["APP_PATH"]
+CWD = CONFIG.get("LOG_PATH", CONFIG["APP_PATH"])
 
 LEVELS = {'NOSET': logging.NOTSET,
           'DEBUG': logging.DEBUG,

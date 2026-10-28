@@ -12,6 +12,16 @@ import signal
 import logging
 import platform
 
+# Frozen (PyInstaller) multiprocessing: helper processes (resource tracker,
+# spawn workers) re-executed this executable would run this script as __main__.
+# freeze_support() MUST run before any heavy module import, because
+# utils/processer.py creates multiprocessing.Queue objects at import time,
+# which would spawn new resource trackers in every re-executed child
+# (runaway process explosion).
+import multiprocessing
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.options
@@ -20,7 +30,6 @@ import tornado.locale
 import tornado.netutil
 from tornado.options import define, options
 import psutil
-
 from config import CONFIG
 from db.db_html import DB as HTML_DB
 from db.db_rich import DB as RICH_DB
@@ -32,20 +41,17 @@ from ix.ix_html import IX as HTML_IX
 from ix.ix_rich import IX as RICH_IX
 from ix.ix_note import IX as NOTE_IX
 from utils import common
-import multiprocessing
 from utils.multi_async_tea import MultiProcessNoteTea
 from utils.processer import ManagerClient
 from app import Application
 
 PLATFORM = [platform.system(), platform.architecture()[0]]
 
-# fork service process without jieba for linux, unix
-if PLATFORM[0].lower() != "windows":
-    crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
-    common.Servers.CRYPT_SERVER = crypt_server
-    processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
-    common.Servers.PROCESSER_SERVER = processer_server
-else:
+# NOTE: service processes (MultiProcessNoteTea / ManagerClient) must NOT be
+# created at module import time: with the "spawn" start method (macOS default,
+# Windows, PyInstaller frozen apps) every child re-imports this module and
+# would create children recursively. They are created inside __main__ below.
+if PLATFORM[0].lower() == "windows":
     import utils.win_compat
 
 import logger
@@ -59,8 +65,6 @@ define("log", default = CONFIG["LOG_FILE_NAME"], help = "specify the log file", 
 LOG = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    if PLATFORM[0].lower() == "windows":
-        multiprocessing.freeze_support()
     tornado.options.parse_command_line()
     logger.config_logging(file_name = options.log,
                           log_level = CONFIG['LOG_LEVEL'],
@@ -110,12 +114,11 @@ if __name__ == "__main__":
         common.Servers.IX_SERVER = {"HTML": HTML_IX(),
                                     "RICH": RICH_IX(),
                                     "NOTE": NOTE_IX()}
-        # create service process for windows
-        if PLATFORM[0].lower() == "windows":
-            crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
-            common.Servers.CRYPT_SERVER = crypt_server
-            processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
-            common.Servers.PROCESSER_SERVER = processer_server
+        # create service processes on all platforms (spawn-safe: only in the parent)
+        crypt_server = MultiProcessNoteTea(CONFIG["PROCESS_NUM"])
+        common.Servers.CRYPT_SERVER = crypt_server
+        processer_server = ManagerClient(CONFIG["PROCESS_NUM"])
+        common.Servers.PROCESSER_SERVER = processer_server
 
         tornado.locale.load_translations(os.path.join(cwd, "translations"))
         if CONFIG["SERVER_SCHEME"].lower() == "https":

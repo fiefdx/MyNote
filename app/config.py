@@ -24,7 +24,14 @@ import os
 # default config
 # cwd = '.'
 cwd = os.path.split(os.path.realpath(__file__))[0]
-configpath = os.path.join(cwd, "configuration.yml")
+
+# MYNOTE_HOME: optional writable directory (configuration.yml, logs, pid file).
+# Used when the application is embedded in a desktop shell (Electron) or frozen
+# with PyInstaller, where APP_PATH (inside the bundle) may be read-only.
+MYNOTE_HOME = os.environ.get("MYNOTE_HOME", "")
+if MYNOTE_HOME and not os.path.isdir(MYNOTE_HOME):
+    os.makedirs(MYNOTE_HOME)
+configpath = os.path.join(MYNOTE_HOME, "configuration.yml") if MYNOTE_HOME else os.path.join(cwd, "configuration.yml")
 
 def update(**kwargs):
     config = load(stream = open(configpath), Loader = Loader)
@@ -69,7 +76,8 @@ try:
     CONFIG["STORAGE_DB_PATH"] = os.path.join(datapath, "db")
     if not os.path.exists(CONFIG["STORAGE_DB_PATH"]) or not os.path.isdir(CONFIG["STORAGE_DB_PATH"]):
         os.makedirs(CONFIG["STORAGE_DB_PATH"])
-    CONFIG["PID_PATH"] = cwd
+    CONFIG["PID_PATH"] = MYNOTE_HOME if MYNOTE_HOME else cwd
+    CONFIG["LOG_PATH"] = MYNOTE_HOME if MYNOTE_HOME else cwd
     if "FUNCTIONS" not in CONFIG:
         CONFIG["FUNCTIONS"] = ["rich", "note", "help"] # ["home", "search", "note", "rich", "help"]
     CONFIG["LOG_FILE_NAME"] = "MyNote.log"
