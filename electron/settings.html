@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MyNote Preferences</title>
+<style>
+  body {
+    font: -apple-system, 13px system-ui, sans-serif;
+    margin: 0; padding: 18px 20px;
+  }
+  h2 { font-size: 14px; margin: 0 0 4px; }
+  p.hint { color: #777; margin: 0 0 14px; font-size: 12px; }
+  label { display: block; font-weight: 600; margin-bottom: 6px; }
+  .row { display: flex; gap: 8px; }
+  input[type=text] {
+    flex: 1; padding: 6px 8px; font-size: 13px;
+    border: 1px solid #bbb; border-radius: 5px;
+  }
+  button { padding: 6px 14px; font-size: 13px; border-radius: 5px; border: 1px solid #bbb; background: #f4f4f4; }
+  button.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+  #status { margin-top: 12px; font-size: 12px; color: #555; min-height: 16px; }
+  #defaultNote { margin-top: 4px; font-size: 12px; color: #888; }
+</style>
+</head>
+<body>
+  <h2>Data storage</h2>
+  <p class="hint">Notes, databases and the search index are stored in this folder.
+     The server restarts automatically after saving.</p>
+
+  <label for="dataPath">MyNote data folder</label>
+  <div class="row">
+    <input type="text" id="dataPath" spellcheck="false">
+    <button id="pick">Choose&hellip;</button>
+  </div>
+  <div id="defaultNote"></div>
+
+  <div class="row" style="margin-top:18px; justify-content:flex-end;">
+    <button id="reset">Use default</button>
+    <button id="save" class="primary">Save &amp; restart server</button>
+  </div>
+
+  <div id="status"></div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  let defaults = null;
+
+  async function init() {
+    const s = await window.mynoteSettings.get();
+    defaults = s;
+    $('dataPath').value = s.dataPath;
+    $('defaultNote').textContent = 'Default: ' + s.defaultDataPath;
+  }
+
+  $('pick').addEventListener('click', async () => {
+    const picked = await window.mynoteSettings.pick();
+    if (picked) $('dataPath').value = picked;
+  });
+
+  $('reset').addEventListener('click', () => {
+    $('dataPath').value = defaults.defaultDataPath;
+  });
+
+  $('save').addEventListener('click', async () => {
+    const value = $('dataPath').value.trim();
+    if (!value) { $('status').textContent = 'Folder path must not be empty.'; return; }
+    $('status').textContent = 'Saving and restarting the server\u2026';
+    const result = await window.mynoteSettings.save({
+      dataPath: value,
+      useDefault: value === defaults.defaultDataPath,
+    });
+    $('dataPath').value = result.dataPath;
+    $('status').textContent = 'Saved. Server restarted, data folder: ' + result.dataPath;
+  });
+
+  init();
+</script>
+</body>
+</html>

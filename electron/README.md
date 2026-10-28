@@ -23,6 +23,19 @@ CPython interpreter** — end users need no Python installed.
 - electron-builder copies `../dist/MyNote` into the app bundle as
   `Contents/Resources/backend`.
 
+## Data location
+
+- Default data folder (notes, SQLite DBs, whoosh index, pictures, uploads):
+  **`~/MyNoteData`** (home directory).
+- Change it via **MyNote ▸ Preferences (⌘,)**: pick any folder; the choice is
+  saved in `<userData>/settings.json` and the backend restarts automatically.
+  “Use default” resets back to `~/MyNoteData`.
+- Logs, generated `configuration.yml` and the pid file stay in
+  `<userData>/backend-home/` (`~/Library/Application Support/MyNote/` on macOS).
+- Data found in the old pre-1.1 location
+  (`<userData>/backend-home/data`) is copied to the default folder once,
+  automatically, on first launch.
+
 All user data (SQLite DBs, whoosh index, pictures, uploads, logs) lives under
 `<userData>/backend-home/data` — the app bundle stays read-only friendly.
 
@@ -41,6 +54,7 @@ Smoke tests (no manual interaction):
 ```bash
 MYNOTE_ELECTRON_HEADLESS=1 npm start   # start backend, verify port, quit
 MYNOTE_SMOKE_MS=4000 npm start         # open window, quit 4s after page load
+MYNOTE_OPEN_SETTINGS=1 npm start       # also open the Preferences window
 ```
 
 ## Notes / gotchas
