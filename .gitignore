@@ -15,6 +15,7 @@
 *.pyo
 *.bak
 *.desktop
+.DS_Store
 __pycache__/
 build/
 .venv/
