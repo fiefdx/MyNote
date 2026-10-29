@@ -52,6 +52,16 @@ class BaseHandler(tornado.web.RequestHandler):
         return None
 
 class BaseSocketHandler(tornado.websocket.WebSocketHandler):
+    def get_ping_interval(self):
+        """Send a websocket ping every 30s so connections that died during
+        machine sleep / network loss are detected and closed (the browser
+        then runs its auto-reconnect logic)."""
+        return 30
+
+    def get_ping_timeout(self):
+        """Close the connection if no pong arrives within 60s."""
+        return 60
+
     def get_current_user(self):
         return self.get_secure_cookie("user", max_age_days = COOKIE_TIME)
 

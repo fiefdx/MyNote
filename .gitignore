@@ -33,3 +33,6 @@ dist/*
 
 # electron build
 .venv-electron/
+
+# build/test scratch
+.tmp-test/

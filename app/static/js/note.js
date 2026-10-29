@@ -50,15 +50,48 @@ function noteInit (scheme, locale) {
     var action = "";
 
     var WebSocket = window.WebSocket || window.MozWebSocket;
-    if (WebSocket) {
-        try {
-            var socket = new WebSocket(uri);
-        } catch (e) {}
+    var socket = null;
+    var socket_reconnect_timer = null;
+    var socket_reconnect_delay = 1000;
+    var socket_ui_events_bound = false;
+
+    function socket_schedule_reconnect() {
+        if (socket_reconnect_timer !== null) return;
+        // A short break (e.g. resuming from sleep) usually recovers on the
+        // first retry; only warn the user once retries keep failing.
+        if (socket_reconnect_delay > 2000 && !$('#offline_modal').is(':visible')) {
+            $('#offline_modal').modal('show');
+        }
+        console.log("websocket: reconnecting in " + socket_reconnect_delay + " ms");
+        socket_reconnect_timer = window.setTimeout(function () {
+            socket_reconnect_timer = null;
+            socket_connect();
+        }, socket_reconnect_delay);
+        socket_reconnect_delay = Math.min(socket_reconnect_delay * 2, 15000);
     }
 
-    if (socket) {
+    function socket_connect() {
+        if (!WebSocket) return;
+        if (socket_reconnect_timer !== null) {
+            window.clearTimeout(socket_reconnect_timer);
+            socket_reconnect_timer = null;
+        }
+        try {
+            socket = new WebSocket(uri);
+        } catch (e) { socket = null; }
+        if (!socket) {
+            socket_schedule_reconnect();
+            return;
+        }
+
         socket.onopen = function() {
             console.log("websocket onopen");
+            socket_reconnect_delay = 1000;
+            if ($('#offline_modal').is(':visible')) {
+                $('#offline_modal').modal('hide');
+            }
+            if (socket_ui_events_bound) return;
+            socket_ui_events_bound = true;
             $goto_header.bind("click", gotoHome);
             $goto_home.bind("click", gotoHome);
             $goto_search.bind("click", gotoSearch);
@@ -288,19 +321,31 @@ function noteInit (scheme, locale) {
 
         socket.onclose = function() {
             console.log("websocket onclose");
-            if ((action == "" || (action != "import_notes" &&
-                    action != "delete_notes" &&
-                    action != "reindex_notes" &&
-                    action != "change_settings" &&
-                    action != "goto_home" &&
-                    action != "goto_search" &&
-                    action != "goto_rich" &&
-                    action != "goto_note" &&
-                    action != "goto_help")) && !$('#offline_modal').is(':visible')) {
-                $('#offline_modal').modal('show');
-            }
+            socket_schedule_reconnect();
+        };
+
+        socket.onerror = function() {
+            console.log("websocket onerror");
+            // onclose fires right after; reconnection is handled there.
         };
     }
+
+    socket_connect();
+
+    // Reconnect quickly when the machine wakes from sleep or the network
+    // comes back, without waiting for the browser to notice the dead socket.
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && (!socket || socket.readyState === socket.CLOSED)) {
+            socket_reconnect_delay = 1000;
+            socket_connect();
+        }
+    });
+    window.addEventListener('online', function () {
+        socket_reconnect_delay = 1000;
+        if (!socket || socket.readyState === socket.CLOSED) {
+            socket_connect();
+        }
+    });
 
     var entityMap = {
         "&": "&amp;",

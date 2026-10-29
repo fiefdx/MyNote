@@ -54,15 +54,52 @@ function noteInit (scheme, locale) {
     });
 
     var WebSocket = window.WebSocket || window.MozWebSocket;
-    if (WebSocket) {
-        try {
-            var socket = new WebSocket(uri);
-        } catch (e) {}
+    var socket = null;
+    var socket_reconnect_timer = null;
+    var socket_reconnect_delay = 1000;
+    var socket_ui_events_bound = false;
+
+    function socket_schedule_reconnect() {
+        if (socket_reconnect_timer !== null) return;
+        // A short break (e.g. resuming from sleep) usually recovers on the
+        // first retry; only warn the user once retries keep failing.
+        if (socket_reconnect_delay > 2000 && !$('#offline_modal').is(':visible')) {
+            $('#offline_modal').modal('show');
+        }
+        console.log("websocket: reconnecting in " + socket_reconnect_delay + " ms");
+        socket_reconnect_timer = window.setTimeout(function () {
+            socket_reconnect_timer = null;
+            socket_connect();
+        }, socket_reconnect_delay);
+        socket_reconnect_delay = Math.min(socket_reconnect_delay * 2, 15000);
     }
 
-    if (socket) {
+    function socket_connect() {
+        if (!WebSocket) return;
+        if (socket_reconnect_timer !== null) {
+            window.clearTimeout(socket_reconnect_timer);
+            socket_reconnect_timer = null;
+        }
+        try {
+            socket = new WebSocket(uri);
+        } catch (e) { socket = null; }
+        if (!socket) {
+            socket_schedule_reconnect();
+            return;
+        }
+        socket_attach_handlers();
+    }
+
+    function socket_attach_handlers() {
         socket.onopen = function() {
             console.log("websocket onopen");
+            socket_reconnect_delay = 1000;
+            $note_title.css({'background-color' : ''});
+            if ($('#offline_modal').is(':visible')) {
+                $('#offline_modal').modal('hide');
+            }
+            if (socket_ui_events_bound) return;
+            socket_ui_events_bound = true;
             $user_settings.bind("click", showSettings);
             $save_note.bind("click", saveNote);
             $save_note_toolbar.bind("click", saveNote);
@@ -205,9 +242,33 @@ function noteInit (scheme, locale) {
         socket.onclose = function() {
             console.log("websocket onclose");
             $note_title.css({'background-color' : '#CC0000'});
+            socket_schedule_reconnect();
         };
 
-        var entityMap = {
+        socket.onerror = function() {
+            console.log("websocket onerror");
+            // onclose fires right after; reconnection is handled there.
+        };
+    }
+
+    socket_connect();
+
+    // Reconnect quickly when the machine wakes from sleep or the network
+    // comes back, without waiting for the browser to notice the dead socket.
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && (!socket || socket.readyState === socket.CLOSED)) {
+            socket_reconnect_delay = 1000;
+            socket_connect();
+        }
+    });
+    window.addEventListener('online', function () {
+        socket_reconnect_delay = 1000;
+        if (!socket || socket.readyState === socket.CLOSED) {
+            socket_connect();
+        }
+    });
+
+    var entityMap = {
             "&": "&amp;",
             "<": "&lt;",
             ">": "&gt;",
@@ -458,6 +519,5 @@ function noteInit (scheme, locale) {
             search();
             return false;
         });
-    }
 }
 
