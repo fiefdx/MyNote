@@ -34,6 +34,10 @@
   </div>
   <div id="defaultNote"></div>
 
+  <label for="maxBuffer" style="margin-top:18px;">Max import/export package size (MB)</label>
+  <p class="hint">Uploads larger than this are rejected by the server. 16&ndash;4096&nbsp;MB, default 512.</p>
+  <input type="number" id="maxBuffer" min="16" max="4096" step="1" style="padding:6px 8px;font-size:13px;border:1px solid #bbb;border-radius:5px;width:120px;">
+
   <div class="row" style="margin-top:18px; justify-content:flex-end;">
     <button id="reset">Use default</button>
     <button id="save" class="primary">Save &amp; restart server</button>
@@ -50,6 +54,7 @@
     defaults = s;
     $('dataPath').value = s.dataPath;
     $('defaultNote').textContent = 'Default: ' + s.defaultDataPath;
+    $('maxBuffer').value = s.maxBufferMb;
   }
 
   $('pick').addEventListener('click', async () => {
@@ -64,12 +69,19 @@
   $('save').addEventListener('click', async () => {
     const value = $('dataPath').value.trim();
     if (!value) { $('status').textContent = 'Folder path must not be empty.'; return; }
+    const mb = Number($('maxBuffer').value);
+    if (!Number.isInteger(mb) || mb < 16 || mb > 4096) {
+      $('status').textContent = 'Package size limit must be an integer between 16 and 4096 MB.';
+      return;
+    }
     $('status').textContent = 'Saving and restarting the server\u2026';
     const result = await window.mynoteSettings.save({
       dataPath: value,
       useDefault: value === defaults.defaultDataPath,
+      maxBufferMb: mb,
     });
     $('dataPath').value = result.dataPath;
+    $('maxBuffer').value = result.maxBufferMb;
     $('status').textContent = 'Saved. Server restarted, data folder: ' + result.dataPath;
   });
 

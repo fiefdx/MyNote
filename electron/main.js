@@ -71,6 +71,16 @@ function saveSettings(settings) {
   fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2), 'utf8');
 }
 
+// Max upload (import package) size in MB. Tornado 6 caps request bodies at
+// max_body_size, which defaults to max_buffer_size; too small a value makes
+// large note-import uploads fail with "Content-Length too long".
+const DEFAULT_MAX_BUFFER_MB = 512;
+
+function maxBufferMb() {
+  const mb = Number(loadSettings().maxBufferMb);
+  return Number.isInteger(mb) && mb >= 16 && mb <= 4096 ? mb : DEFAULT_MAX_BUFFER_MB;
+}
+
 function defaultDataPath() {
   return path.join(app.getPath('home'), 'MyNoteData');
 }
@@ -109,7 +119,7 @@ function writeBackendConfig(home, port) {
     `DATA_PATH: ${JSON.stringify(dataPath)}`,
     'ENCRYPT: true',
     'LOG_LEVEL: INFO',
-    'MAX_BUFFER_SIZE: 33554432',
+    'MAX_BUFFER_SIZE: ' + maxBufferMb() * 1024 * 1024, // also the Tornado 6 max request body size
     'NOTE_DESCRIPTION_LENGTH: 300',
     'PROCESS_NUM: 2',
     'SERVER_HOST: 127.0.0.1',
@@ -353,6 +363,7 @@ ipcMain.handle('mynote:get-settings', () => {
     dataPath: currentDataPath(),
     defaultDataPath: defaultDataPath(),
     hasCustom: Boolean(loadSettings().dataPath),
+    maxBufferMb: maxBufferMb(),
   };
 });
 
@@ -374,9 +385,15 @@ ipcMain.handle('mynote:save-settings', async (_event, values) => {
   } else {
     delete settings.dataPath;
   }
+  const mb = Number(values.maxBufferMb);
+  if (Number.isInteger(mb) && mb >= 16 && mb <= 4096) {
+    settings.maxBufferMb = mb;
+  } else {
+    delete settings.maxBufferMb;
+  }
   saveSettings(settings);
   await restartBackend();
-  return { dataPath: currentDataPath() };
+  return { dataPath: currentDataPath(), maxBufferMb: maxBufferMb() };
 });
 
 /* ---------- app lifecycle ---------- */
