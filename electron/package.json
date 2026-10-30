@@ -1,7 +1,7 @@
 {
   "name": "mynote-desktop",
   "productName": "MyNote",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "MyNote desktop app: Electron shell with a bundled PyInstaller Python/Tornado backend",
   "main": "main.js",
   "scripts": {
@@ -35,6 +35,34 @@
       "target": [
         "dmg"
       ]
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 140,
+          "y": 190,
+          "type": "file",
+          "name": "1. Install MyNote.command",
+          "path": "install/Install MyNote.command"
+        },
+        {
+          "x": 420,
+          "y": 190,
+          "type": "dir",
+          "name": "MyNote.app",
+          "path": "dist/mac-arm64/MyNote.app"
+        },
+        {
+          "x": 640,
+          "y": 190,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ],
+      "window": {
+        "width": 780,
+        "height": 400
+      }
     },
     "win": {
       "target": [
