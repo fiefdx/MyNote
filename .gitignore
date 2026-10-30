@@ -36,3 +36,7 @@ dist/*
 
 # build/test scratch
 .tmp-test/
+
+# electron-builder resources (app icon)
+!electron/build/
+!electron/build/**
