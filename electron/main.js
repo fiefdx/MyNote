@@ -320,7 +320,22 @@ function buildMenu() {
         { role: 'togglefullscreen' },
       ],
     },
-    { role: 'editMenu' },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        ...(process.platform === 'darwin'
+          ? [{ role: 'pasteAndMatchStyle' }, { role: 'delete' }, { role: 'selectAll' }]
+          : [{ role: 'delete' }, { type: 'separator' }, { role: 'selectAll' }]),
+        { type: 'separator' },
+        { label: 'Preferences\u2026', accelerator: 'CmdOrCtrl+,', click: openSettings },
+      ],
+    },
     { role: 'windowMenu' },
   ];
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
