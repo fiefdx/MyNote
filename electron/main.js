@@ -250,7 +250,7 @@ function createWindow() {
     height: 860,
     minWidth: 800,
     minHeight: 600,
-    title: 'MyNote',
+    title: `MyNote - v${app.getVersion()}`,
     autoHideMenuBar: false,
     webPreferences: {
       contextIsolation: true,
@@ -258,12 +258,21 @@ function createWindow() {
     },
   });
 
+  // keep the window frame title fixed (the page's <title> is feature-dependent)
+  mainWindow.on('page-title-updated', (event) => {
+    event.preventDefault();
+    mainWindow.setTitle(`MyNote - v${app.getVersion()}`);
+  });
+
   mainWindow.loadURL(`http://127.0.0.1:${backendPort}/`);
 
   if (SMOKE_MS > 0) {
     mainWindow.webContents.once('did-finish-load', () => {
       console.log('MYNOTE_PAGE_LOADED url=' + mainWindow.webContents.getURL());
-      setTimeout(() => app.quit(), SMOKE_MS);
+      setTimeout(() => {
+        console.log('MYNOTE_TITLE=' + mainWindow.getTitle());
+        app.quit();
+      }, SMOKE_MS);
     });
     mainWindow.webContents.once('did-fail-load', (e, code, desc) => {
       console.error('MYNOTE_PAGE_FAILED ' + code + ' ' + desc);
