@@ -128,7 +128,6 @@ function writeBackendConfig(home, port) {
     'USB_MODE: false',
     'FUNCTIONS:',
     '  - rich',
-    '  - note',
     '',
   ].join('\n');
   fs.writeFileSync(path.join(home, 'configuration.yml'), config, 'utf8');
