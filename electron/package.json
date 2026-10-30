@@ -1,7 +1,7 @@
 {
   "name": "mynote-desktop",
   "productName": "MyNote",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "MyNote desktop app: Electron shell with a bundled PyInstaller Python/Tornado backend",
   "main": "main.js",
   "scripts": {
@@ -17,6 +17,7 @@
   "build": {
     "appId": "com.mynote.desktop",
     "productName": "MyNote",
+    "afterPack": "afterPack.js",
     "files": [
       "main.js",
       "preload.js",
